@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toni Esan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #030303;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --cyan:   #5BB8FF;
+      --purple: #C084FC;
+      --orange: #FF6B2B;
+      --amber:  #FBBF24;
+      --dot:    #FF6B2B;
+      --surf:   #0e0e0e;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    /* ══════════════════════════════════
+       LEAF SVG DECORATIONS
+    ══════════════════════════════════ */
+    .leaf-deco {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .leaf-hero-bl {
+      bottom: -20px; left: -10px;
+      width: 200px; opacity: 0.22;
+    }
+    .leaf-work-tr {
+      top: 40px; right: -20px;
+      width: 160px; opacity: 0.15;
+      transform: scaleX(-1) rotate(20deg);
+    }
+    .leaf-about-br {
+      bottom: 0; right: -10px;
+      width: 180px; opacity: 0.15;
+      transform: rotate(10deg);
+    }
+
+    /* ══════════════════════════════════
+       NAV
+    ══════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .nav-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .nav-group.row { flex-direction: row; align-items: center; gap: 0.75rem; }
+
+    .nav-pill {
+      display: inline-flex; align-items: center;
+      height: 28px; padding: 0 1rem;
+      border: 1.5px solid #4ECDC4; border-radius: 100px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.77rem; font-weight: 500; color: #4ECDC4;
+      letter-spacing: 0.04em; cursor: pointer; background: transparent;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-pill:hover { background: rgba(78,205,196,0.12); }
+
+    .dot-tile {
+      width: 84px; height: 84px;
+      background: #0c0c0c; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+    }
+    .dot-tile:hover { background: #141414; }
+    .dot-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 7px);
+      grid-template-rows: repeat(7, 7px);
+      gap: 4px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--dot); opacity: 0.13;
+      transition: opacity 0.18s ease;
+    }
+    .dot.lit { opacity: 0.92; }
+
+    /* ══════════════════════════════════
+       HERO
+    ══════════════════════════════════ */
+    #hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 46% 54%;
+      padding-top: 7.5rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-left {
+      padding: 2rem 0 3rem 2.5rem;
+      display: flex; flex-direction: column;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Name ── */
+    .hero-name {
+      display: flex;
+      flex-direction: column;
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      font-weight: 300;
+      font-size: clamp(3.8rem, 9vw, 7.5rem);
+      margin-bottom: 2.5rem;
+      user-select: none;
+    }
+    .n-toni {
+      color: var(--cyan);
+      position: relative;
+      display: inline-block;
+    }
+    .n-esan {
+      color: #ffffff;
+      padding-left: 0.55em;
+    }
+    /* sparkle accent near name */
+    .name-sparkle {
+      position: absolute;
+      right: -0.45em; top: 0.1em;
+      font-size: 0.28em;
+      color: rgba(91,184,255,0.5);
+      animation: sparkle-pulse 3s ease-in-out infinite;
+    }
+    @keyframes sparkle-pulse {
+      0%,100% { opacity:0.5; transform: scale(1) rotate(0deg); }
+      50%      { opacity:1;   transform: scale(1.2) rotate(15deg); }
+    }
+
+    /* ── 4 Hat Cards ── */
+    .hat-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: min(320px, 80%);
+    }
+    .hat-card {
+      position: relative;
+      aspect-ratio: 3/4;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #0e0e0e;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .hat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+    .hat-card img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .hat-card-ph {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: #0e0e0e;
+    }
+    .hat-card-ph span { font-size: 0.65rem; color: rgba(255,255,255,0.15); }
+    .hat-card-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 1.5rem 0.7rem 0.6rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+      font-size: 0.72rem; font-weight: 500;
+      color: rgba(255,255,255,0.8); letter-spacing: 0.07em;
+    }
+    .hat-card-dot {
+      display: inline-block; width: 5px; height: 5px;
+      border-radius: 50%; margin-right: 5px;
+      vertical-align: middle;
+    }
+    .hat-card[data-hat="thinking"]    .hat-card-dot { background: var(--cyan); }
+    .hat-card[data-hat="artisting"]   .hat-card-dot { background: var(--purple); }
+    .hat-card[data-hat="engineering"] .hat-card-dot { background: var(--orange); }
+    .hat-card[data-hat="marketing"]   .hat-card-dot { background: var(--amber); }
+
+    /* ── Flower Card ── */
+    .hero-right {
+      display: flex; align-items: center;
+      justify-content: flex-end; overflow: visible;
+    }
+    .flower-card {
+      width: clamp(340px, 40vw, 520px);
+      height: clamp(360px, 58vh, 575px);
+      flex-shrink: 0; background: #070707;
+      border-radius: 22px; overflow: hidden;
+      transform: rotate(-6deg) translateX(44px);
+      box-shadow: 0 60px 140px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+    .flower-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .flower-fallback {
+      width: 100%; height: 100%; display: flex;
+      align-items: center; justify-content: center;
+      background: linear-gradient(155deg, #0b1220 0%, #04080f 100%);
+      font-size: 0.72rem; color: rgba(255,255,255,0.08); letter-spacing: 0.14em;
+    }
+
+    /* ══════════════════════════════════
+       SECTION COMMON
+    ══════════════════════════════════ */
+    .section {
+      max-width: 1200px; margin: 0 auto;
+      padding: 6rem 2.5rem;
+      position: relative;
+    }
+    .section-label {
+      font-size: 0.7rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(255,255,255,0.28);
+      margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+      font-weight: 300; letter-spacing: -0.02em;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ══════════════════════════════════
+       WORK — subsections per hat
+    ══════════════════════════════════ */
+    #work { border-top: 1px solid var(--border); }
+
+    .hat-section { margin-bottom: 5rem; }
+    .hat-section:last-child { margin-bottom: 0; }
+
+    .hat-section-header {
+      display: flex; align-items: center; gap: 1.25rem;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .hat-thumb {
+      width: 52px; height: 68px;
+      border-radius: 8px; overflow: hidden;
+      background: #0e0e0e; flex-shrink: 0;
+    }
+    .hat-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .hat-thumb-ph { width: 100%; height: 100%; background: #111; }
+
+    .hat-section-title {
+      font-size: 1.1rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .hat-pill {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
+      padding: 0.18rem 0.65rem; border-radius: 100px;
+    }
+    .hat-pill.thinking    { background: rgba(91,184,255,0.12); color: var(--cyan); }
+    .hat-pill.artisting   { background: rgba(192,132,252,0.12); color: var(--purple); }
+    .hat-pill.engineering { background: rgba(255,107,43,0.12); color: var(--orange); }
+    .hat-pill.marketing   { background: rgba(251,191,36,0.12); color: var(--amber); }
+
+    .hat-section-desc {
+      font-size: 0.8rem; color: rgba(255,255,255,0.3);
+      margin-top: 0.2rem;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .project-card {
+      background: #030303; padding: 1.6rem;
+      display: flex; flex-direction: column; gap: 0.8rem;
+      transition: background 0.2s;
+    }
+    .project-card:hover { background: #0a0a0a; }
+    .card-period { font-size: 0.65rem; color: rgba(255,255,255,0.22); letter-spacing: 0.08em; text-transform: uppercase; }
+    .card-title  { font-size: 0.95rem; font-weight: 500; line-height: 1.35; color: rgba(255,255,255,0.88); }
+    .card-desc   { font-size: 0.8rem; color: rgba(255,255,255,0.4); line-height: 1.65; }
+    .card-metric { font-size: 0.7rem; font-weight: 500; color: rgba(255,255,255,0.45); border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: auto; }
+    .card-tags   { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
+    .tag {
+      font-size: 0.62rem; letter-spacing: 0.05em; padding: 0.2rem 0.55rem;
+      border-radius: 100px; border: 1px solid rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.28);
+    }
+
+    /* ══════════════════════════════════
+       AI BUILT
+    ══════════════════════════════════ */
+    #ai-built { border-top: 1px solid var(--border); overflow: hidden; }
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .ai-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .ai-card-header { display: flex; align-items: center; justify-content: space-between; }
+    .ai-badge {
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
+      padding: 0.18rem 0.6rem; border-radius: 100px;
+    }
+    .badge-claude  { background: rgba(204,153,85,0.15); color: #CC9955; }
+    .badge-gpt    { background: rgba(16,163,127,0.15); color: #10A37F; }
+    .badge-gemini { background: rgba(66,133,244,0.15); color: #4285F4; }
+    .badge-multi  { background: rgba(200,200,200,0.08); color: rgba(255,255,255,0.4); }
+    .ai-card-title { font-size: 0.92rem; font-weight: 500; color: rgba(255,255,255,0.85); }
+    .ai-card-desc  { font-size: 0.78rem; color: rgba(255,255,255,0.38); line-height: 1.65; }
+
+    /* ══════════════════════════════════
+       CONSULTING
+    ══════════════════════════════════ */
+    #consulting { border-top: 1px solid var(--border); }
+    .consulting-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .consulting-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.75rem;
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    .consult-num   { font-size: 1.8rem; font-weight: 300; color: rgba(255,255,255,0.06); letter-spacing: -0.04em; }
+    .consult-title { font-size: 1rem; font-weight: 500; }
+    .consult-desc  { font-size: 0.8rem; color: rgba(255,255,255,0.38); line-height: 1.65; }
+    .consult-tags  { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+    .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center;
+      padding: 0.7rem 1.75rem; border-radius: 100px;
+      background: #4ECDC4; color: #000;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-ghost {
+      display: inline-flex; align-items: center;
+      padding: 0.7rem 1.75rem; border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.14); background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    /* ══════════════════════════════════
+       ABOUT
+    ══════════════════════════════════ */
+    #about { border-top: 1px solid var(--border); overflow: hidden; }
+    .about-grid {
+      display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 4rem;
+    }
+    .about-bio {
+      font-size: 1rem; font-weight: 300; line-height: 1.85;
+      color: rgba(255,255,255,0.6);
+    }
+    .about-bio strong { color: rgba(255,255,255,0.88); font-weight: 500; }
+    .about-bio p + p { margin-top: 1.1rem; }
+
+    .side-label {
+      font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.22); margin-bottom: 0.75rem;
+    }
+    .contact-links { display: flex; flex-direction: column; gap: 0.45rem; }
+    .contact-link {
+      font-size: 0.82rem; color: rgba(255,255,255,0.45);
+      display: flex; align-items: center; gap: 0.55rem; transition: color 0.2s;
+    }
+    .contact-link:hover { color: var(--cyan); }
+    .cl-icon { opacity: 0.35; font-size: 0.75rem; width: 16px; text-align: center; }
+
+    .tags-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .interest-tag {
+      font-size: 0.7rem; padding: 0.22rem 0.6rem;
+      border-radius: 100px; border: 1px solid rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.32);
+    }
+    .blog-ph {
+      background: var(--surf); border: 1px dashed rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 2rem;
+    }
+    .blog-ph p { font-size: 0.78rem; color: rgba(255,255,255,0.2); line-height: 1.7; }
+
+    /* ══════════════════════════════════
+       FOOTER
+    ══════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-size: 0.7rem; color: rgba(255,255,255,0.18); letter-spacing: 0.06em; }
+    footer a { color: rgba(255,255,255,0.28); transition: color 0.2s; }
+    footer a:hover { color: var(--cyan); }
+
+    /* about side spacing */
+    .about-side { display: flex; flex-direction: column; gap: 2rem; }
+  </style>
+</head>
+<body>
+
+<!-- ══════ LEAF SVG DEFS (reusable) ══════ -->
+<!-- bottom-left branch -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="leaf-branch" viewBox="0 0 140 240">
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- stem -->
+      <path d="M55 235 C52 195 48 155 55 115 C60 80 65 50 70 20" stroke="#1a4a30" stroke-width="1.8"/>
+      <!-- leaf L1 -->
+      <path d="M55 155 C25 138 12 108 28 82 C48 108 55 138 55 155Z" fill="#0e2a1c"/>
+      <path d="M55 155 L28 82" stroke="#1a4a30" stroke-width="1.2"/>
+      <!-- leaf R1 -->
+      <path d="M58 120 C88 100 98 70 82 48 C66 72 60 100 58 120Z" fill="#0e2a1c"/>
+      <path d="M58 120 L82 48" stroke="#1a4a30" stroke-width="1.2"/>
+      <!-- leaf L2 (upper) -->
+      <path d="M62 85 C38 72 30 50 44 32 C60 52 63 72 62 85Z" fill="#0e2a1c" opacity="0.7"/>
+      <path d="M62 85 L44 32" stroke="#1a4a30" stroke-width="1"/>
+      <!-- tiny top leaf -->
+      <path d="M67 50 C82 38 86 22 76 12 C66 26 65 40 67 50Z" fill="#0e2a1c" opacity="0.5"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- ══════ NAV ══════ -->
+<nav>
+  <div class="nav-group">
+    <button class="nav-pill" onclick="navTo('work')">work</button>
+    <div class="dot-tile" data-pattern="E" onclick="navTo('work')"></div>
+  </div>
+  <div class="nav-group" style="align-items:center">
+    <div class="dot-tile" data-pattern="i" onclick="navTo('about')"></div>
+  </div>
+  <div class="nav-group row">
+    <div class="dot-tile" data-pattern="heart" onclick="navTo('about')"></div>
+    <a href="context/Toni Esan CV_MLx.pdf" target="_blank">
+      <button class="nav-pill" style="font-size:0.82rem">Resumé</button>
+    </a>
+  </div>
+</nav>
+
+<!-- ══════ HERO ══════ -->
+<section id="hero">
+  <!-- bottom-left leaf -->
+  <svg class="leaf-deco leaf-hero-bl" viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <use href="#leaf-branch"/>
+  </svg>
+
+  <div class="hero-left">
+    <h1 class="hero-name">
+      <span class="n-toni">Toni<span class="name-sparkle">✦</span></span>
+      <span class="n-esan">Esan</span>
+    </h1>
+
+    <div class="hat-cards" id="hatCards">
+      <div class="hat-card" data-hat="thinking" onclick="navTo('thinking')">
+        <img src="assetsforsite/thinking_hat.png" alt="thinking"
+          onerror="this.outerHTML='<div class=hat-card-ph><span>thinking_hat.png</span></div>'">
+        <div class="hat-card-label">
+          <span class="hat-card-dot"></span>thinking
+        </div>
+      </div>
+      <div class="hat-card" data-hat="artisting" onclick="navTo('artisting')">
+        <img src="assetsforsite/artisting_hat.png" alt="artisting"
+          onerror="this.outerHTML='<div class=hat-card-ph><span>artisting_hat.png</span></div>'">
+        <div class="hat-card-label">
+          <span class="hat-card-dot"></span>artisting
+        </div>
+      </div>
+      <div class="hat-card" data-hat="engineering" onclick="navTo('engineering')">
+        <img src="assetsforsite/engineering_hat.png" alt="engineering"
+          onerror="this.outerHTML='<div class=hat-card-ph><span>engineering_hat.png</span></div>'">
+        <div class="hat-card-label">
+          <span class="hat-card-dot"></span>engineering
+        </div>
+      </div>
+      <div class="hat-card" data-hat="marketing" onclick="navTo('marketing')">
+        <img src="assetsforsite/marketing_hat.png" alt="marketing"
+          onerror="this.outerHTML='<div class=hat-card-ph><span>marketing_hat.png</span></div>'">
+        <div class="hat-card-label">
+          <span class="hat-card-dot"></span>marketing
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="flower-card">
+      <img src="assetsforsite/hyrdangea.png" alt="Hydrangea"
+        onerror="this.outerHTML='<div class=flower-fallback>hydrangea</div>'">
+    </div>
+  </div>
+</section>
+
+<!-- ══════ WORK ══════ -->
+<div id="work" style="border-top:1px solid var(--border); position:relative; overflow:hidden;">
+  <svg class="leaf-deco leaf-work-tr" viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <use href="#leaf-branch"/>
+  </svg>
+  <div class="section">
+    <p class="section-label">Selected work</p>
+    <h2 class="section-title">Things I've built &amp; shipped</h2>
+
+    <!-- THINKING -->
+    <div class="hat-section" id="thinking">
+      <div class="hat-section-header">
+        <div class="hat-thumb">
+          <img src="assetsforsite/thinking_hat.png" alt=""
+            onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
+        </div>
+        <div>
+          <h3 class="hat-section-title">
+            <span class="hat-pill thinking">thinking</span>
+            AI, code &amp; systems
+          </h3>
+          <p class="hat-section-desc">Machine learning, computer vision, autonomous systems, software engineering</p>
+        </div>
+      </div>
+      <div class="projects-grid">
+        <div class="project-card">
+          <p class="card-period">June 2024 – Present</p>
+          <h3 class="card-title">Leveret AI — Dental X-Ray Diagnosis</h3>
+          <p class="card-desc">CV platform for automated dental X-ray diagnosis deployed into NHS beta clinics. Led dataset curation, beta testing, and bridged engineers with clinical end users.</p>
+          <p class="card-metric">~27% early adoption across NHS beta clinics</p>
+          <div class="card-tags"><span class="tag">Python</span><span class="tag">YOLO</span><span class="tag">Roboflow</span><span class="tag">Healthcare AI</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">Feb 2025</p>
+          <h3 class="card-title">Bundesliga AI Hackathon — Pose Classification</h3>
+          <p class="card-desc">Automated pipeline classifying thousands of media day football photos into 16 pose categories. YOLO + transformers on Amazon SageMaker with GPU instances.</p>
+          <div class="card-tags"><span class="tag">YOLO</span><span class="tag">Transformers</span><span class="tag">SageMaker</span><span class="tag">PyTorch</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Deep RL for Autonomous Driving (MSc)</h3>
+          <p class="card-desc">DQN and PPO agents on OpenAI Gymnasium CarRacing. MDP formulation, 4-frame stacking, auxiliary sensor features. GPU-accelerated on MacBook Metal.</p>
+          <div class="card-tags"><span class="tag">DQN</span><span class="tag">PPO</span><span class="tag">OpenAI Gym</span><span class="tag">TensorBoard</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Computer Vision — CIFAR-10 &amp; UAV Detection (MSc)</h3>
+          <p class="card-desc">FCN, CNN, and ResNet50V2 transfer learning on CIFAR-10. YOLOv8n vs Faster R-CNN for UAV detection with mAP/IoU benchmarking.</p>
+          <div class="card-tags"><span class="tag">ResNet50V2</span><span class="tag">YOLOv8n</span><span class="tag">Faster R-CNN</span><span class="tag">Keras</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2023–2024</p>
+          <h3 class="card-title">RAG System for Sales Engineering</h3>
+          <p class="card-desc">Bespoke RAG pipeline automating PDF-to-CSV extraction and LLM-based retrieval for a sales team. Cut manual processing overhead significantly.</p>
+          <div class="card-tags"><span class="tag">Python</span><span class="tag">RAG</span><span class="tag">LLM</span><span class="tag">Supabase</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Automated Geospatial Data Pipeline</h3>
+          <p class="card-desc">Satellite imagery + API metadata + LLM-generated narratives for computer vision dataset construction. Contributed to a published research project.</p>
+          <div class="card-tags"><span class="tag">Satellite imagery</span><span class="tag">LLM</span><span class="tag">CV dataset</span><span class="tag">Python</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTISTING -->
+    <div class="hat-section" id="artisting">
+      <div class="hat-section-header">
+        <div class="hat-thumb">
+          <img src="assetsforsite/artisting_hat.png" alt=""
+            onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
+        </div>
+        <div>
+          <h3 class="hat-section-title">
+            <span class="hat-pill artisting">artisting</span>
+            design, brand &amp; culture
+          </h3>
+          <p class="hat-section-desc">Product design, visual identity, MagKits, cinema</p>
+        </div>
+      </div>
+      <div class="projects-grid">
+        <div class="project-card">
+          <p class="card-period">Dec 2022 – Present</p>
+          <h3 class="card-title">MagKits — iPhone Accessory Brand</h3>
+          <p class="card-desc">MagSafe wallet brand built around football clubs. Full stack: product design in Blender &amp; Photoshop, Shopify store, supply chain, social content. Founded &amp; bootstrapped.</p>
+          <p class="card-metric">500k+ followers grown for a client within 2 years</p>
+          <div class="card-tags"><span class="tag">Blender</span><span class="tag">Photoshop</span><span class="tag">Shopify</span><span class="tag">Branding</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Fitbod Smart Speaker — Industrial Design</h3>
+          <p class="card-desc">Physical smart speaker embodying the Fitbod brand. Full CAD in SolidWorks, 3D-printed prototype, and KeyShot studio renders. 1st class result.</p>
+          <div class="card-tags"><span class="tag">SolidWorks</span><span class="tag">KeyShot</span><span class="tag">3D Printing</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2022 – Present</p>
+          <h3 class="card-title">Client Interactive Websites</h3>
+          <p class="card-desc">Vue.js interactive sites with dynamic animations and Shopify integrations for e-commerce clients. From brief to live, fast.</p>
+          <div class="card-tags"><span class="tag">Vue.js</span><span class="tag">Shopify</span><span class="tag">Liquid</span><span class="tag">Vercel</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">Ongoing</p>
+          <h3 class="card-title">Cinema &amp; Film</h3>
+          <p class="card-desc">Obsessive film watcher. From A24 to Nollywood. Logging, ranking, and occasionally over-analysing on Letterboxd.</p>
+          <div class="card-tags"><span class="tag">Letterboxd</span><span class="tag">Film criticism</span></div>
+          <a href="https://boxd.it/5YsGb" target="_blank" style="font-size:0.75rem;color:var(--purple);margin-top:0.2rem;display:inline-block;">→ letterboxd ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENGINEERING -->
+    <div class="hat-section" id="engineering">
+      <div class="hat-section-header">
+        <div class="hat-thumb">
+          <img src="assetsforsite/engineering_hat.png" alt=""
+            onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
+        </div>
+        <div>
+          <h3 class="hat-section-title">
+            <span class="hat-pill engineering">engineering</span>
+            mechanical &amp; physical
+          </h3>
+          <p class="hat-section-desc">Product design, CAD, simulations, autonomous systems, hardware</p>
+        </div>
+      </div>
+      <div class="projects-grid">
+        <div class="project-card">
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Electric Scooter Dissertation — 1st Class</h3>
+          <p class="card-desc">Technical comparison of Pure Electric vs Xiaoming — battery architecture, voltage sag under load, performance analysis in MATLAB/Simulink.</p>
+          <div class="card-tags"><span class="tag">MATLAB</span><span class="tag">Simulink</span><span class="tag">Battery diagnostics</span><span class="tag">EVs</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2016</p>
+          <h3 class="card-title">Chillybox — Medical Storage for Rural Africa</h3>
+          <p class="card-desc">Insulated blood transport box for East Africa's heat constraints. Thermodynamic simulation and CAD. Built at Imperial College London.</p>
+          <div class="card-tags"><span class="tag">SolidWorks</span><span class="tag">Thermodynamics</span><span class="tag">Social Impact</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2019</p>
+          <h3 class="card-title">Navya Autonomous Vehicle — Route Training</h3>
+          <p class="card-desc">Trained a Navya AV on urban routes using Xbox controller inputs. Gathered structured public feedback on AV perception in a live city environment.</p>
+          <div class="card-tags"><span class="tag">Autonomous vehicles</span><span class="tag">Control systems</span><span class="tag">UX research</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Cyber-Physical Systems — Multi-Agent Consensus (MSc)</h3>
+          <p class="card-desc">Leader-follower temperature control with QPSK wireless comms, XOR encryption, and FPGA-ready HDL implementation in MATLAB/Simulink.</p>
+          <div class="card-tags"><span class="tag">MATLAB</span><span class="tag">Simulink</span><span class="tag">QPSK</span><span class="tag">FPGA/HDL</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Automatic Gear Shift System — Road Bikes</h3>
+          <p class="card-desc">Sensor and laser-based automatic derailleur system optimising gear shifts for road cyclists under variable terrain and speed.</p>
+          <div class="card-tags"><span class="tag">Laser measurement</span><span class="tag">Sensors</span><span class="tag">CAD</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKETING -->
+    <div class="hat-section" id="marketing">
+      <div class="hat-section-header">
+        <div class="hat-thumb">
+          <img src="assetsforsite/marketing_hat.png" alt=""
+            onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
+        </div>
+        <div>
+          <h3 class="hat-section-title">
+            <span class="hat-pill marketing">marketing</span>
+            growth, ops &amp; consulting
+          </h3>
+          <p class="hat-section-desc">Business development, social strategy, events operations, client consulting</p>
+        </div>
+      </div>
+      <div class="projects-grid">
+        <div class="project-card">
+          <p class="card-period">Dec 2022 – Present</p>
+          <h3 class="card-title">Digital &amp; Automation Consulting</h3>
+          <p class="card-desc">Self-employed. AI-assisted web builds, Shopify stores, VBA automation scripts, and workflow optimisation for SME clients across London.</p>
+          <div class="card-tags"><span class="tag">Shopify</span><span class="tag">VBA</span><span class="tag">Automation</span><span class="tag">Web dev</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">Jan 2024 – Present</p>
+          <h3 class="card-title">Santander HQ — Events &amp; Operations Systems</h3>
+          <p class="card-desc">Excel dashboards cutting spend ~15%. QR registration system deployed across 300+ client events, cutting check-in time by ~20%.</p>
+          <p class="card-metric">~15% spend reduction · ~20% faster check-in · 300+ events</p>
+          <div class="card-tags"><span class="tag">Excel</span><span class="tag">VBA</span><span class="tag">QR systems</span><span class="tag">Events</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">2022 – Present</p>
+          <h3 class="card-title">Social Media Growth — 500k+ Followers</h3>
+          <p class="card-desc">Strategy, content creation, and campaign management growing a client's presence from 0 to 500k+ followers in 2 years across platforms.</p>
+          <p class="card-metric">500k+ followers in 2 years</p>
+          <div class="card-tags"><span class="tag">Content strategy</span><span class="tag">Growth</span><span class="tag">Brand building</span></div>
+        </div>
+        <div class="project-card">
+          <p class="card-period">June 2024 – Present</p>
+          <h3 class="card-title">Leveret AI — Business Development</h3>
+          <p class="card-desc">Merged market research with technical feasibility to shape product use-cases. Bridged engineer-to-clinician communication. Competitor analysis.</p>
+          <div class="card-tags"><span class="tag">Market research</span><span class="tag">Stakeholder comms</span><span class="tag">Healthcare</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /section -->
+</div>
+
+<!-- ══════ AI BUILT ══════ -->
+<section id="ai-built" style="border-top:1px solid var(--border)">
+  <div class="section">
+    <p class="section-label">Built with AI</p>
+    <h2 class="section-title">Things Claude, GPT &amp; Gemini helped me build</h2>
+    <div class="ai-grid">
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-claude">Claude</span></div>
+        <h3 class="ai-card-title">This Portfolio Site</h3>
+        <p class="ai-card-desc">Designed and built in a single session with Claude Code. Layout, dot-matrix nav animations, content — all from a PDF brief.</p>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-multi">Claude + GPT</span></div>
+        <h3 class="ai-card-title">RAG Sales Engineering Tool</h3>
+        <p class="ai-card-desc">PDF extraction pipeline and LLM retrieval system for a sales team. Claude for architecture planning, GPT for the retrieval layer.</p>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-gemini">Gemini</span></div>
+        <h3 class="ai-card-title">Geospatial Data Pipeline</h3>
+        <p class="ai-card-desc">LLM-generated narrative descriptions for satellite imagery datasets, enabling richer multimodal dataset construction for CV research.</p>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-gpt">GPT-4</span></div>
+        <h3 class="ai-card-title">VBA Automation Scripts</h3>
+        <p class="ai-card-desc">Excel dashboards and automation workflows for Santander HQ — resource tracking, event registration, and reporting, built fast.</p>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-claude">Claude</span></div>
+        <h3 class="ai-card-title">Client Shopify Stores</h3>
+        <p class="ai-card-desc">AI-assisted Liquid theme customisation and product page generation. Dramatically faster iteration cycles for e-commerce clients.</p>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-header"><span class="ai-badge badge-multi">Claude + Gemini</span></div>
+        <h3 class="ai-card-title">More coming — building constantly</h3>
+        <p class="ai-card-desc">Half marathon training tools, gym CV apps, location memory maps, Spotify memory layers… ideas are cheap, shipping is the work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CONSULTING ══════ -->
+<section id="consulting" style="border-top:1px solid var(--border)">
+  <div class="section">
+    <p class="section-label">Services</p>
+    <h2 class="section-title">How I can help your business</h2>
+    <div class="consulting-grid">
+      <div class="consulting-card">
+        <p class="consult-num">01</p>
+        <h3 class="consult-title">AI Integration &amp; Automation</h3>
+        <p class="consult-desc">LLM pipelines, document automation, custom RAG systems, and workflow tooling that actually gets used.</p>
+        <div class="consult-tags"><span class="tag">LLM APIs</span><span class="tag">RAG</span><span class="tag">Python</span><span class="tag">VBA/Excel</span></div>
+      </div>
+      <div class="consulting-card">
+        <p class="consult-num">02</p>
+        <h3 class="consult-title">Web &amp; Shopify Builds</h3>
+        <p class="consult-desc">Fast, clean web presences and e-commerce stores. Vue/React frontends, Shopify Liquid, deployed on Vercel. Brief to live in days.</p>
+        <div class="consult-tags"><span class="tag">Vue.js</span><span class="tag">React</span><span class="tag">Shopify</span><span class="tag">Vercel</span></div>
+      </div>
+      <div class="consulting-card">
+        <p class="consult-num">03</p>
+        <h3 class="consult-title">Computer Vision Prototyping</h3>
+        <p class="consult-desc">YOLO-based detection, classification pipelines, dataset curation, and deployment. From proof-of-concept to something demoable.</p>
+        <div class="consult-tags"><span class="tag">YOLO</span><span class="tag">PyTorch</span><span class="tag">Roboflow</span><span class="tag">SageMaker</span></div>
+      </div>
+      <div class="consulting-card">
+        <p class="consult-num">04</p>
+        <h3 class="consult-title">Social &amp; Growth Strategy</h3>
+        <p class="consult-desc">Content strategy, brand positioning, and growth systems. Proven track record scaling accounts to 500k+ followers.</p>
+        <div class="consult-tags"><span class="tag">Content</span><span class="tag">Brand</span><span class="tag">Growth</span><span class="tag">E-commerce</span></div>
+      </div>
+    </div>
+    <div class="cta-row">
+      <a href="mailto:oluwatoniesan@gmail.com"><button class="btn-primary">Get in touch</button></a>
+      <a href="https://www.linkedin.com/in/toni-esan" target="_blank"><button class="btn-ghost">LinkedIn ↗</button></a>
+      <a href="https://x.com/tonzwownz" target="_blank"><button class="btn-ghost">Twitter ↗</button></a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ ABOUT ══════ -->
+<section id="about" style="border-top:1px solid var(--border); position:relative; overflow:hidden">
+  <svg class="leaf-deco leaf-about-br" viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <use href="#leaf-branch"/>
+  </svg>
+  <div class="section">
+    <p class="section-label">About</p>
+    <h2 class="section-title">Mechanical engineer turned AI builder</h2>
+    <div class="about-grid">
+      <div>
+        <div class="about-bio">
+          <p>I'm <strong>Toni Esan</strong> — based in London. I sit at the intersection of engineering rigour, AI application, and creative product thinking. Not a pure researcher, not a pure developer — someone who <strong>builds things that bridge disciplines</strong> and solves real problems with taste.</p>
+          <p>Currently finishing an <strong>MSc in Applied AI at Cranfield</strong> (Distinction, September 2025) while working as Technical Officer at <strong>Leveret AI</strong> — a CV startup bringing AI diagnostics to NHS dental clinics. Before that: Design Engineering at Aston (1st class).</p>
+          <p>I've trained autonomous vehicles, grown social accounts to half a million followers, and built dental AI products used in real clinics. I wear a lot of hats — <em>literally</em>.</p>
+          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Watches more films than is probably healthy.</p>
+        </div>
+        <div class="blog-ph">
+          <p>Blog coming soon — cool news, half-formed thoughts, film takes, and tech rabbit holes.<br>Currently living in Twitter bookmarks <a href="https://x.com/tonzwownz" style="color:var(--cyan)">@tonzwownz</a>. Moving here eventually.</p>
+        </div>
+      </div>
+      <div class="about-side">
+        <div>
+          <p class="side-label">Contact</p>
+          <div class="contact-links">
+            <a class="contact-link" href="mailto:oluwatoniesan@gmail.com"><span class="cl-icon">✉</span>oluwatoniesan@gmail.com</a>
+            <a class="contact-link" href="https://github.com/Toni9a" target="_blank"><span class="cl-icon">◈</span>github.com/Toni9a</a>
+            <a class="contact-link" href="https://www.linkedin.com/in/toni-esan" target="_blank"><span class="cl-icon">◈</span>LinkedIn</a>
+            <a class="contact-link" href="https://x.com/tonzwownz" target="_blank"><span class="cl-icon">◈</span>@tonzwownz</a>
+            <a class="contact-link" href="https://boxd.it/5YsGb" target="_blank"><span class="cl-icon">◈</span>Letterboxd</a>
+          </div>
+        </div>
+        <div>
+          <p class="side-label">Education</p>
+          <div class="contact-links">
+            <span class="contact-link" style="cursor:default">MSc Applied AI — Cranfield (Distinction)</span>
+            <span class="contact-link" style="cursor:default">BEng Design Engineering — Aston (1st)</span>
+          </div>
+        </div>
+        <div>
+          <p class="side-label">Interests</p>
+          <div class="tags-list">
+            <span class="interest-tag">Mobile apps</span><span class="interest-tag">Consumer hardware</span>
+            <span class="interest-tag">Electric vehicles</span><span class="interest-tag">Mixed reality</span>
+            <span class="interest-tag">Half marathons</span><span class="interest-tag">EdTech</span>
+            <span class="interest-tag">Film</span><span class="interest-tag">Football</span><span class="interest-tag">BSL</span>
+          </div>
+        </div>
+        <div>
+          <p class="side-label">Languages</p>
+          <div class="tags-list">
+            <span class="interest-tag">English</span><span class="interest-tag">BSL</span>
+            <span class="interest-tag">Spanish</span><span class="interest-tag">Yoruba</span><span class="interest-tag">Arabic (basic)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FOOTER ══════ -->
+<footer>
+  <p>Toni Esan — London, UK</p>
+  <p>
+    <a href="mailto:oluwatoniesan@gmail.com">oluwatoniesan@gmail.com</a>
+    &nbsp;·&nbsp;
+    <a href="https://x.com/tonzwownz" target="_blank">@tonzwownz</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/Toni9a" target="_blank">github</a>
+  </p>
+</footer>
+
+<script>
+  // ── Nav scroll (renamed to avoid conflict with window.scrollTo) ─────
+  function navTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── DOT MATRIX ────────────────────────────────────────────────────
+  const PATTERNS = {
+    E:     [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,0, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
+    i:     [0,0,1,0,0, 0,0,0,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
+    heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0, 0,0,0,0,0, 0,0,0,0,0],
+  };
+
+  document.querySelectorAll('.dot-tile').forEach(tile => {
+    const pattern = PATTERNS[tile.dataset.pattern];
+    if (!pattern) return;
+    const grid = document.createElement('div');
+    grid.className = 'dot-grid';
+    pattern.forEach(active => {
+      const d = document.createElement('span');
+      d.className = 'dot'; d.dataset.active = active;
+      grid.appendChild(d);
+    });
+    tile.appendChild(grid);
+
+    tile.addEventListener('mouseenter', () => {
+      [...grid.querySelectorAll('.dot')]
+        .filter(d => d.dataset.active === '1')
+        .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
+    });
+    tile.addEventListener('mouseleave', () => {
+      [...grid.querySelectorAll('.dot')]
+        .filter(d => d.dataset.active === '1')
+        .forEach((d, i) => setTimeout(() => d.classList.remove('lit'), i * 10));
+    });
+  });
+</script>
+</body>
+</html>
