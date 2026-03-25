@@ -19,11 +19,15 @@
     a { color: inherit; text-decoration: none; }
 
     :root {
-      --cyan:   #5BB8FF;
-      --purple: #C084FC;
-      --orange: #FF6B2B;
-      --amber:  #FBBF24;
-      --dot:    #FF6B2B;
+      --cyan:        #5BB8FF;
+      --purple:      #C084FC;
+      --orange:      #FF6B2B;
+      --amber:       #FBBF24;
+      --hat-thinking:    #C4956A;
+      --hat-artisting:   #6EE7B7;
+      --hat-engineering: #5BB8FF;
+      --hat-marketing:   #FBBF24;
+      --dot:    #5BB8FF;
       --surf:   #0e0e0e;
       --border: rgba(255,255,255,0.07);
     }
@@ -136,64 +140,30 @@
       padding-left: 0.55em;
     }
     /* sparkle accent near name */
-    .name-sparkle {
-      position: absolute;
-      right: -0.45em; top: 0.1em;
-      font-size: 0.28em;
-      color: rgba(91,184,255,0.5);
-      animation: sparkle-pulse 3s ease-in-out infinite;
-    }
-    @keyframes sparkle-pulse {
-      0%,100% { opacity:0.5; transform: scale(1) rotate(0deg); }
-      50%      { opacity:1;   transform: scale(1.2) rotate(15deg); }
-    }
 
-    /* ── 4 Hat Cards ── */
-    .hat-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      width: min(320px, 80%);
+    /* ── Hero Nav Links (replaces hat cards) ── */
+    .hero-nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-top: 0.5rem;
     }
-    .hat-card {
-      position: relative;
-      aspect-ratio: 3/4;
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      background: #0e0e0e;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    .hero-nav-link {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      cursor: pointer; width: fit-content;
+      padding: 0.45rem 0.6rem 0.45rem 0;
+      transition: opacity 0.2s;
+      border-bottom: 1px solid transparent;
     }
-    .hat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    }
-    .hat-card img {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
-    }
-    .hat-card-ph {
-      width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      background: #0e0e0e;
-    }
-    .hat-card-ph span { font-size: 0.65rem; color: rgba(255,255,255,0.15); }
-    .hat-card-label {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 1.5rem 0.7rem 0.6rem;
-      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
-      font-size: 0.72rem; font-weight: 500;
-      color: rgba(255,255,255,0.8); letter-spacing: 0.07em;
-    }
-    .hat-card-dot {
-      display: inline-block; width: 5px; height: 5px;
-      border-radius: 50%; margin-right: 5px;
-      vertical-align: middle;
-    }
-    .hat-card[data-hat="thinking"]    .hat-card-dot { background: var(--cyan); }
-    .hat-card[data-hat="artisting"]   .hat-card-dot { background: var(--purple); }
-    .hat-card[data-hat="engineering"] .hat-card-dot { background: var(--orange); }
-    .hat-card[data-hat="marketing"]   .hat-card-dot { background: var(--amber); }
+    .hero-nav-link:hover { opacity: 0.65; }
+    .hnl-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .hnl-label { font-size: 1rem; font-weight: 300; letter-spacing: 0.06em; color: rgba(255,255,255,0.5); }
+    .hnl-arrow { font-size: 0.72rem; color: rgba(255,255,255,0.18); transition: transform 0.2s; }
+    .hero-nav-link:hover .hnl-arrow { transform: translateX(4px); }
+    .hero-nav-link[data-hat="thinking"]    .hnl-dot { background: var(--hat-thinking); }
+    .hero-nav-link[data-hat="artisting"]   .hnl-dot { background: var(--hat-artisting); }
+    .hero-nav-link[data-hat="engineering"] .hnl-dot { background: var(--hat-engineering); }
+    .hero-nav-link[data-hat="marketing"]   .hnl-dot { background: var(--hat-marketing); }
 
     /* ── Flower Card ── */
     .hero-right {
@@ -250,8 +220,8 @@
       border-bottom: 1px solid var(--border);
     }
     .hat-thumb {
-      width: 52px; height: 68px;
-      border-radius: 8px; overflow: hidden;
+      width: 120px; height: 158px;
+      border-radius: 12px; overflow: hidden;
       background: #0e0e0e; flex-shrink: 0;
     }
     .hat-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -265,10 +235,10 @@
       font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
       padding: 0.18rem 0.65rem; border-radius: 100px;
     }
-    .hat-pill.thinking    { background: rgba(91,184,255,0.12); color: var(--cyan); }
-    .hat-pill.artisting   { background: rgba(192,132,252,0.12); color: var(--purple); }
-    .hat-pill.engineering { background: rgba(255,107,43,0.12); color: var(--orange); }
-    .hat-pill.marketing   { background: rgba(251,191,36,0.12); color: var(--amber); }
+    .hat-pill.thinking    { background: rgba(196,149,106,0.15); color: var(--hat-thinking); }
+    .hat-pill.artisting   { background: rgba(110,231,183,0.12); color: var(--hat-artisting); }
+    .hat-pill.engineering { background: rgba(91,184,255,0.12);  color: var(--hat-engineering); }
+    .hat-pill.marketing   { background: rgba(251,191,36,0.12);  color: var(--hat-marketing); }
 
     .hat-section-desc {
       font-size: 0.8rem; color: rgba(255,255,255,0.3);
@@ -447,14 +417,13 @@
 <!-- ══════ NAV ══════ -->
 <nav>
   <div class="nav-group">
-    <button class="nav-pill" onclick="navTo('work')">work</button>
     <div class="dot-tile" data-pattern="E" onclick="navTo('work')"></div>
   </div>
   <div class="nav-group" style="align-items:center">
     <div class="dot-tile" data-pattern="i" onclick="navTo('about')"></div>
   </div>
   <div class="nav-group row">
-    <div class="dot-tile" data-pattern="heart" onclick="navTo('about')"></div>
+    <div class="dot-tile" data-pattern="heart" onclick="window.location.href='blog.html'"></div>
     <a href="context/Toni Esan CV_MLx.pdf" target="_blank">
       <button class="nav-pill" style="font-size:0.82rem">Resumé</button>
     </a>
@@ -470,38 +439,30 @@
 
   <div class="hero-left">
     <h1 class="hero-name">
-      <span class="n-toni">Toni<span class="name-sparkle">✦</span></span>
+      <span class="n-toni">Toni</span>
       <span class="n-esan">Esan</span>
     </h1>
 
-    <div class="hat-cards" id="hatCards">
-      <div class="hat-card" data-hat="thinking" onclick="navTo('thinking')">
-        <img src="assetsforsite/thinking_hat.png" alt="thinking"
-          onerror="this.outerHTML='<div class=hat-card-ph><span>thinking_hat.png</span></div>'">
-        <div class="hat-card-label">
-          <span class="hat-card-dot"></span>thinking
-        </div>
+    <div class="hero-nav-links">
+      <div class="hero-nav-link" data-hat="thinking" onclick="navTo('thinking')">
+        <span class="hnl-dot"></span>
+        <span class="hnl-label">thinking</span>
+        <span class="hnl-arrow">→</span>
       </div>
-      <div class="hat-card" data-hat="artisting" onclick="navTo('artisting')">
-        <img src="assetsforsite/artisting_hat.png" alt="artisting"
-          onerror="this.outerHTML='<div class=hat-card-ph><span>artisting_hat.png</span></div>'">
-        <div class="hat-card-label">
-          <span class="hat-card-dot"></span>artisting
-        </div>
+      <div class="hero-nav-link" data-hat="artisting" onclick="navTo('artisting')">
+        <span class="hnl-dot"></span>
+        <span class="hnl-label">artisting</span>
+        <span class="hnl-arrow">→</span>
       </div>
-      <div class="hat-card" data-hat="engineering" onclick="navTo('engineering')">
-        <img src="assetsforsite/engineering_hat.png" alt="engineering"
-          onerror="this.outerHTML='<div class=hat-card-ph><span>engineering_hat.png</span></div>'">
-        <div class="hat-card-label">
-          <span class="hat-card-dot"></span>engineering
-        </div>
+      <div class="hero-nav-link" data-hat="engineering" onclick="navTo('engineering')">
+        <span class="hnl-dot"></span>
+        <span class="hnl-label">engineering</span>
+        <span class="hnl-arrow">→</span>
       </div>
-      <div class="hat-card" data-hat="marketing" onclick="navTo('marketing')">
-        <img src="assetsforsite/marketing_hat.png" alt="marketing"
-          onerror="this.outerHTML='<div class=hat-card-ph><span>marketing_hat.png</span></div>'">
-        <div class="hat-card-label">
-          <span class="hat-card-dot"></span>marketing
-        </div>
+      <div class="hero-nav-link" data-hat="marketing" onclick="navTo('marketing')">
+        <span class="hnl-dot"></span>
+        <span class="hnl-label">marketing</span>
+        <span class="hnl-arrow">→</span>
       </div>
     </div>
   </div>
@@ -619,7 +580,7 @@
           <h3 class="card-title">Cinema &amp; Film</h3>
           <p class="card-desc">Obsessive film watcher. From A24 to Nollywood. Logging, ranking, and occasionally over-analysing on Letterboxd.</p>
           <div class="card-tags"><span class="tag">Letterboxd</span><span class="tag">Film criticism</span></div>
-          <a href="https://boxd.it/5YsGb" target="_blank" style="font-size:0.75rem;color:var(--purple);margin-top:0.2rem;display:inline-block;">→ letterboxd ↗</a>
+          <a href="https://boxd.it/5YsGb" target="_blank" style="font-size:0.75rem;color:var(--hat-artisting);margin-top:0.2rem;display:inline-block;">→ letterboxd ↗</a>
         </div>
       </div>
     </div>
@@ -795,7 +756,7 @@
     <div class="cta-row">
       <a href="mailto:oluwatoniesan@gmail.com"><button class="btn-primary">Get in touch</button></a>
       <a href="https://www.linkedin.com/in/toni-esan" target="_blank"><button class="btn-ghost">LinkedIn ↗</button></a>
-      <a href="https://x.com/tonzwownz" target="_blank"><button class="btn-ghost">Twitter ↗</button></a>
+      <a href="https://x.com/tonzownz" target="_blank"><button class="btn-ghost">Twitter ↗</button></a>
     </div>
   </div>
 </section>
@@ -814,10 +775,14 @@
           <p>I'm <strong>Toni Esan</strong> — based in London. I sit at the intersection of engineering rigour, AI application, and creative product thinking. Not a pure researcher, not a pure developer — someone who <strong>builds things that bridge disciplines</strong> and solves real problems with taste.</p>
           <p>Currently finishing an <strong>MSc in Applied AI at Cranfield</strong> (Distinction, September 2025) while working as Technical Officer at <strong>Leveret AI</strong> — a CV startup bringing AI diagnostics to NHS dental clinics. Before that: Design Engineering at Aston (1st class).</p>
           <p>I've trained autonomous vehicles, grown social accounts to half a million followers, and built dental AI products used in real clinics. I wear a lot of hats — <em>literally</em>.</p>
-          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Watches more films than is probably healthy.</p>
+          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Currently training for a half marathon — running is the thinking time.</p>
         </div>
-        <div class="blog-ph">
-          <p>Blog coming soon — cool news, half-formed thoughts, film takes, and tech rabbit holes.<br>Currently living in Twitter bookmarks <a href="https://x.com/tonzwownz" style="color:var(--cyan)">@tonzwownz</a>. Moving here eventually.</p>
+        <div style="margin-top:3rem;">
+          <p class="side-label" style="margin-bottom:0.75rem">Blog</p>
+          <div class="blog-ph">
+          <p style="font-size:0.9rem;color:rgba(255,255,255,0.35);font-weight:500;margin-bottom:0.4rem">Coming soon</p>
+          <p>Cool news, half-formed thoughts, film takes, tech rabbit holes. Currently living in Twitter bookmarks <a href="https://x.com/tonzownz" style="color:var(--cyan)">@tonzownz</a>.</p>
+        </div>
         </div>
       </div>
       <div class="about-side">
@@ -827,7 +792,7 @@
             <a class="contact-link" href="mailto:oluwatoniesan@gmail.com"><span class="cl-icon">✉</span>oluwatoniesan@gmail.com</a>
             <a class="contact-link" href="https://github.com/Toni9a" target="_blank"><span class="cl-icon">◈</span>github.com/Toni9a</a>
             <a class="contact-link" href="https://www.linkedin.com/in/toni-esan" target="_blank"><span class="cl-icon">◈</span>LinkedIn</a>
-            <a class="contact-link" href="https://x.com/tonzwownz" target="_blank"><span class="cl-icon">◈</span>@tonzwownz</a>
+            <a class="contact-link" href="https://x.com/tonzownz" target="_blank"><span class="cl-icon">◈</span>@tonzownz</a>
             <a class="contact-link" href="https://boxd.it/5YsGb" target="_blank"><span class="cl-icon">◈</span>Letterboxd</a>
           </div>
         </div>
@@ -865,7 +830,7 @@
   <p>
     <a href="mailto:oluwatoniesan@gmail.com">oluwatoniesan@gmail.com</a>
     &nbsp;·&nbsp;
-    <a href="https://x.com/tonzwownz" target="_blank">@tonzwownz</a>
+    <a href="https://x.com/tonzownz" target="_blank">@tonzownz</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/Toni9a" target="_blank">github</a>
   </p>

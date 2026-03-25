@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Toni Esan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #030303;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    :root {
+      --cyan:   #5BB8FF;
+      --dot:    #5BB8FF;
+      --surf:   #0e0e0e;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 1.5rem 2.5rem;
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .nav-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .nav-group.row { flex-direction: row; align-items: center; gap: 0.75rem; }
+    .nav-pill {
+      display: inline-flex; align-items: center;
+      height: 28px; padding: 0 1rem;
+      border: 1.5px solid #4ECDC4; border-radius: 100px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.77rem; font-weight: 500; color: #4ECDC4;
+      letter-spacing: 0.04em; cursor: pointer; background: transparent;
+      transition: background 0.2s;
+    }
+    .nav-pill:hover { background: rgba(78,205,196,0.12); }
+    .dot-tile {
+      width: 84px; height: 84px;
+      background: #0c0c0c; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+    }
+    .dot-tile:hover { background: #141414; }
+    .dot-tile.active { background: #141414; outline: 1px solid rgba(91,184,255,0.3); }
+    .dot-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 7px);
+      grid-template-rows: repeat(7, 7px);
+      gap: 4px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--dot); opacity: 0.13;
+      transition: opacity 0.18s ease;
+    }
+    .dot.lit { opacity: 0.92; }
+
+    /* ── MAIN ── */
+    main {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 8rem 2.5rem 4rem;
+      position: relative;
+    }
+
+    /* leaf decoration */
+    .leaf-deco {
+      position: fixed; pointer-events: none; z-index: 0;
+    }
+
+    .coming-soon-wrap {
+      text-align: center;
+      position: relative; z-index: 1;
+      max-width: 560px;
+    }
+
+    .blog-eyebrow {
+      font-size: 0.7rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: rgba(255,255,255,0.25);
+      margin-bottom: 1.5rem;
+    }
+
+    .blog-title {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 300; letter-spacing: -0.03em;
+      line-height: 1; margin-bottom: 1.5rem;
+    }
+    .blog-title span { color: var(--cyan); }
+
+    .blog-desc {
+      font-size: 1rem; font-weight: 300; line-height: 1.75;
+      color: rgba(255,255,255,0.4); margin-bottom: 2.5rem;
+    }
+
+    .blog-tags {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      justify-content: center; margin-bottom: 3rem;
+    }
+    .blog-tag {
+      font-size: 0.72rem; padding: 0.3rem 0.85rem;
+      border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.3);
+    }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; color: rgba(255,255,255,0.3);
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--cyan); }
+
+    /* subtle grid pattern in background */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<!-- leaf bottom-right -->
+<svg class="leaf-deco" style="bottom:-20px;right:-10px;width:200px;opacity:0.15;transform:rotate(10deg)"
+  viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M55 235 C52 195 48 155 55 115 C60 80 65 50 70 20" stroke="#1a4a30" stroke-width="1.8"/>
+    <path d="M55 155 C25 138 12 108 28 82 C48 108 55 138 55 155Z" fill="#0e2a1c"/>
+    <path d="M55 155 L28 82" stroke="#1a4a30" stroke-width="1.2"/>
+    <path d="M58 120 C88 100 98 70 82 48 C66 72 60 100 58 120Z" fill="#0e2a1c"/>
+    <path d="M58 120 L82 48" stroke="#1a4a30" stroke-width="1.2"/>
+    <path d="M62 85 C38 72 30 50 44 32 C60 52 63 72 62 85Z" fill="#0e2a1c" opacity="0.7"/>
+    <path d="M67 50 C82 38 86 22 76 12 C66 26 65 40 67 50Z" fill="#0e2a1c" opacity="0.5"/>
+  </g>
+</svg>
+
+<nav>
+  <div class="nav-group">
+    <div class="dot-tile" data-pattern="E" onclick="window.location.href='index-new.html'"></div>
+  </div>
+  <div class="nav-group" style="align-items:center">
+    <div class="dot-tile" data-pattern="i" onclick="window.location.href='index-new.html#about'"></div>
+  </div>
+  <div class="nav-group row">
+    <div class="dot-tile active" data-pattern="heart"></div>
+    <a href="context/Toni Esan CV_MLx.pdf" target="_blank">
+      <button class="nav-pill" style="font-size:0.82rem">Resumé</button>
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="coming-soon-wrap">
+    <p class="blog-eyebrow">Toni Esan / Blog</p>
+    <h1 class="blog-title">Coming<br><span>soon</span></h1>
+    <p class="blog-desc">
+      Pictures, cool news, half-formed thoughts, film takes, and tech rabbit holes.<br>
+      Building this out properly — check back.
+    </p>
+    <div class="blog-tags">
+      <span class="blog-tag">cool news</span>
+      <span class="blog-tag">pictures</span>
+      <span class="blog-tag">film takes</span>
+      <span class="blog-tag">tech</span>
+      <span class="blog-tag">running</span>
+      <span class="blog-tag">ideas</span>
+    </div>
+    <a class="back-link" href="index-new.html">← back to portfolio</a>
+  </div>
+</main>
+
+<script>
+  const PATTERNS = {
+    E:     [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,0, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
+    i:     [0,0,1,0,0, 0,0,0,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
+    heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0, 0,0,0,0,0, 0,0,0,0,0],
+  };
+  document.querySelectorAll('.dot-tile').forEach(tile => {
+    const pattern = PATTERNS[tile.dataset.pattern];
+    if (!pattern) return;
+    const grid = document.createElement('div');
+    grid.className = 'dot-grid';
+    pattern.forEach(active => {
+      const d = document.createElement('span');
+      d.className = 'dot'; d.dataset.active = active;
+      grid.appendChild(d);
+    });
+    tile.appendChild(grid);
+
+    // auto-light the heart tile on this page
+    if (tile.dataset.pattern === 'heart') {
+      setTimeout(() => {
+        [...grid.querySelectorAll('.dot')]
+          .filter(d => d.dataset.active === '1')
+          .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
+      }, 400);
+    }
+
+    tile.addEventListener('mouseenter', () => {
+      [...grid.querySelectorAll('.dot')].filter(d => d.dataset.active === '1')
+        .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
+    });
+    tile.addEventListener('mouseleave', () => {
+      if (tile.dataset.pattern === 'heart') return; // keep heart lit
+      [...grid.querySelectorAll('.dot')].filter(d => d.dataset.active === '1')
+        .forEach((d, i) => setTimeout(() => d.classList.remove('lit'), i * 10));
+    });
+  });
+</script>
+</body>
+</html>
