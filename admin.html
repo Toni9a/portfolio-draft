@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Toni — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
+    --accent: #a78bfa; --accent-dim: #7c3aed22; --text: #e8e8e8;
+    --muted: #666; --green: #4ade80; --red: #f87171;
+    --font-ui: 'Syne', system-ui, sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; word-break: break-word; overflow-wrap: break-word; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-ui); min-height: 100vh; overflow-x: hidden; }
+
+  #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 1.5rem; }
+  #auth-screen h1 { font-size: 1.5rem; color: var(--accent); letter-spacing: -0.02em; }
+  #auth-screen p { color: var(--muted); font-size: 0.875rem; }
+  #app { display: none; }
+
+  nav { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+  nav button { padding: 1rem 1.5rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-family: var(--font-ui); font-size: 0.875rem; letter-spacing: 0.05em; text-transform: uppercase; transition: all 0.15s; }
+  nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  nav button:hover:not(.active) { color: var(--text); }
+
+  main { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; overflow-x: hidden; }
+  .tab { display: none; } .tab.active { display: block; }
+  h2 { font-size: 1.25rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 2rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; overflow: hidden; }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .card-title { font-size: 0.95rem; font-weight: 600; }
+  .card-meta { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); margin-top: 0.25rem; }
+
+  .tag { display: inline-block; padding: 0.2rem 0.5rem; background: var(--accent-dim); color: var(--accent); border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono); margin: 0.2rem 0.15rem 0 0; }
+
+  .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-family: var(--font-ui); font-size: 0.875rem; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+  .toggle { width: 40px; height: 22px; border-radius: 11px; background: var(--border); border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { left: 21px; }
+
+  textarea, input[type=email] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 0.9rem; line-height: 1.6; padding: 0.75rem; outline: none; transition: border-color 0.15s; }
+  textarea:focus, input[type=email]:focus { border-color: var(--accent); }
+  textarea { resize: vertical; overflow-y: auto; min-height: 140px; }
+
+  /* Source links in digest cards */
+  .source-links { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.3rem; }
+  .source-link { color: var(--accent); font-size: 0.78rem; font-family: var(--font-mono); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .source-link:hover { text-decoration: underline; }
+
+  .voice-btn { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; background: var(--accent-dim); border: 2px solid var(--accent); color: var(--accent); cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .voice-btn.recording { background: #ef444422; border-color: var(--red); color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  .qa-input-row { display: flex; gap: 0.75rem; align-items: flex-start; margin-top: 1rem; }
+  .qa-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 2rem; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+  .empty { text-align: center; color: var(--muted); padding: 3rem 0; font-size: 0.9rem; }
+  .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 2rem auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading { display: flex; justify-content: center; }
+
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1.25rem; font-size: 0.875rem; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 999; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  .recording-bar { display: none; background: #ef444415; border: 1px solid var(--red); border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.8rem; color: var(--red); margin-top: 0.5rem; }
+  .recording-bar.active { display: block; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600&family=DM+Mono&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div id="auth-screen">
+  <h1>toni / admin</h1>
+  <p>Enter your email to receive a magic link.</p>
+  <input type="email" id="email-input" placeholder="your@email.com" style="max-width:300px" />
+  <button class="btn btn-primary" onclick="sendMagicLink()">Send magic link</button>
+  <p id="auth-msg" style="color:var(--green);display:none">✓ Check your email</p>
+</div>
+
+<div id="app">
+  <nav>
+    <button class="active" onclick="switchTab('repos', this)">Repos</button>
+    <button onclick="switchTab('qa', this)">Q&amp;A</button>
+    <button onclick="switchTab('digest', this)">Digest</button>
+  </nav>
+  <main>
+    <div id="tab-repos" class="tab active">
+      <h2>GitHub Repos</h2>
+      <p class="sub">Toggle which repos are active. Green = included. Run <code style="color:var(--accent)">python github_sync.py</code> to refresh.</p>
+      <div id="repos-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div id="tab-qa" class="tab">
+      <h2>Project Q&amp;A</h2>
+      <p class="sub">Answer these questions to build out your project pages. No character limit.</p>
+      <div id="qa-progress" class="progress-bar" style="display:none"><div class="progress-fill" id="qa-fill"></div></div>
+      <div id="qa-content"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div id="tab-digest" class="tab">
+      <h2>Cool News Digest</h2>
+      <p class="sub">Write your take on each topic. Feeds your blog and trains the opinion brain.</p>
+      <div id="digest-content"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://dmlwcrbjetpgqacblvqp.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let qaItems = [], qaIndex = 0, recognition = null;
+
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.max(140, el.scrollHeight + 4) + 'px'; }
+function resizeAll() { document.querySelectorAll('textarea').forEach(autoResize); }
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showApp();
+  sb.auth.onAuthStateChange((_, s) => { if (s) showApp(); });
+}
+async function sendMagicLink() {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email) return;
+  const redirectTo = window.location.href.includes('localhost') ? window.location.href : 'https://toniesan.com/admin.html';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+  if (!error) document.getElementById('auth-msg').style.display = 'block';
+  else toast('Error: ' + error.message);
+}
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadRepos();
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'qa') loadQA();
+  if (name === 'digest') loadDigest();
+}
+
+async function loadRepos() {
+  const { data } = await sb.from('github_sync_cache').select('repo_full_name,display_name,description,topics,included,last_commit_at').order('last_commit_at', { ascending: false });
+  const el = document.getElementById('repos-list');
+  if (!data || !data.length) { el.innerHTML = '<p class="empty">No repos synced yet.</p>'; return; }
+  el.innerHTML = data.map(r => `
+    <div class="card"><div class="card-header">
+      <div style="min-width:0;flex:1">
+        <div class="card-title">${r.display_name || r.repo_full_name}</div>
+        <div class="card-meta">${r.repo_full_name} · ${r.last_commit_at ? new Date(r.last_commit_at).toLocaleDateString() : 'unknown'}</div>
+        <div style="margin-top:0.5rem">${(r.topics||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        ${r.description ? `<div style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem">${r.description}</div>` : ''}
+      </div>
+      <div class="toggle-wrap"><button class="toggle ${r.included ? 'on' : ''}" onclick="toggleRepo('${r.repo_full_name}', this)"></button></div>
+    </div></div>`).join('');
+}
+async function toggleRepo(name, btn) {
+  const isOn = btn.classList.contains('on');
+  btn.classList.toggle('on');
+  await sb.from('github_sync_cache').update({ included: !isOn }).eq('repo_full_name', name);
+  toast(name.split('/')[1] + (isOn ? ' excluded' : ' included'));
+}
+
+async function loadQA() {
+  const { data } = await sb.from('project_qna_sessions').select('id,project_id,question,answer').is('answer', null).order('project_id');
+  qaItems = data || []; qaIndex = 0; renderQA();
+}
+function renderQA() {
+  const el = document.getElementById('qa-content');
+  const prog = document.getElementById('qa-progress');
+  if (!qaItems.length) { prog.style.display = 'none'; el.innerHTML = '<p class="empty">No questions yet — run <code>python generate_questions.py</code> first.</p>'; return; }
+  prog.style.display = 'block';
+  document.getElementById('qa-fill').style.width = (qaIndex / Math.max(qaItems.length + qaIndex, 1) * 100) + '%';
+  if (qaIndex >= qaItems.length) { el.innerHTML = '<p class="empty">All done ✓</p>'; return; }
+  const item = qaItems[qaIndex];
+  el.innerHTML = `
+    <div class="card">
+      <div class="tag" style="margin-bottom:0.75rem">${item.project_id}</div>
+      <div style="font-size:1rem;line-height:1.6;margin-bottom:1rem">${item.question}</div>
+      <div class="qa-input-row">
+        <textarea id="qa-answer" placeholder="No character limit — type or dictate…" oninput="autoResize(this)"></textarea>
+        <button class="voice-btn" id="voice-btn" onclick="toggleVoice('qa-answer','voice-btn','qa-rec')" title="Dictate">🎙</button>
+      </div>
+      <div class="recording-bar" id="qa-rec">🔴 Recording — press ⏹ to stop</div>
+      <div class="qa-actions">
+        <button class="btn btn-ghost btn-sm" onclick="stopVoice();skipQA()">Skip</button>
+        <button class="btn btn-primary btn-sm" onclick="stopVoice();saveQA('${item.id}')">Save &amp; next →</button>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem">${qaItems.length - qaIndex - 1} more after this</p>`;
+  setTimeout(resizeAll, 50);
+}
+async function saveQA(id) {
+  const answer = document.getElementById('qa-answer').value.trim();
+  if (!answer) { toast('Write something first'); return; }
+  await sb.from('project_qna_sessions').update({ answer, answered_at: new Date().toISOString() }).eq('id', id);
+  toast('Saved ✓'); qaIndex++; renderQA();
+}
+function skipQA() { qaIndex++; renderQA(); }
+
+function toggleVoice(taId, btnId, recBarId) {
+  const btn = document.getElementById(btnId);
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) { toast('Voice needs Chrome or Safari'); return; }
+  if (recognition) { stopVoice(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'en-GB';
+  const ta = document.getElementById(taId);
+  const recBar = recBarId ? document.getElementById(recBarId) : null;
+  let accumulated = ta.value;
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) accumulated += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    ta.value = accumulated + interim; autoResize(ta);
+  };
+  recognition.onend = () => {
+    ta.value = accumulated.trimEnd(); autoResize(ta);
+    recognition = null; btn.classList.remove('recording'); btn.textContent = '🎙';
+    if (recBar) recBar.classList.remove('active');
+  };
+  recognition.start(); btn.classList.add('recording'); btn.textContent = '⏹';
+  if (recBar) recBar.classList.add('active');
+}
+function stopVoice() { if (recognition) recognition.stop(); }
+
+// ── Digest — now fetches source URLs from inbox ───────────────────────────────
+async function loadDigest() {
+  const { data } = await sb.from('digest_items')
+    .select('id,summary,topic_tags,surfaced_at,status,inbox_ids')
+    .eq('status', 'pending')
+    .order('surfaced_at', { ascending: false });
+
+  const el = document.getElementById('digest-content');
+  if (!data || !data.length) { el.innerHTML = '<p class="empty">No pending items — run <code>python generate_digest.py</code>.</p>'; return; }
+
+  // Fetch source URLs for all inbox_ids across all digest items in one query
+  const allIds = [...new Set(data.flatMap(d => d.inbox_ids || []))];
+  let urlMap = {};
+  if (allIds.length) {
+    const { data: inboxItems } = await sb.from('inbox').select('id,url,author_handle').in('id', allIds);
+    if (inboxItems) inboxItems.forEach(i => { urlMap[i.id] = i; });
+  }
+
+  el.innerHTML = data.map(item => {
+    const sources = (item.inbox_ids || []).map(id => urlMap[id]).filter(Boolean);
+    const sourceLinks = sources.length
+      ? `<div class="source-links">${sources.map(s =>
+          `<a href="${s.url}" target="_blank" rel="noopener" class="source-link">↗ ${s.author_handle ? '@' + s.author_handle + ' · ' : ''}${s.url}</a>`
+        ).join('')}</div>`
+      : '';
+    return `
+    <div class="card" id="digest-${item.id}">
+      <div class="card-title">${item.summary}</div>
+      <div style="margin-top:0.5rem">${(item.topic_tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="card-meta" style="margin-top:0.5rem">${new Date(item.surfaced_at).toLocaleDateString()}</div>
+      ${sourceLinks}
+      <textarea id="comment-${item.id}" placeholder="Your take…" oninput="autoResize(this)" style="margin-top:1rem"></textarea>
+      <div class="recording-bar" id="rec-${item.id}">🔴 Recording — press ⏹ to stop</div>
+      <div class="qa-input-row" style="margin-top:0.5rem">
+        <button class="voice-btn btn-sm" id="dvbtn-${item.id}" onclick="toggleVoice('comment-${item.id}','dvbtn-${item.id}','rec-${item.id}')" title="Dictate">🎙</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="stopVoice();skipDigest('${item.id}')">Skip</button>
+        <button class="btn btn-primary btn-sm" onclick="stopVoice();saveCommentary('${item.id}')">Save →</button>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(resizeAll, 50);
+}
+
+async function saveCommentary(id) {
+  const body = document.getElementById('comment-' + id).value.trim();
+  if (!body) { toast('Write something first'); return; }
+  const { error } = await sb.from('commentary').insert({ digest_item_id: id, body });
+  if (error) { toast('Error saving'); return; }
+  await sb.from('digest_items').update({ status: 'commented' }).eq('id', id);
+  document.getElementById('digest-' + id).remove(); toast('Saved ✓');
+}
+async function skipDigest(id) {
+  await sb.from('digest_items').update({ status: 'skipped' }).eq('id', id);
+  document.getElementById('digest-' + id).remove(); toast('Skipped');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
