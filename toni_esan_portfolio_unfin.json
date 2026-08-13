@@ -7,9 +7,14 @@
     "email": "oluwatoniesan@gmail.com",
     "phone": "+44 759665 7760",
     "positioning_note": "Toni sits at the intersection of engineering rigour, AI application, and creative product thinking. Not a pure researcher, not a pure developer — someone who builds things that bridge disciplines and solves real problems with taste.",
-    "languages": ["English", "BSL (British Sign Language)", "Conversational Spanish", "Conversational Yoruba", "Basic Arabic"]
+    "languages": [
+      "English",
+      "BSL (British Sign Language)",
+      "Conversational Spanish",
+      "Conversational Yoruba",
+      "Basic Arabic"
+    ]
   },
-
   "education": [
     {
       "id": "cranfield",
@@ -41,7 +46,6 @@
       ]
     }
   ],
-
   "skill_clusters": [
     {
       "id": "ai_ml",
@@ -58,7 +62,15 @@
         "Hyperparameter Tuning & Experiment Tracking",
         "Model Evaluation (mAP, IoU, Precision/Recall, AUC)"
       ],
-      "related_project_ids": ["leveret", "bundesliga_hackathon", "cranfield_cv", "cranfield_rl", "cranfield_predictive", "rag_sales_tool"]
+      "related_project_ids": [
+        "leveret",
+        "bundesliga_hackathon",
+        "cranfield_cv",
+        "cranfield_rl",
+        "cranfield_predictive",
+        "rag_sales_tool"
+      ],
+      "family": "Intelligence"
     },
     {
       "id": "computer_vision",
@@ -75,7 +87,16 @@
         "Synthetic dataset generation",
         "Video frame extraction & processing"
       ],
-      "related_project_ids": ["leveret", "bundesliga_hackathon", "cranfield_cv", "magkit_photo_alert", "gym_segmentation", "plantain_detector", "photo_order_helper"]
+      "related_project_ids": [
+        "leveret",
+        "bundesliga_hackathon",
+        "cranfield_cv",
+        "magkit_photo_alert",
+        "gym_segmentation",
+        "plantain_detector",
+        "photo_order_helper"
+      ],
+      "family": "Intelligence"
     },
     {
       "id": "data_analytics",
@@ -91,11 +112,18 @@
         "Geospatial data visualisation",
         "Excel dashboards & VBA automation"
       ],
-      "related_project_ids": ["cranfield_networks", "cranfield_cyber_physical", "cranfield_optimisation", "cranfield_predictive", "santander_dashboards"]
+      "related_project_ids": [
+        "cranfield_networks",
+        "cranfield_cyber_physical",
+        "cranfield_optimisation",
+        "cranfield_predictive",
+        "santander_dashboards"
+      ],
+      "family": "Intelligence"
     },
     {
-      "id": "product_engineering",
-      "label": "Product Engineering & Prototyping",
+      "id": "design_engineering",
+      "label": "Design Engineering",
       "icon_suggestion": "wrench",
       "skills": [
         "SolidWorks CAD",
@@ -105,9 +133,21 @@
         "Arduino sensor integration",
         "IoT system design",
         "Product Requirements Documentation (PRD)",
-        "Technical Feasibility Analysis"
+        "Technical Feasibility Analysis",
+        "Robotics",
+        "Mechatronics"
       ],
-      "related_project_ids": ["aston_fitbod_speaker", "aston_smart_cot", "aston_scooter_dissertation", "aston_gear_shift", "chillybox", "navya_av", "knock_to_light"]
+      "related_project_ids": [
+        "aston_fitbod_speaker",
+        "aston_smart_cot",
+        "aston_scooter_dissertation",
+        "aston_gear_shift",
+        "chillybox",
+        "navya_av",
+        "knock_to_light"
+      ],
+      "note": "Mechanical, hardware, robotics, 3D printing. Never used for web work.",
+      "family": "Building"
     },
     {
       "id": "web_software",
@@ -124,7 +164,14 @@
         "Git / GitHub",
         "Vercel deployment"
       ],
-      "related_project_ids": ["magkits_brand", "client_websites", "rag_sales_tool", "instagram_maps", "keys_site"]
+      "related_project_ids": [
+        "magkits_brand",
+        "client_websites",
+        "rag_sales_tool",
+        "instagram_maps",
+        "keys_site"
+      ],
+      "family": "Building"
     },
     {
       "id": "creative_media",
@@ -137,9 +184,17 @@
         "Automotive photography",
         "Infographic & content design",
         "Brand identity design",
-        "Social media content strategy"
+        "Social media content strategy",
+        "Midjourney",
+        "Veo"
       ],
-      "related_project_ids": ["magkits_brand", "ccard_gpt", "spotify_outfit_match"]
+      "related_project_ids": [
+        "magkits_brand",
+        "ccard_gpt",
+        "spotify_outfit_match"
+      ],
+      "note": "Making the media itself.",
+      "family": "Craft"
     },
     {
       "id": "automation_iot",
@@ -153,7 +208,15 @@
         "PDF-to-CSV pipeline automation",
         "Notification & scheduling systems"
       ],
-      "related_project_ids": ["magkit_photo_alert", "santander_qr", "rag_sales_tool", "telegram_gym_streaks", "watch_later_app", "pastor_assist"]
+      "related_project_ids": [
+        "magkit_photo_alert",
+        "santander_qr",
+        "rag_sales_tool",
+        "telegram_gym_streaks",
+        "watch_later_app",
+        "pastor_assist"
+      ],
+      "family": "Building"
     },
     {
       "id": "business_consulting",
@@ -169,18 +232,72 @@
         "Social media growth strategy",
         "Cold outreach & B2B engagement"
       ],
-      "related_project_ids": ["leveret", "magkits_brand", "client_websites", "santander_events"]
+      "related_project_ids": [
+        "leveret",
+        "magkits_brand",
+        "client_websites",
+        "santander_events"
+      ],
+      "family": "Business"
+    },
+    {
+      "id": "creative_tech",
+      "label": "Creative Tech",
+      "family": "Craft",
+      "note": "Building creative software.",
+      "skills": [
+        "Three.js",
+        "WebGL",
+        "3D rendering in the browser",
+        "Scroll animation",
+        "Dither and halftone effects",
+        "Real time video overlay",
+        "Generative video pipelines"
+      ],
+      "related_project_ids": []
+    },
+    {
+      "id": "product_management",
+      "label": "Product Management",
+      "family": "Business",
+      "note": "Deciding what gets built and in what order.",
+      "skills": [
+        "PRD writing",
+        "Roadmapping",
+        "MVP scoping",
+        "Feature prioritisation",
+        "Technical feasibility analysis",
+        "Stakeholder communication"
+      ],
+      "related_project_ids": []
+    },
+    {
+      "id": "entrepreneurship",
+      "label": "Entrepreneurship",
+      "family": "Business",
+      "note": "Things you run yourself.",
+      "skills": [
+        "Running a product business",
+        "Supplier sourcing and negotiation",
+        "Pricing and margin",
+        "Direct to consumer sales",
+        "Finding and winning clients",
+        "Brand launch"
+      ],
+      "related_project_ids": []
     }
   ],
-
   "projects": [
-
     {
       "id": "leveret",
       "title": "Leveret AI — Dental X-Ray Diagnosis Platform",
       "status": "shipped",
       "featured": true,
-      "category": ["AI & Machine Learning", "Computer Vision", "Healthcare"],
+      "category": [
+        "AI & Machine Learning",
+        "Computer Vision",
+        "Healthcare"
+      ],
       "role": "Technical Officer",
       "period": "June 2024 – Present",
       "short_description": "Computer vision platform for automated dental X-ray diagnosis, deployed into NHS beta clinics.",
@@ -192,18 +309,33 @@
         "Competitor dental software analysis and UX gap identification",
         "Business use-case documentation and stakeholder communication"
       ],
-      "skills_used": ["ai_ml", "computer_vision", "business_consulting"],
-      "tech_tags": ["Python", "YOLO", "Roboflow", "Computer Vision", "Healthcare AI"],
-      "metrics": ["~27% early adoption rate in beta NHS clinics"],
+      "skills_used": [
+        "ai_ml",
+        "computer_vision",
+        "business_consulting"
+      ],
+      "tech_tags": [
+        "Python",
+        "YOLO",
+        "Roboflow",
+        "Computer Vision",
+        "Healthcare AI"
+      ],
+      "metrics": [
+        "~27% early adoption rate in beta NHS clinics"
+      ],
       "learnings": "Applying AI in regulated clinical environments requires as much attention to workflow integration and user trust as to model accuracy."
     },
-
     {
       "id": "magkits_brand",
       "title": "MagKits — iPhone Accessory Brand",
       "status": "shipped",
       "featured": true,
-      "category": ["Product", "E-commerce", "Creative"],
+      "category": [
+        "Product",
+        "E-commerce",
+        "Creative"
+      ],
       "role": "Founder",
       "period": "December 2022 – Present",
       "short_description": "MagSafe wallet brand built around football clubs — custom product design, Shopify store, supply chain, and content.",
@@ -215,18 +347,34 @@
         "Social media strategy growing a client following to 500k+ within 2 years",
         "Deployed Vue-based interactive websites for multiple clients"
       ],
-      "skills_used": ["web_software", "creative_media", "business_consulting"],
-      "tech_tags": ["Shopify", "Blender", "Vue.js", "Photoshop", "Illustrator"],
-      "metrics": ["500k+ followers grown for a client within 2 years"],
-      "learnings": "Product, brand, and distribution are inseparable — building all three simultaneously forces better decision-making."
+      "skills_used": [
+        "web_software",
+        "creative_media",
+        "business_consulting"
+      ],
+      "tech_tags": [
+        "Shopify",
+        "Blender",
+        "Vue.js",
+        "Photoshop",
+        "Illustrator"
+      ],
+      "metrics": [
+        "500k+ followers grown for a client within 2 years"
+      ],
+      "learnings": "Product, brand, and distribution are inseparable — building all three simultaneously forces better decision-making.",
+      "venture": "magkits"
     },
-
     {
       "id": "bundesliga_hackathon",
       "title": "Bundesliga AI Hackathon — Player Pose Classification",
       "status": "shipped",
       "featured": true,
-      "category": ["Computer Vision", "AI & Machine Learning", "Sports Tech"],
+      "category": [
+        "Computer Vision",
+        "AI & Machine Learning",
+        "Sports Tech"
+      ],
       "role": "Individual Participant",
       "period": "February 2025",
       "short_description": "Automated classification system sorting thousands of media day football photos into 16 pose-based categories.",
@@ -238,17 +386,30 @@
         "PRFAQ-style documentation of results and learnings",
         "3-minute video presentation of solution"
       ],
-      "skills_used": ["ai_ml", "computer_vision", "data_analytics"],
-      "tech_tags": ["YOLO", "Transformers", "Amazon SageMaker", "Python", "PyTorch", "OpenCV"],
+      "skills_used": [
+        "ai_ml",
+        "computer_vision",
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "YOLO",
+        "Transformers",
+        "Amazon SageMaker",
+        "Python",
+        "PyTorch",
+        "OpenCV"
+      ],
       "learnings": "Edge cases in sports imagery (lighting, angles, partial occlusion) demand robust augmentation strategies more than more complex architectures."
     },
-
     {
       "id": "rag_sales_tool",
       "title": "RAG System for Sales Engineering Team",
       "status": "shipped",
       "featured": false,
-      "category": ["AI & Machine Learning", "Automation"],
+      "category": [
+        "AI & Machine Learning",
+        "Automation"
+      ],
       "role": "Self-employed consultant",
       "period": "2023–2024",
       "short_description": "Custom RAG pipeline automating PDF-to-CSV data extraction and LLM-based retrieval for a sales team.",
@@ -258,16 +419,28 @@
         "RAG architecture design and LLM integration",
         "Reduction in manual data processing time"
       ],
-      "skills_used": ["ai_ml", "automation_iot", "web_software"],
-      "tech_tags": ["Python", "RAG", "LLM", "PDF processing", "Supabase"]
+      "skills_used": [
+        "ai_ml",
+        "automation_iot",
+        "web_software"
+      ],
+      "tech_tags": [
+        "Python",
+        "RAG",
+        "LLM",
+        "PDF processing",
+        "Supabase"
+      ]
     },
-
     {
       "id": "client_websites",
       "title": "Client Website & Social Media Consulting",
       "status": "shipped",
       "featured": false,
-      "category": ["Web Development", "Business Consulting"],
+      "category": [
+        "Web Development",
+        "Business Consulting"
+      ],
       "role": "Freelance consultant",
       "period": "December 2022 – Present",
       "short_description": "Interactive websites and social strategies for multiple clients, including one scaled to 500k+ followers.",
@@ -276,16 +449,27 @@
         "Shopify integrations for e-commerce clients",
         "Social media campaigns and content strategy"
       ],
-      "skills_used": ["web_software", "business_consulting", "creative_media"],
-      "tech_tags": ["Vue.js", "Shopify", "Social Media", "HTML/CSS"]
+      "skills_used": [
+        "web_software",
+        "business_consulting",
+        "creative_media"
+      ],
+      "tech_tags": [
+        "Vue.js",
+        "Shopify",
+        "Social Media",
+        "HTML/CSS"
+      ]
     },
-
     {
       "id": "santander_dashboards",
       "title": "Santander HQ — Events & Operations Systems",
       "status": "shipped",
       "featured": false,
-      "category": ["Automation", "Operations"],
+      "category": [
+        "Automation",
+        "Operations"
+      ],
       "role": "Events & Operations Coordinator",
       "period": "January 2024 – Present",
       "short_description": "Excel dashboards and QR code systems improving resource tracking and event registration at scale.",
@@ -294,17 +478,32 @@
         "QR code registration system for 300+ client events — cut registration time ~20%",
         "AV setup coordination"
       ],
-      "skills_used": ["data_analytics", "automation_iot"],
-      "tech_tags": ["Excel", "VBA", "QR systems", "Event operations"],
-      "metrics": ["~15% spend reduction", "~20% registration time reduction", "300+ events"]
+      "skills_used": [
+        "data_analytics",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Excel",
+        "VBA",
+        "QR systems",
+        "Event operations"
+      ],
+      "metrics": [
+        "~15% spend reduction",
+        "~20% registration time reduction",
+        "300+ events"
+      ]
     },
-
     {
       "id": "cranfield_cv",
       "title": "Cranfield: Deep Learning for Computer Vision",
       "status": "shipped",
       "featured": true,
-      "category": ["Computer Vision", "AI & Machine Learning", "Academic"],
+      "category": [
+        "Computer Vision",
+        "AI & Machine Learning",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "CIFAR-10 image classification with CNN/FCN/ResNet50V2 transfer learning, plus YOLOv8 vs Faster R-CNN UAV detection comparison.",
@@ -315,16 +514,30 @@
         "YOLOv8n and Faster R-CNN UAV detection pipelines",
         "mAP, IoU, loss curve evaluation"
       ],
-      "skills_used": ["ai_ml", "computer_vision"],
-      "tech_tags": ["Python", "PyTorch", "TensorFlow", "Keras", "YOLOv8n", "Faster R-CNN", "ResNet50V2"]
+      "skills_used": [
+        "ai_ml",
+        "computer_vision"
+      ],
+      "tech_tags": [
+        "Python",
+        "PyTorch",
+        "TensorFlow",
+        "Keras",
+        "YOLOv8n",
+        "Faster R-CNN",
+        "ResNet50V2"
+      ]
     },
-
     {
       "id": "cranfield_rl",
       "title": "Cranfield: Deep RL for Autonomous Driving",
       "status": "shipped",
       "featured": true,
-      "category": ["AI & Machine Learning", "Autonomous Systems", "Academic"],
+      "category": [
+        "AI & Machine Learning",
+        "Autonomous Systems",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "DQN and PPO agents trained on OpenAI Gymnasium's CarRacing environment with advanced feature engineering.",
@@ -336,16 +549,27 @@
         "TensorBoard metric logging",
         "Metal GPU acceleration on MacBook"
       ],
-      "skills_used": ["ai_ml"],
-      "tech_tags": ["Python", "OpenAI Gymnasium", "DQN", "PPO", "TensorBoard", "Metal GPU"]
+      "skills_used": [
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "Python",
+        "OpenAI Gymnasium",
+        "DQN",
+        "PPO",
+        "TensorBoard",
+        "Metal GPU"
+      ]
     },
-
     {
       "id": "cranfield_networks",
       "title": "Cranfield: Aviation Network Analysis",
       "status": "shipped",
       "featured": false,
-      "category": ["Data Analytics", "Academic"],
+      "category": [
+        "Data Analytics",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "Directed flight network graphs for USA, China, UK, and Australia — analysing 3,475 airports with NetworkX.",
@@ -354,16 +578,26 @@
         "Geospatial network plots, betweenness centrality graphs, k-core decomposition",
         "Comparative network resilience analysis across 4 countries"
       ],
-      "skills_used": ["data_analytics"],
-      "tech_tags": ["Python", "NetworkX", "Matplotlib", "Geospatial analysis"]
+      "skills_used": [
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "Python",
+        "NetworkX",
+        "Matplotlib",
+        "Geospatial analysis"
+      ]
     },
-
     {
       "id": "cranfield_predictive",
       "title": "Cranfield: Predictive Maintenance (Aircraft Engines)",
       "status": "shipped",
       "featured": false,
-      "category": ["Data Analytics", "AI & Machine Learning", "Academic"],
+      "category": [
+        "Data Analytics",
+        "AI & Machine Learning",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "Regression and classification models predicting aircraft engine Time-To-Failure from sensor data.",
@@ -373,16 +607,28 @@
         "Random forest + logistic regression for 30-cycle failure classification",
         "ROC, AUC, confusion matrix evaluation"
       ],
-      "skills_used": ["ai_ml", "data_analytics"],
-      "tech_tags": ["Python", "scikit-learn", "pandas", "matplotlib", "seaborn"]
+      "skills_used": [
+        "ai_ml",
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "Python",
+        "scikit-learn",
+        "pandas",
+        "matplotlib",
+        "seaborn"
+      ]
     },
-
     {
       "id": "cranfield_cyber_physical",
       "title": "Cranfield: Intelligent Cyber Physical Systems",
       "status": "shipped",
       "featured": false,
-      "category": ["IoT", "Systems Engineering", "Academic"],
+      "category": [
+        "IoT",
+        "Systems Engineering",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "Multi-agent consensus temperature control with QPSK wireless comms, XOR encryption, and FPGA translation.",
@@ -392,339 +638,1003 @@
         "XOR-based data encryption scheme",
         "HDL fixed-point arithmetic for FPGA implementation"
       ],
-      "skills_used": ["data_analytics", "product_engineering"],
-      "tech_tags": ["MATLAB", "Simulink", "QPSK", "FPGA", "HDL"]
+      "skills_used": [
+        "data_analytics",
+        "design_engineering"
+      ],
+      "tech_tags": [
+        "MATLAB",
+        "Simulink",
+        "QPSK",
+        "FPGA",
+        "HDL"
+      ]
     },
-
     {
       "id": "cranfield_optimisation",
       "title": "Cranfield: Search & Optimization (Genetic Algorithms)",
       "status": "shipped",
       "featured": false,
-      "category": ["AI & Machine Learning", "Academic"],
+      "category": [
+        "AI & Machine Learning",
+        "Academic"
+      ],
       "role": "MSc Module Project",
       "period": "2024",
       "short_description": "Linear, mixed-integer, and nonlinear programming models solved with MATLAB and genetic algorithms.",
-      "skills_used": ["ai_ml", "data_analytics"],
-      "tech_tags": ["MATLAB", "Genetic Algorithms", "Linear Programming", "Mixed-Integer Programming"]
+      "skills_used": [
+        "ai_ml",
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "MATLAB",
+        "Genetic Algorithms",
+        "Linear Programming",
+        "Mixed-Integer Programming"
+      ]
     },
-
     {
       "id": "aston_fitbod_speaker",
       "title": "Aston: Fitbod Smart Speaker Design",
       "status": "shipped",
       "featured": false,
-      "category": ["Product Engineering", "3D Design", "Academic"],
+      "category": [
+        "Product Engineering",
+        "3D Design",
+        "Academic"
+      ],
       "role": "Lead Designer",
       "period": "2021",
       "short_description": "Physical smart speaker embodying the Fitbod brand — full CAD, 3D printing, and KeyShot rendering.",
-      "skills_used": ["product_engineering", "creative_media"],
-      "tech_tags": ["SolidWorks", "KeyShot", "3D Printing"]
+      "skills_used": [
+        "design_engineering",
+        "creative_media"
+      ],
+      "tech_tags": [
+        "SolidWorks",
+        "KeyShot",
+        "3D Printing"
+      ]
     },
-
     {
       "id": "aston_scooter_dissertation",
       "title": "Aston: Electric Scooter Performance Dissertation",
       "status": "shipped",
       "featured": false,
-      "category": ["Engineering Analysis", "Academic"],
+      "category": [
+        "Engineering Analysis",
+        "Academic"
+      ],
       "role": "Researcher",
       "period": "2021",
       "short_description": "Technical comparison of Pure Electric vs Xiaoming scooters — battery architecture, voltage sag, and performance analysis.",
-      "skills_used": ["product_engineering", "data_analytics"],
-      "tech_tags": ["MATLAB/Simulink", "Battery diagnostics", "Electrical analysis"]
+      "skills_used": [
+        "design_engineering",
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "MATLAB/Simulink",
+        "Battery diagnostics",
+        "Electrical analysis"
+      ]
     },
-
     {
       "id": "aston_smart_cot",
       "title": "Aston: Smart Cot for Baby Monitoring",
       "status": "shipped",
       "featured": false,
-      "category": ["IoT", "Product Engineering", "Academic"],
+      "category": [
+        "IoT",
+        "Product Engineering",
+        "Academic"
+      ],
       "role": "Team Member",
       "period": "2018",
       "short_description": "Arduino-based smart cot monitoring temperature and baby cry sounds via trained audio models.",
-      "skills_used": ["product_engineering", "automation_iot"],
-      "tech_tags": ["Arduino", "Sensors", "Signal processing", "Audio ML"]
+      "skills_used": [
+        "design_engineering",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Arduino",
+        "Sensors",
+        "Signal processing",
+        "Audio ML"
+      ]
     },
-
     {
       "id": "aston_gear_shift",
       "title": "Aston: Automatic Gear Shift System for Road Bikes",
       "status": "shipped",
       "featured": false,
-      "category": ["Product Engineering", "Academic"],
+      "category": [
+        "Product Engineering",
+        "Academic"
+      ],
       "role": "Team Member",
       "period": "2021",
       "short_description": "Sensor and laser-based automatic derailleur system optimising gear shifting for road cyclists.",
-      "skills_used": ["product_engineering"],
-      "tech_tags": ["Laser measurement", "Sensors", "CAD"]
+      "skills_used": [
+        "design_engineering"
+      ],
+      "tech_tags": [
+        "Laser measurement",
+        "Sensors",
+        "CAD"
+      ]
     },
-
     {
       "id": "chillybox",
       "title": "Imperial College: Chillybox (2016)",
       "status": "shipped",
       "featured": false,
-      "category": ["Product Engineering", "Social Impact"],
+      "category": [
+        "Product Engineering",
+        "Social Impact"
+      ],
       "role": "Team Designer",
       "period": "2016",
       "short_description": "Cost-effective insulated medical storage box for rural East Africa — designed for blood transport under heat constraints.",
-      "skills_used": ["product_engineering"],
-      "tech_tags": ["SolidWorks", "Thermodynamic simulation", "CAD"]
+      "skills_used": [
+        "design_engineering"
+      ],
+      "tech_tags": [
+        "SolidWorks",
+        "Thermodynamic simulation",
+        "CAD"
+      ]
     },
-
     {
       "id": "navya_av",
       "title": "Navya Autonomous Vehicle — Route Training (2019)",
       "status": "shipped",
       "featured": false,
-      "category": ["Autonomous Systems", "Engineering"],
+      "category": [
+        "Autonomous Systems",
+        "Engineering"
+      ],
       "role": "Work Experience",
       "period": "2019",
       "short_description": "Trained an autonomous vehicle on urban routes using an Xbox controller and gathered public feedback on AV perception.",
-      "skills_used": ["product_engineering", "business_consulting"],
-      "tech_tags": ["Autonomous vehicles", "Control systems", "MATLAB"]
+      "skills_used": [
+        "design_engineering",
+        "business_consulting"
+      ],
+      "tech_tags": [
+        "Autonomous vehicles",
+        "Control systems",
+        "MATLAB"
+      ]
     },
-
     {
       "id": "livia_soft",
       "title": "LiviaSoft Technologies — GNSS & Bluetooth Research (2019–2020)",
       "status": "shipped",
       "featured": false,
-      "category": ["Engineering", "Business"],
+      "category": [
+        "Engineering",
+        "Business"
+      ],
       "role": "Research Assistant",
       "period": "2019–2020",
       "short_description": "GNSS signal analysis and radio jamming demos in MATLAB, securing telecom training contracts in West Africa.",
-      "skills_used": ["data_analytics", "business_consulting"],
-      "tech_tags": ["MATLAB", "GNSS", "Bluetooth", "Signal analysis"]
+      "skills_used": [
+        "data_analytics",
+        "business_consulting"
+      ],
+      "tech_tags": [
+        "MATLAB",
+        "GNSS",
+        "Bluetooth",
+        "Signal analysis"
+      ]
     },
-
     {
       "id": "santander_qr",
       "title": "Santander QR Registration System",
       "status": "shipped",
       "featured": false,
-      "category": ["Automation", "Operations"],
+      "category": [
+        "Automation",
+        "Operations"
+      ],
       "role": "Events & Operations Coordinator",
       "period": "2024",
       "short_description": "QR code system deployed across 300+ client events, cutting check-in time by ~20%.",
-      "skills_used": ["automation_iot"],
-      "tech_tags": ["QR systems", "Event tech"]
+      "skills_used": [
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "QR systems",
+        "Event tech"
+      ]
     },
-
     {
       "id": "magkit_photo_alert",
       "title": "MagKit Auto Photo Alert & Album Viewer",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Mobile Automation", "E-commerce"],
+      "category": [
+        "Computer Vision",
+        "Mobile Automation",
+        "E-commerce"
+      ],
       "short_description": "iOS shortcut that alerts you of upcoming football games and uses image recognition to auto-sort MagKit product photos into team-based albums.",
-      "skills_used": ["computer_vision", "automation_iot", "ai_ml"],
-      "tech_tags": ["iOS Shortcuts", "YOLO", "Sports API", "Image classification"],
+      "skills_used": [
+        "computer_vision",
+        "automation_iot",
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "iOS Shortcuts",
+        "YOLO",
+        "Sports API",
+        "Image classification"
+      ],
       "idea_stage": "Concept — clear technical path defined"
     },
-
     {
       "id": "plantain_detector",
       "title": "Plantain Ripeness Detector",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Wearables"],
+      "category": [
+        "Computer Vision",
+        "Wearables"
+      ],
       "short_description": "Meta glasses app providing audio feedback on plantain ripeness using CV trained on personal quality criteria via a Tinder-style swipe interface.",
-      "skills_used": ["computer_vision", "ai_ml"],
-      "tech_tags": ["Meta glasses", "SAM2", "CV classification", "Audio feedback"],
+      "skills_used": [
+        "computer_vision",
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "Meta glasses",
+        "SAM2",
+        "CV classification",
+        "Audio feedback"
+      ],
       "idea_stage": "Concept — fun, exploratory"
     },
-
     {
       "id": "gym_segmentation",
       "title": "Gym Segmentation & Muscle Visualisation",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Fitness Tech"],
+      "category": [
+        "Computer Vision",
+        "Fitness Tech"
+      ],
       "short_description": "Overlays muscle groups on gym equipment videos using pose estimation and segmentation to visualise tension during workouts.",
-      "skills_used": ["computer_vision", "ai_ml"],
-      "tech_tags": ["Pose estimation", "SAM2/SAM3", "OpenCV", "PyTorch"]
+      "skills_used": [
+        "computer_vision",
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "Pose estimation",
+        "SAM2/SAM3",
+        "OpenCV",
+        "PyTorch"
+      ]
     },
-
     {
       "id": "photo_order_helper",
       "title": "Photo Order Helper",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Personal Tools"],
+      "category": [
+        "Computer Vision",
+        "Personal Tools"
+      ],
       "short_description": "Uses facial recognition and age estimation to sort personal photos chronologically — from childhood to present.",
-      "skills_used": ["computer_vision", "ai_ml"],
-      "tech_tags": ["Facial recognition", "Age estimation", "Metadata analysis"]
+      "skills_used": [
+        "computer_vision",
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "Facial recognition",
+        "Age estimation",
+        "Metadata analysis"
+      ]
     },
-
     {
       "id": "clothing_3d_wardrobe",
       "title": "Clothing Autodetect & Virtual Wardrobe",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Fashion Tech"],
+      "category": [
+        "Computer Vision",
+        "Fashion Tech"
+      ],
       "short_description": "Processes Instagram influencer videos, segments clothing with SAM3, identifies items via Google Vision, and curates purchase links. Weather API integration planned.",
-      "skills_used": ["computer_vision", "web_software"],
-      "tech_tags": ["SAM3", "Google Vision API", "Video processing", "Shopping APIs"]
+      "skills_used": [
+        "computer_vision",
+        "web_software"
+      ],
+      "tech_tags": [
+        "SAM3",
+        "Google Vision API",
+        "Video processing",
+        "Shopping APIs"
+      ]
     },
-
     {
       "id": "instagram_maps",
       "title": "Instagram × Google Maps Integration",
       "status": "idea",
       "featured": false,
-      "category": ["Web Development", "Mapping"],
+      "category": [
+        "Web Development",
+        "Mapping"
+      ],
       "short_description": "Web app linking saved Instagram/TikTok locations to Google Maps — for friend group restaurant lists and itinerary planning.",
-      "skills_used": ["web_software"],
-      "tech_tags": ["Instagram API", "Google Maps API", "React/Vue.js", "Geolocation"]
+      "skills_used": [
+        "web_software"
+      ],
+      "tech_tags": [
+        "Instagram API",
+        "Google Maps API",
+        "React/Vue.js",
+        "Geolocation"
+      ]
     },
-
     {
       "id": "explored_map",
       "title": "Explored — % of Area Explored App",
       "status": "idea",
       "featured": false,
-      "category": ["Mapping", "Personal Analytics"],
+      "category": [
+        "Mapping",
+        "Personal Analytics"
+      ],
       "short_description": "Interactive map visualising what percentage of a city or region you've explored, using photo geolocation metadata — like Snapchat's map feature.",
-      "skills_used": ["web_software", "data_analytics"],
-      "tech_tags": ["Geolocation", "Photo metadata", "Map visualisation"]
+      "skills_used": [
+        "web_software",
+        "data_analytics"
+      ],
+      "tech_tags": [
+        "Geolocation",
+        "Photo metadata",
+        "Map visualisation"
+      ]
     },
-
     {
       "id": "spotify_memory",
       "title": "Spotify Memory",
       "status": "idea",
       "featured": false,
-      "category": ["Audio", "Personal Analytics"],
+      "category": [
+        "Audio",
+        "Personal Analytics"
+      ],
       "short_description": "Links camera roll photos (via metadata timestamps) to the music you were listening to at the time — a personalised audiovisual memory lane.",
-      "skills_used": ["web_software", "automation_iot"],
-      "tech_tags": ["Spotify API", "Photo metadata", "Timeline correlation"]
+      "skills_used": [
+        "web_software",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Spotify API",
+        "Photo metadata",
+        "Timeline correlation"
+      ]
     },
-
     {
       "id": "pacetune",
       "title": "Pacetune",
-      "status": "idea",
+      "status": "shipped",
       "featured": false,
-      "category": ["Audio", "Fitness Tech"],
+      "category": [
+        "Audio",
+        "Fitness Tech"
+      ],
       "short_description": "Generates running playlists matched to your pace splits — and retrospectively maps songs you've listened to against your run data.",
-      "skills_used": ["web_software", "automation_iot"],
-      "tech_tags": ["Spotify API", "Strava API", "Pace mapping"]
+      "skills_used": [
+        "web_software",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Spotify API",
+        "Strava API",
+        "Pace mapping"
+      ],
+      "live_url": "https://pacetune.vercel.app",
+      "github_repo_url": "https://github.com/Toni9a/pacetune"
     },
-
     {
       "id": "rag_youtube",
       "title": "RAG for YouTube Videos",
       "status": "idea",
       "featured": false,
-      "category": ["AI & Machine Learning", "EdTech"],
+      "category": [
+        "AI & Machine Learning",
+        "EdTech"
+      ],
       "short_description": "Auto-transcribes YouTube videos and generates Duolingo-style multiple choice questions to test comprehension.",
-      "skills_used": ["ai_ml", "automation_iot"],
-      "tech_tags": ["RAG", "Whisper/transcription", "NLP", "Quiz generation"]
+      "skills_used": [
+        "ai_ml",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "RAG",
+        "Whisper/transcription",
+        "NLP",
+        "Quiz generation"
+      ]
     },
-
     {
       "id": "pastor_assist",
       "title": "PastorAssist",
       "status": "idea",
       "featured": false,
-      "category": ["AI & Machine Learning", "Community Tech"],
+      "category": [
+        "AI & Machine Learning",
+        "Community Tech"
+      ],
       "short_description": "Auto-transcribes sermons, generates Anki flashcards from slides, and runs a Telegram bot for daily verse reminders and Q&A.",
-      "skills_used": ["ai_ml", "automation_iot"],
-      "tech_tags": ["Whisper", "NLP", "Anki API", "Telegram Bot"]
+      "skills_used": [
+        "ai_ml",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Whisper",
+        "NLP",
+        "Anki API",
+        "Telegram Bot"
+      ]
     },
-
     {
       "id": "telegram_gym_streaks",
       "title": "Telegram Gym Streaks",
       "status": "idea",
       "featured": false,
-      "category": ["Fitness Tech", "Community"],
+      "category": [
+        "Fitness Tech",
+        "Community"
+      ],
       "short_description": "Telegram group bot tracking gym attendance, water intake, and calories with streaks and competitive leaderboards.",
-      "skills_used": ["automation_iot", "ai_ml"],
-      "tech_tags": ["Telegram Bot API", "Apple Health API", "Computer vision snap detection"]
+      "skills_used": [
+        "automation_iot",
+        "ai_ml"
+      ],
+      "tech_tags": [
+        "Telegram Bot API",
+        "Apple Health API",
+        "Computer vision snap detection"
+      ]
     },
-
     {
       "id": "physio_app",
       "title": "Physio App — Pain & Muscle Visualisation",
       "status": "idea",
       "featured": false,
-      "category": ["Fitness Tech", "Healthcare"],
+      "category": [
+        "Fitness Tech",
+        "Healthcare"
+      ],
       "short_description": "Describe pain by location, get animated muscle group visualisation, stretch suggestions, and linked video resources.",
-      "skills_used": ["ai_ml", "web_software"],
-      "tech_tags": ["NLP", "Anatomical animation", "YouTube/TikTok API"]
+      "skills_used": [
+        "ai_ml",
+        "web_software"
+      ],
+      "tech_tags": [
+        "NLP",
+        "Anatomical animation",
+        "YouTube/TikTok API"
+      ]
     },
-
     {
       "id": "cv_retail_analytics",
       "title": "CV for Purchase Detection (Retail Analytics)",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Retail"],
+      "category": [
+        "Computer Vision",
+        "Retail"
+      ],
       "short_description": "Detects red lanyards in a cafeteria setting to anonymously differentiate employee vs public purchasing patterns.",
-      "skills_used": ["computer_vision"],
-      "tech_tags": ["Computer vision", "Anonymisation", "Retail analytics"]
+      "skills_used": [
+        "computer_vision"
+      ],
+      "tech_tags": [
+        "Computer vision",
+        "Anonymisation",
+        "Retail analytics"
+      ]
     },
-
     {
       "id": "knock_to_light",
       "title": "Knock-to-Light Translator",
       "status": "idea",
       "featured": false,
-      "category": ["IoT", "Hardware"],
+      "category": [
+        "IoT",
+        "Hardware"
+      ],
       "short_description": "Sensor on a door detects knock patterns and activates an LED with matching intensity/frequency.",
-      "skills_used": ["automation_iot", "product_engineering"],
-      "tech_tags": ["IoT sensor", "Arduino", "LED control"]
+      "skills_used": [
+        "automation_iot",
+        "design_engineering"
+      ],
+      "tech_tags": [
+        "IoT sensor",
+        "Arduino",
+        "LED control"
+      ]
     },
-
     {
       "id": "ccard_gpt",
       "title": "CCard from GPT Chats",
       "status": "idea",
       "featured": false,
-      "category": ["Creative", "AI & Machine Learning"],
+      "category": [
+        "Creative",
+        "AI & Machine Learning"
+      ],
       "short_description": "Transforms long GPT outputs into visually styled infographic cards designed for Instagram.",
-      "skills_used": ["ai_ml", "creative_media"],
-      "tech_tags": ["GPT API", "Infographic design", "Content automation"]
+      "skills_used": [
+        "ai_ml",
+        "creative_media"
+      ],
+      "tech_tags": [
+        "GPT API",
+        "Infographic design",
+        "Content automation"
+      ]
     },
-
     {
       "id": "spotify_outfit_match",
       "title": "Spotify Outfit Match",
       "status": "idea",
       "featured": false,
-      "category": ["Creative", "Computer Vision"],
+      "category": [
+        "Creative",
+        "Computer Vision"
+      ],
       "short_description": "Matches key colours from your outfit photo to Spotify album covers — a cross-domain fashion × music experiment.",
-      "skills_used": ["computer_vision", "creative_media"],
-      "tech_tags": ["Spotify API", "Colour analysis", "Image processing"]
+      "skills_used": [
+        "computer_vision",
+        "creative_media"
+      ],
+      "tech_tags": [
+        "Spotify API",
+        "Colour analysis",
+        "Image processing"
+      ]
     },
-
     {
       "id": "keys_site",
       "title": "Timikeys Project Site",
-      "status": "idea",
+      "status": "shipped",
       "featured": false,
-      "category": ["Web Development"],
+      "category": [
+        "Web Development"
+      ],
       "short_description": "Web presence for the Timikeys brand/concept.",
-      "skills_used": ["web_software"],
-      "tech_tags": ["Web development", "Branding"]
+      "skills_used": [
+        "web_software"
+      ],
+      "tech_tags": [
+        "Web development",
+        "Branding"
+      ],
+      "live_url": "https://timikeys.com",
+      "github_repo_url": "https://github.com/Toni9a/timilanding",
+      "venture": "timikeys"
     },
-
     {
       "id": "meta_glasses_networking",
       "title": "Meta Glasses — Event Face Detection & Networking",
       "status": "idea",
       "featured": false,
-      "category": ["Computer Vision", "Wearables"],
+      "category": [
+        "Computer Vision",
+        "Wearables"
+      ],
       "short_description": "Real-time face detection via Meta glasses at events — alerts you to people in your field or with mutual LinkedIn/Instagram connections.",
-      "skills_used": ["computer_vision", "automation_iot"],
-      "tech_tags": ["Meta glasses", "Face detection", "LinkedIn API", "Real-time streaming"]
+      "skills_used": [
+        "computer_vision",
+        "automation_iot"
+      ],
+      "tech_tags": [
+        "Meta glasses",
+        "Face detection",
+        "LinkedIn API",
+        "Real-time streaming"
+      ]
+    },
+    {
+      "id": "face-gallery-60th",
+      "title": "60th Birthday Face Gallery",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Private event photo album with face clustering, human review, and timeline browsing so guests relive the night in order.",
+      "skills_used": [
+        "computer_vision",
+        "web_software"
+      ],
+      "domains": [
+        "events-and-weddings"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/60thface"
+      ],
+      "live_url": "https://60thface.vercel.app"
+    },
+    {
+      "id": "wedding-program",
+      "title": "Wedding Program Site",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Mobile wedding program with a gallery, built for a wedding in Nigeria.",
+      "skills_used": [
+        "web_software",
+        "creative_tech"
+      ],
+      "domains": [
+        "events-and-weddings"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/wedprog"
+      ],
+      "live_url": "https://weddinggal.vercel.app"
+    },
+    {
+      "id": "a3-tutoring-site",
+      "title": "A3 Tutoring Demo Site",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Demo site for a 3D graphics tutor, showing her work in the browser instead of on third party teaching platforms.",
+      "skills_used": [
+        "web_software",
+        "creative_tech"
+      ],
+      "domains": [
+        "education-and-tutoring"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/a3tutor"
+      ],
+      "live_url": "https://a3tutoring.vercel.app"
+    },
+    {
+      "id": "avalon-landing",
+      "title": "Avalon Insights Landing Page",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Newsletter capture page with email forwarding, a QR code, and an Apple Wallet pass. Built in about ten minutes on the bus to the event it was needed for.",
+      "skills_used": [
+        "web_software",
+        "automation_iot"
+      ],
+      "domains": [
+        "consulting-and-business"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/avlandingpage"
+      ],
+      "live_url": "https://avalonindex.vercel.app",
+      "venture": "avalon"
+    },
+    {
+      "id": "portfolio-platform",
+      "title": "Portfolio Platform and Second Brain",
+      "status": "in_progress",
+      "featured": false,
+      "category": [],
+      "short_description": "This site, plus a Supabase knowledge graph fed by a Telegram capture bot, bookmark sync, and a GitHub question and answer pipeline.",
+      "skills_used": [
+        "web_software",
+        "ai_ml",
+        "automation_iot",
+        "product_management"
+      ],
+      "domains": [
+        "consulting-and-business"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/portfolio-draft"
+      ],
+      "live_url": "https://portfolio-draft-ten.vercel.app"
+    },
+    {
+      "id": "chefhelp",
+      "title": "ChefHelp",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "QR ordering for catered events, with table grouping, a live kitchen queue, stock counts, and search by guest name.",
+      "skills_used": [
+        "web_software",
+        "automation_iot"
+      ],
+      "domains": [
+        "food-and-hospitality",
+        "events-and-weddings"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/chefhelp",
+        "Toni9a/ayopartyfood"
+      ],
+      "live_url": "https://livefood.vercel.app"
+    },
+    {
+      "id": "birthday-slideshow-order",
+      "title": "Birthday Slideshow Ordering",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Crowdsourced ordering of photos from someone's life, so guests who knew him could put the slideshow in the right order.",
+      "skills_used": [
+        "web_software"
+      ],
+      "domains": [
+        "events-and-weddings"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/DapoOrder"
+      ]
+    },
+    {
+      "id": "dining-with-taha",
+      "title": "Dining with Taha",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Restaurant review analytics for a food creator, with Instagram extraction, voice note capture, and weighted scoring so a six out of ten means something.",
+      "skills_used": [
+        "web_software",
+        "data_analytics",
+        "ai_ml"
+      ],
+      "domains": [
+        "food-and-hospitality",
+        "creators-and-social-media"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/tahacookz"
+      ],
+      "live_url": "https://tahacookz.vercel.app"
+    },
+    {
+      "id": "halfmara",
+      "title": "Halfmara",
+      "status": "in_progress",
+      "featured": false,
+      "category": [],
+      "short_description": "Training tracking front end.",
+      "skills_used": [
+        "web_software"
+      ],
+      "domains": [
+        "fitness-and-running"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/halfmara"
+      ]
+    },
+    {
+      "id": "healthcoach",
+      "title": "Healthcoach",
+      "status": "in_progress",
+      "featured": false,
+      "category": [],
+      "short_description": "Full health tracking. Related to Halfmara but a separate app.",
+      "skills_used": [
+        "web_software"
+      ],
+      "domains": [
+        "fitness-and-running"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/healthcoach"
+      ]
+    },
+    {
+      "id": "gymscrap",
+      "title": "Gymscrap",
+      "status": "in_progress",
+      "featured": false,
+      "category": [],
+      "short_description": "Indexes a fitness creator's TikToks into a searchable directory by muscle group, so you can find one exercise without scrolling a whole profile.",
+      "skills_used": [
+        "ai_ml",
+        "data_analytics",
+        "web_software"
+      ],
+      "domains": [
+        "fitness-and-running",
+        "creators-and-social-media"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/Gymscrap"
+      ]
+    },
+    {
+      "id": "montedera",
+      "title": "Montedera",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Turns an Apple Notes itinerary into a shareable travel site with maps, currency conversion, and phrases.",
+      "skills_used": [
+        "web_software",
+        "data_analytics"
+      ],
+      "domains": [],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/montedera"
+      ],
+      "live_url": "https://claudeera.vercel.app"
+    },
+    {
+      "id": "derrick-interview-prep",
+      "title": "Derrick Interview Command Centre",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Interview preparation for a Band 5 clinical technologist role, with a live spoken interview mode and immediate scoring.",
+      "skills_used": [
+        "web_software",
+        "ai_ml",
+        "creative_tech"
+      ],
+      "domains": [
+        "healthcare-and-dental",
+        "education-and-tutoring"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/DerrickInt"
+      ],
+      "live_url": "https://derrick-int.vercel.app"
+    },
+    {
+      "id": "cornerstore",
+      "title": "Cornerstore",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Stock counting for a corner shop, using voice entry and OCR of the printed stock list, with a 3D view so staff can find items.",
+      "skills_used": [
+        "computer_vision",
+        "ai_ml",
+        "web_software"
+      ],
+      "domains": [
+        "retail-and-stock"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/cornerstockv2"
+      ],
+      "live_url": "https://cornerstockv2.vercel.app",
+      "venture": "cornerstore"
+    },
+    {
+      "id": "cranfield-gdp",
+      "title": "Cranfield Group Design Project",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Narrative prompt generation pipeline producing descriptive prompts for image generation models.",
+      "skills_used": [
+        "ai_ml",
+        "creative_tech"
+      ],
+      "domains": [],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/VisualGazebo"
+      ]
+    },
+    {
+      "id": "msc-lidar-nudge",
+      "title": "MSc Individual Project: Lidar and Nudge Impact",
+      "status": "shipped",
+      "featured": false,
+      "category": [],
+      "short_description": "Dashboard showcasing the masters dissertation on lidar data and nudge impact.",
+      "skills_used": [
+        "data_analytics",
+        "ai_ml"
+      ],
+      "domains": [
+        "mobility-and-automotive"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/LidarDash"
+      ],
+      "live_url": "https://lidarnudge.vercel.app"
+    },
+    {
+      "id": "lyricvid",
+      "title": "LyricVid",
+      "status": "experiment",
+      "featured": false,
+      "category": [],
+      "short_description": "Live lyric overlay on video with a dithered album art background. A creative test of Gemini.",
+      "skills_used": [
+        "creative_tech",
+        "ai_ml"
+      ],
+      "domains": [
+        "music"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/LyricVid"
+      ]
+    },
+    {
+      "id": "write-sync",
+      "title": "Write-sync",
+      "status": "experiment",
+      "featured": false,
+      "category": [],
+      "short_description": "Animates handwritten notes from a photo so the ink appears to arrive on the page.",
+      "skills_used": [
+        "creative_tech",
+        "ai_ml"
+      ],
+      "domains": [],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/Write-sync"
+      ]
+    },
+    {
+      "id": "gardener-seo",
+      "title": "Gardener SEO Test",
+      "status": "experiment",
+      "featured": false,
+      "category": [],
+      "short_description": "Test of SEO and Facebook post scraping for a gardening business.",
+      "skills_used": [
+        "data_analytics",
+        "business_consulting"
+      ],
+      "domains": [],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/Gardener"
+      ]
+    },
+    {
+      "id": "jasoncooks",
+      "title": "JasonCooks",
+      "status": "shelved",
+      "featured": false,
+      "category": [],
+      "short_description": "Proof of concept for turning Meta glasses cooking footage into recipes automatically. Never finished.",
+      "skills_used": [
+        "web_software",
+        "ai_ml"
+      ],
+      "domains": [
+        "food-and-hospitality"
+      ],
+      "tech_tags": [],
+      "repos": [
+        "Toni9a/JasonCooks"
+      ]
     }
   ],
-
   "experience": [
     {
       "id": "leveret_exp",
@@ -740,7 +1650,11 @@
       "role": "Founder / Consultant",
       "location": "London, UK",
       "period": "December 2022 – Present",
-      "project_refs": ["magkits_brand", "client_websites", "rag_sales_tool"]
+      "project_refs": [
+        "magkits_brand",
+        "client_websites",
+        "rag_sales_tool"
+      ]
     },
     {
       "id": "santander_exp",
@@ -748,7 +1662,10 @@
       "role": "Events & Operations Coordinator (Part-time)",
       "location": "Milton Keynes, UK",
       "period": "January 2024 – Present",
-      "project_refs": ["santander_dashboards", "santander_qr"]
+      "project_refs": [
+        "santander_dashboards",
+        "santander_qr"
+      ]
     },
     {
       "id": "gxo_exp",
@@ -795,7 +1712,6 @@
       "project_ref": "navya_av"
     }
   ],
-
   "interests_and_identity": {
     "headline_interests": [
       "AI & Machine Learning applied to real products",
@@ -824,11 +1740,16 @@
       "Has basic BSL (British Sign Language)"
     ]
   },
-
   "design_guidance": {
     "positioning": "Multidisciplinary Creative Technologist",
     "tone": "Confident, curious, hands-on. Not academic. Speaks in projects and outcomes.",
-    "featured_project_order": ["leveret", "cranfield_cv", "cranfield_rl", "bundesliga_hackathon", "magkits_brand"],
+    "featured_project_order": [
+      "leveret",
+      "cranfield_cv",
+      "cranfield_rl",
+      "bundesliga_hackathon",
+      "magkits_brand"
+    ],
     "suggested_sections": [
       "Hero — name, tagline, brief positioning statement",
       "What I Build — skill clusters as visual cards (not a boring list)",
@@ -845,6 +1766,129 @@
       "idea": "In the Lab"
     }
   },
-
-  "prompt_for_site_generation": "Use this JSON as the complete data source for a personal portfolio site for Toni Esan. The positioning is 'Multidisciplinary Creative Technologist' — not a standard engineer CV, but a visual, interconnected site that shows how disciplines connect. Key design requirements: (1) Featured projects section for shipped work with metrics and tech tags. (2) An 'In the Lab' section for ideas — clearly labelled but not hidden. (3) Skill clusters should be interactive and visually linked to projects. (4) Dark-mode-first, minimal but not cold. (5) The hero should feel confident and human, not corporate. All project IDs in skill_clusters.related_project_ids map to projects[].id. All skill_cluster IDs in projects[].skills_used map to skill_clusters[].id. Use these relationships to render the interactive skill-project graph."
+  "prompt_for_site_generation": "Use this JSON as the complete data source for a personal portfolio site for Toni Esan. The positioning is 'Multidisciplinary Creative Technologist' — not a standard engineer CV, but a visual, interconnected site that shows how disciplines connect. Key design requirements: (1) Featured projects section for shipped work with metrics and tech tags. (2) An 'In the Lab' section for ideas — clearly labelled but not hidden. (3) Skill clusters should be interactive and visually linked to projects. (4) Dark-mode-first, minimal but not cold. (5) The hero should feel confident and human, not corporate. All project IDs in skill_clusters.related_project_ids map to projects[].id. All skill_cluster IDs in projects[].skills_used map to skill_clusters[].id. Use these relationships to render the interactive skill-project graph.",
+  "ventures": [
+    {
+      "id": "timikeys",
+      "label": "Timikeys",
+      "projects": [
+        "keys_site"
+      ]
+    },
+    {
+      "id": "avalon",
+      "label": "Avalon Insights",
+      "projects": [
+        "avalon-landing"
+      ]
+    },
+    {
+      "id": "cornerstore",
+      "label": "Cornerstore",
+      "projects": [
+        "cornerstore"
+      ]
+    },
+    {
+      "id": "magkits",
+      "label": "MagKits",
+      "projects": [
+        "magkits_brand"
+      ]
+    }
+  ],
+  "status_values": [
+    "shipped",
+    "in_progress",
+    "idea",
+    "experiment",
+    "shelved"
+  ],
+  "domains": [
+    {
+      "id": "healthcare-and-dental",
+      "label": "Healthcare and dental"
+    },
+    {
+      "id": "events-and-weddings",
+      "label": "Events and weddings"
+    },
+    {
+      "id": "food-and-hospitality",
+      "label": "Food and hospitality"
+    },
+    {
+      "id": "fitness-and-running",
+      "label": "Fitness and running"
+    },
+    {
+      "id": "music",
+      "label": "Music"
+    },
+    {
+      "id": "retail-and-stock",
+      "label": "Retail and stock"
+    },
+    {
+      "id": "education-and-tutoring",
+      "label": "Education and tutoring"
+    },
+    {
+      "id": "mobility-and-automotive",
+      "label": "Mobility and automotive"
+    },
+    {
+      "id": "aviation",
+      "label": "Aviation"
+    },
+    {
+      "id": "faith-and-community",
+      "label": "Faith and community"
+    },
+    {
+      "id": "fashion",
+      "label": "Fashion"
+    },
+    {
+      "id": "creators-and-social-media",
+      "label": "Creators and social media"
+    },
+    {
+      "id": "consulting-and-business",
+      "label": "Consulting and business"
+    }
+  ],
+  "door_families": [
+    {
+      "name": "Intelligence",
+      "doors": [
+        "ai_ml",
+        "computer_vision",
+        "data_analytics"
+      ]
+    },
+    {
+      "name": "Building",
+      "doors": [
+        "web_software",
+        "automation_iot",
+        "design_engineering"
+      ]
+    },
+    {
+      "name": "Craft",
+      "doors": [
+        "creative_tech",
+        "creative_media"
+      ]
+    },
+    {
+      "name": "Business",
+      "doors": [
+        "product_management",
+        "business_consulting",
+        "entrepreneurship"
+      ]
+    }
+  ]
 }

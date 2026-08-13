@@ -50,3 +50,6 @@ npm-debug.log*
 # Supabase local dev
 supabase/.branches/
 supabase/.temp/
+
+# Local backups taken before a rewrite. Git already has the previous version.
+*.backup.json

@@ -37,6 +37,9 @@
   .card-meta { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); margin-top: 0.25rem; }
 
   .tag { display: inline-block; padding: 0.2rem 0.5rem; background: var(--accent-dim); color: var(--accent); border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono); margin: 0.2rem 0.15rem 0 0; }
+  .tag-x { margin-left: 0.35rem; cursor: pointer; opacity: 0.6; }
+  .tag-x:hover { opacity: 1; color: var(--red); }
+  .tag-add-input { width: auto; flex: 1; min-width: 100px; padding: 0.3rem 0.6rem; font-size: 0.78rem; font-family: var(--font-mono); }
 
   .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-family: var(--font-ui); font-size: 0.875rem; transition: opacity 0.15s; }
   .btn:hover { opacity: 0.85; }
@@ -50,11 +53,11 @@
   .toggle.on { background: var(--accent); }
   .toggle.on::after { left: 21px; }
 
-  textarea, input[type=email] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 0.9rem; line-height: 1.6; padding: 0.75rem; outline: none; transition: border-color 0.15s; }
-  textarea:focus, input[type=email]:focus { border-color: var(--accent); }
+  textarea, input[type=email], input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 0.9rem; line-height: 1.6; padding: 0.75rem; outline: none; transition: border-color 0.15s; }
+  textarea:focus, input[type=email]:focus, input[type=text]:focus { border-color: var(--accent); }
   textarea { resize: vertical; overflow-y: auto; min-height: 140px; }
 
-  .source-links { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.3rem; }
+  .source-links { margin-top: 0.6rem; padding: 0.5rem 0.6rem; background: #7c3aed10; border-left: 2px solid var(--accent); border-radius: 4px; display: flex; flex-direction: column; gap: 0.3rem; }
   .source-link { color: var(--accent); font-size: 0.78rem; font-family: var(--font-mono); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
   .source-link:hover { text-decoration: underline; }
 
@@ -75,6 +78,44 @@
   #toast.show { opacity: 1; transform: translateY(0); }
   .recording-bar { display: none; background: #ef444415; border: 1px solid var(--red); border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.8rem; color: var(--red); margin-top: 0.5rem; }
   .recording-bar.active { display: block; }
+
+  /* ---- Explore ---- */
+  .facet { margin-bottom: 0.9rem; }
+  .facet-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .chip { padding: 0.28rem 0.6rem; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; cursor: pointer; transition: all 0.12s; }
+  .chip:hover { color: var(--text); border-color: #3a3a3a; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #17151c; }
+  .chip .n { opacity: 0.55; margin-left: 0.3rem; }
+  .chip.fam { border-style: dashed; cursor: default; color: #4a4a4a; background: none; }
+  .chip.fam:hover { color: #4a4a4a; }
+
+  .ex-bar { position: sticky; top: 53px; background: var(--bg); padding: 0.75rem 0; z-index: 5; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+  .ex-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .ex-more { display: block; width: 100%; margin-top: 0.5rem; }
+
+  .nrow { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.7rem 0.8rem; border: 1px solid transparent; border-radius: 8px; cursor: pointer; }
+  .nrow:hover { background: var(--surface); border-color: var(--border); }
+  .kind { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.45rem; border-radius: 4px; background: var(--accent-dim); color: var(--accent); margin-top: 0.15rem; }
+  .kind.capture { background: #4ade8018; color: var(--green); }
+  .kind.repo    { background: #f8717118; color: var(--red); }
+  .kind.answer  { background: #60a5fa18; color: #60a5fa; }
+  .nrow-body { flex: 1; min-width: 0; }
+  .nrow-title { font-size: 0.9rem; line-height: 1.4; }
+  .nrow-meta { margin-top: 0.25rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+
+  #ex-detail { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 50; overflow-y: auto; padding: 3rem 1rem; }
+  #ex-detail.open { display: block; }
+  .detail-card { max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+  .detail-close { float: right; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
+  .detail-close:hover { color: var(--text); }
+  .detail-body { margin-top: 0.9rem; padding: 0.8rem; background: var(--bg); border-radius: 6px; font-size: 0.85rem; line-height: 1.65; color: #c8c8c8; white-space: pre-wrap; max-height: 260px; overflow-y: auto; }
+  .rel-group { margin-top: 1.1rem; }
+  .rel-why { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-bottom: 0.35rem; }
+  .rel-why .rare { color: var(--muted); }
+  .rel-item { padding: 0.35rem 0.5rem; border-radius: 6px; font-size: 0.83rem; cursor: pointer; display: flex; gap: 0.5rem; }
+  .rel-item:hover { background: var(--bg); }
+  .weak { opacity: 0.45; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600&family=DM+Mono&display=swap" rel="stylesheet" />
@@ -94,6 +135,9 @@
     <button class="active" onclick="switchTab('repos', this)">Repos</button>
     <button onclick="switchTab('qa', this)">Q&amp;A</button>
     <button onclick="switchTab('digest', this)">Digest</button>
+    <button onclick="switchTab('pending', this)">Pending<span id="pending-count" class="tag" style="display:none;margin-left:0.4rem"></span></button>
+    <button onclick="switchTab('explore', this)">Explore</button>
+    <button onclick="switchTab('tagging', this)">Tagging</button>
   </nav>
   <main>
     <div id="tab-repos" class="tab active">
@@ -112,7 +156,52 @@
       <p class="sub">Write your take on each topic. Feeds your blog and trains the opinion brain.</p>
       <div id="digest-content"><div class="loading"><div class="spinner"></div></div></div>
     </div>
+    <div id="tab-pending" class="tab">
+      <h2>Pending</h2>
+      <p class="sub">Everything captured via the Telegram bot — voice transcripts, thoughts, links, and unsorted items — with folder/tag assignment.</p>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="pf-unfoldered" onclick="setPendingFilter('unfoldered')">Needs folder</button>
+        <button class="btn btn-ghost btn-sm" id="pf-all" onclick="setPendingFilter('all')">All captures</button>
+        <button class="btn btn-ghost btn-sm" id="pf-blog" onclick="setPendingFilter('blog')">📰 Blog candidates</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="retagAllShown()">🔄 Retag all shown</button>
+      </div>
+      <div id="pending-content"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <div id="tab-explore" class="tab">
+      <h2>Explore</h2>
+      <p class="sub">Everything in one place — captures, projects, repos, answers, roles. Filters stack, so picking a door and a domain shows only what is in both. Click anything to see what it connects to.</p>
+      <div id="ex-facets"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="ex-bar" id="ex-bar" style="display:none">
+        <input type="text" id="ex-q" placeholder="Search titles" oninput="exRender()" />
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem">
+          <span class="ex-count" id="ex-count"></span>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost btn-sm" onclick="exClear()">Clear filters</button>
+        </div>
+      </div>
+      <div id="ex-results"></div>
+    </div>
+
+    <div id="tab-tagging" class="tab">
+      <h2>Tagging</h2>
+      <p class="sub">Watch <code style="color:var(--accent)">python scripts/tag_captures.py</code> as it runs. Refreshes every 5 seconds. Folders are never changed — this only adds doors, concepts and entities on top.</p>
+      <div id="tg-stats"></div>
+      <div class="progress-bar"><div class="progress-fill" id="tg-fill" style="width:0"></div></div>
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <span class="ex-count" id="tg-live"></span>
+        <div style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadTagging()">Refresh now</button>
+      </div>
+      <div id="tg-promote"></div>
+      <div id="tg-recent"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
   </main>
+</div>
+
+<div id="ex-detail" onclick="if(event.target===this) exCloseDetail()">
+  <div class="detail-card" id="ex-detail-card"></div>
 </div>
 
 <div id="toast"></div>
@@ -123,6 +212,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let qaItems = [], qaIndex = 0, recognition = null;
 
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.max(140, el.scrollHeight + 4) + 'px'; }
 function resizeAll() { document.querySelectorAll('textarea').forEach(autoResize); }
 
@@ -134,8 +224,9 @@ async function init() {
 async function sendMagicLink() {
   const email = document.getElementById('email-input').value.trim();
   if (!email) return;
-  // Use current origin so this works on localhost, toniesan.com, and the Vercel preview URL
-  const redirectTo = window.location.origin + '/admin';
+  // Come back to whatever page we are actually on. Vercel has cleanUrls so this is
+  // /admin in production, but a plain local server needs the real /admin.html.
+  const redirectTo = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
   if (!error) document.getElementById('auth-msg').style.display = 'block';
   else toast('Error: ' + error.message);
@@ -144,6 +235,7 @@ function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   loadRepos();
+  refreshPendingCount();
 }
 
 function switchTab(name, btn) {
@@ -153,6 +245,9 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   if (name === 'qa') loadQA();
   if (name === 'digest') loadDigest();
+  if (name === 'pending') loadPending();
+  if (name === 'explore') loadExplore();
+  if (name === 'tagging') startTagging(); else stopTagging();
 }
 
 async function loadRepos() {
@@ -295,6 +390,599 @@ async function saveCommentary(id) {
 async function skipDigest(id) {
   await sb.from('digest_items').update({ status: 'skipped' }).eq('id', id);
   document.getElementById('digest-' + id).remove(); toast('Skipped');
+}
+
+const TYPE_ICON = { voice: '🎙️', link: '📎', text: '📝', other: '📥' };
+const TYPE_LABEL = { voice: 'Voice note', link: 'Link', text: 'Thought', other: 'Unsorted' };
+
+async function refreshPendingCount() {
+  const { count } = await sb.from('inbox').select('id', { count: 'exact', head: true })
+    .like('source', 'telegram_%').is('folder', null);
+  const badge = document.getElementById('pending-count');
+  if (count) { badge.textContent = count; badge.style.display = 'inline-block'; }
+  else { badge.style.display = 'none'; }
+}
+
+let pendingFilter = 'unfoldered';
+let folderOptions = []; // [{folder, count}], sorted by usage desc — loaded once, refreshed after any folder write
+function setPendingFilter(filter) {
+  pendingFilter = filter;
+  document.getElementById('pf-unfoldered').className = 'btn btn-sm ' + (filter === 'unfoldered' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('pf-all').className = 'btn btn-sm ' + (filter === 'all' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('pf-blog').className = 'btn btn-sm ' + (filter === 'blog' ? 'btn-primary' : 'btn-ghost');
+  loadPending();
+}
+
+async function loadFolderOptions() {
+  const { data } = await sb.from('inbox').select('folder').not('folder', 'is', null);
+  const counts = new Map();
+  (data || []).forEach(r => counts.set(r.folder, (counts.get(r.folder) || 0) + 1));
+  folderOptions = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([folder, count]) => ({ folder, count }));
+}
+
+async function loadPending() {
+  if (!folderOptions.length) await loadFolderOptions();
+
+  let query = sb.from('inbox')
+    .select('id,source,folder,status,full_text,url,media_urls,topic_tags,raw_message_type,is_blog_candidate,related_item_ids,created_at')
+    .order('created_at', { ascending: false });
+  if (pendingFilter === 'unfoldered') query = query.like('source', 'telegram_%').is('folder', null);
+  else if (pendingFilter === 'all') query = query.like('source', 'telegram_%');
+  else if (pendingFilter === 'blog') query = query.eq('is_blog_candidate', true);
+  const { data } = await query;
+
+  refreshPendingCount();
+  const el = document.getElementById('pending-content');
+  if (!data || !data.length) {
+    el.innerHTML = pendingFilter === 'unfoldered'
+      ? '<p class="empty">Nothing pending — the Telegram inbox is clear.</p>'
+      : pendingFilter === 'blog'
+        ? '<p class="empty">No items flagged for blog yet — flag one from the bot (📰 button) or here.</p>'
+        : '<p class="empty">No Telegram captures yet.</p>';
+    return;
+  }
+
+  // Batch-fetch any existing direct commentary for the items on screen.
+  const ids = data.map(d => d.id);
+  const { data: existingComments } = await sb.from('commentary').select('id,inbox_ids,body,created_at').overlaps('inbox_ids', ids);
+  const commentsByItem = {};
+  (existingComments || []).forEach(c => (c.inbox_ids || []).forEach(id => {
+    if (!commentsByItem[id]) commentsByItem[id] = [];
+    commentsByItem[id].push(c);
+  }));
+
+  // Related-item previews (voice notes auto-linked to bookmarks it referenced).
+  const relatedIds = [...new Set(data.flatMap(d => d.related_item_ids || []))];
+  let relatedMap = {};
+  if (relatedIds.length) {
+    const { data: relatedItems } = await sb.from('inbox').select('id,url,title,full_text,author_handle').in('id', relatedIds);
+    (relatedItems || []).forEach(r => { relatedMap[r.id] = r; });
+  }
+
+  // Reverse direction: which items (usually voice notes) reference *this* item —
+  // so a link/bookmark shows "you talked about this" even though the reference
+  // itself is stored on the voice note's row, not this one.
+  const { data: referencingRows } = await sb.from('inbox')
+    .select('id,related_item_ids,raw_message_type,full_text,url')
+    .overlaps('related_item_ids', ids);
+  const referencedByMap = {};
+  (referencingRows || []).forEach(r => {
+    (r.related_item_ids || []).forEach(targetId => {
+      if (!ids.includes(targetId)) return;
+      if (!referencedByMap[targetId]) referencedByMap[targetId] = [];
+      referencedByMap[targetId].push(r);
+    });
+  });
+
+  const topFolders = folderOptions.slice(0, 8).map(f => f.folder);
+
+  el.innerHTML = data.map(item => {
+    const type = item.raw_message_type || 'other';
+    const icon = TYPE_ICON[type] || '📄';
+    const label = TYPE_LABEL[type] || 'Item';
+    const preview = item.url
+      ? `<a href="${item.url}" target="_blank" rel="noopener" class="source-link">↗ ${item.url}</a>`
+      : (item.full_text
+          ? `<div style="font-size:0.9rem;line-height:1.5;margin-top:0.4rem">${item.full_text}</div>`
+          : (item.media_urls && item.media_urls.length
+              ? `<div class="card-meta" style="margin-top:0.4rem">${item.media_urls.length} media file(s), no caption</div>`
+              : `<div class="card-meta" style="margin-top:0.4rem">(no content)</div>`));
+    const folderTag = item.folder ? `<span class="tag" style="background:#4ade8022;color:var(--green)">📁 ${item.folder}</span>` : '';
+    const folderButtons = pendingFilter === 'blog' ? '' : topFolders
+      .filter(f => f !== item.folder)
+      .map(f => `<button class="btn btn-ghost btn-sm" onclick="setPendingFolderDirect('${item.id}','${f.replace(/'/g, "\\'")}')">${f}</button>`)
+      .join('');
+
+    const relatedLinks = (item.related_item_ids || []).map(id => relatedMap[id]).filter(Boolean);
+    const relatedHtml = relatedLinks.length
+      ? `<div class="source-links">${relatedLinks.map(r =>
+          `<a href="${r.url || '#'}" target="_blank" rel="noopener" class="source-link">🔗 mentions: ${r.author_handle ? '@' + r.author_handle + ' · ' : ''}${(r.title || r.full_text || r.url || '').toString().slice(0, 80)}</a>`
+        ).join('')}</div>`
+      : '';
+
+    // Reverse: voice notes/thoughts that talked about THIS item.
+    const referencingItems = referencedByMap[item.id] || [];
+    const referencedByHtml = referencingItems.length
+      ? `<div class="source-links">${referencingItems.map(r =>
+          `<span class="source-link" style="cursor:default;color:var(--text)">${TYPE_ICON[r.raw_message_type] || '📄'} you talked about this in a ${TYPE_LABEL[r.raw_message_type] || 'note'}: "${(r.full_text || '').toString().slice(0, 90)}${(r.full_text || '').length > 90 ? '…' : ''}"</span>`
+        ).join('')}</div>`
+      : '';
+
+    const priorComments = (commentsByItem[item.id] || []).map(c =>
+      `<div style="border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem;font-size:0.85rem;color:var(--text)">${c.body}<div class="card-meta" style="margin-top:0.2rem">${new Date(c.created_at).toLocaleDateString()}</div></div>`
+    ).join('');
+
+    // A voice note's transcript already IS the take — prefill from it instead of
+    // showing a blank "your take" box (that's only right for links/bookmarks,
+    // which need a take written about them). Editable before saving either way.
+    const isVoiceWithTranscript = type === 'voice' && item.full_text && !priorComments;
+    const composeLabel = isVoiceWithTranscript ? 'Your take (from the transcript — edit as needed)…' : 'Your take on this…';
+    const composeValue = isVoiceWithTranscript ? escapeHtml(item.full_text) : '';
+    const composeHint = isVoiceWithTranscript
+      ? '<div class="card-meta" style="margin-bottom:0.4rem">🎙️ Prefilled from your voice note — tweak it, then save.</div>'
+      : '';
+
+    const composeBlock = item.is_blog_candidate ? `
+      <div style="margin-top:0.75rem;border-top:1px solid var(--border);padding-top:0.75rem">
+        ${priorComments}
+        <div style="margin-top:${priorComments ? '0.75rem' : '0'}">
+          ${composeHint}
+          <div class="qa-input-row">
+            <textarea id="comment-item-${item.id}" placeholder="${composeLabel}" oninput="autoResize(this)" style="min-height:80px">${composeValue}</textarea>
+            <button class="voice-btn btn-sm" id="cvbtn-${item.id}" onclick="toggleVoice('comment-item-${item.id}','cvbtn-${item.id}')" title="Dictate">🎙</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem">
+          <button class="btn btn-primary btn-sm" onclick="saveDirectCommentary('${item.id}')">Save take →</button>
+        </div>
+      </div>` : '';
+
+    return `
+    <div class="card" id="pending-${item.id}">
+      <div class="card-header">
+        <div style="min-width:0;flex:1">
+          <div class="card-title">${icon} ${label}${item.status === 'awaiting_folder' ? ' <span class="tag">awaiting folder</span>' : ''}</div>
+          <div class="card-meta">${new Date(item.created_at).toLocaleString()}</div>
+          ${preview}
+          ${relatedHtml}
+          ${referencedByHtml}
+          <div style="margin-top:0.5rem;display:flex;flex-wrap:wrap;align-items:center;gap:0.2rem">
+            ${folderTag}
+            ${(item.topic_tags||[]).map(t=>`<span class="tag">${t}<span class="tag-x" onclick="removeTag('${item.id}','${t.replace(/'/g, "\\'")}')" title="Remove tag">×</span></span>`).join('')}
+            <input type="text" class="tag-add-input" id="tag-add-${item.id}" placeholder="+ tag" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag('${item.id}')}" />
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.85rem">${folderButtons}</div>
+      <div class="qa-input-row" style="margin-top:0.6rem">
+        ${pendingFilter !== 'blog' ? `<input type="text" id="folder-${item.id}" placeholder="Or type a new folder…" style="flex:1" />
+        <button class="btn btn-primary btn-sm" onclick="setPendingFolder('${item.id}')">Set</button>` : '<div style="flex:1"></div>'}
+        <button class="btn btn-ghost btn-sm" onclick="toggleBlogCandidate('${item.id}', ${item.is_blog_candidate})">${item.is_blog_candidate ? '📰 Unflag' : '📰 Flag for blog'}</button>
+        ${item.full_text ? `<button class="btn btn-ghost btn-sm" onclick="retagItem('${item.id}')">🔄 Retag</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="deletePending('${item.id}')">Delete</button>
+      </div>
+      ${composeBlock}
+    </div>`;
+  }).join('');
+  setTimeout(resizeAll, 50);
+}
+
+async function toggleBlogCandidate(id, currentlyOn) {
+  const next = !currentlyOn;
+  const { error } = await sb.from('inbox').update({ is_blog_candidate: next }).eq('id', id);
+  if (error) { toast('Error saving'); return; }
+  if (pendingFilter === 'blog' && !next) {
+    document.getElementById('pending-' + id).remove();
+  } else {
+    loadPending();
+  }
+  toast(next ? 'Flagged for blog' : 'Unflagged');
+}
+
+async function saveDirectCommentary(id) {
+  const ta = document.getElementById('comment-item-' + id);
+  const body = ta.value.trim();
+  if (!body) { toast('Write something first'); return; }
+  const { error } = await sb.from('commentary').insert({ inbox_ids: [id], body });
+  if (error) { toast('Error saving'); return; }
+  toast('Take saved ✓');
+  loadPending();
+}
+
+async function setPendingFolderDirect(id, folder) {
+  const { error } = await sb.from('inbox').update({ folder, status: 'new' }).eq('id', id);
+  if (error) { toast('Error saving'); return; }
+  document.getElementById('pending-' + id).remove();
+  await loadFolderOptions();
+  refreshPendingCount();
+  toast('Filed under ' + folder);
+}
+
+async function setPendingFolder(id) {
+  const input = document.getElementById('folder-' + id);
+  const folder = input.value.trim();
+  if (!folder) { toast('Type a folder name first'); return; }
+  const { error } = await sb.from('inbox').update({ folder, status: 'new' }).eq('id', id);
+  if (error) { toast('Error saving'); return; }
+  await loadFolderOptions();
+  document.getElementById('pending-' + id).remove();
+  refreshPendingCount();
+  toast('Filed under ' + folder);
+}
+
+async function removeTag(id, tag) {
+  const { data: current } = await sb.from('inbox').select('topic_tags').eq('id', id).maybeSingle();
+  const next = (current?.topic_tags || []).filter(t => t !== tag);
+  const { error } = await sb.from('inbox').update({ topic_tags: next }).eq('id', id);
+  if (error) { toast('Error removing tag'); return; }
+  loadPending();
+}
+
+async function addTag(id) {
+  const input = document.getElementById('tag-add-' + id);
+  const raw = input.value.trim();
+  if (!raw) return;
+  // Allow "tag1, tag2" to add several at once.
+  const newTags = raw.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g, '-')).filter(Boolean);
+  const { data: current } = await sb.from('inbox').select('topic_tags').eq('id', id).maybeSingle();
+  const existing = current?.topic_tags || [];
+  const next = [...new Set([...existing, ...newTags])];
+  const { error } = await sb.from('inbox').update({ topic_tags: next }).eq('id', id);
+  if (error) { toast('Error adding tag'); return; }
+  toast('Tag added ✓');
+  loadPending();
+}
+
+async function retagItem(id) {
+  toast('Retagging…');
+  const { data, error } = await sb.functions.invoke('retag-item', { body: { id } });
+  if (error || !data?.results?.[id]) { toast('Retag failed'); return; }
+  toast('Retagged ✓');
+  loadPending();
+}
+
+async function retagAllShown() {
+  const ids = [...document.querySelectorAll('[id^="pending-"]')].map(el => el.id.replace('pending-', ''));
+  if (!ids.length) { toast('Nothing shown to retag'); return; }
+  toast(`Retagging ${ids.length} item(s)…`);
+  const { data, error } = await sb.functions.invoke('retag-item', { body: { ids } });
+  if (error) { toast('Retag failed'); return; }
+  toast('Retagged ✓');
+  loadPending();
+}
+
+async function deletePending(id) {
+  const { error } = await sb.from('inbox').delete().eq('id', id);
+  if (error) { toast('Error deleting'); return; }
+  document.getElementById('pending-' + id).remove();
+  refreshPendingCount();
+  toast('Deleted');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EXPLORE — browse the whole graph
+   ══════════════════════════════════════════════════════════════ */
+
+let exNodes = null;          // every node, without bodies
+let exDoors = [], exDomains = [], exConcepts = {};
+let exFreq = { concept: {}, tag: {} };   // how common each one is, for ranking
+const exSel = { kind: new Set(), door: new Set(), domain: new Set(), concept: new Set(), tag: new Set() };
+let exLimit = 60;
+
+const KIND_ORDER = ['project','repo','answer','capture','commentary','venture','role','education'];
+
+async function loadExplore() {
+  if (exNodes) return;
+  const [doorsRes, domainsRes, conceptsRes] = await Promise.all([
+    sb.from('door').select('id,label,family,sort').order('sort'),
+    sb.from('domain').select('id,label').order('label'),
+    sb.from('concept').select('slug,label,door_id')
+  ]);
+  exDoors = doorsRes.data || [];
+  exDomains = domainsRes.data || [];
+  (conceptsRes.data || []).forEach(c => exConcepts[c.slug] = c);
+
+  // Paged so we are not relying on the default row cap.
+  const cols = 'id,kind,title,url,occurred_at,doors,domains,concepts,tags';
+  exNodes = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from('node_full').select(cols).range(from, from + 999);
+    if (error) { toast('Explore failed: ' + error.message); break; }
+    exNodes.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+
+  exNodes.forEach(n => {
+    (n.concepts || []).forEach(c => exFreq.concept[c] = (exFreq.concept[c] || 0) + 1);
+    (n.tags || []).forEach(t => exFreq.tag[t] = (exFreq.tag[t] || 0) + 1);
+  });
+
+  exBuildFacets();
+  document.getElementById('ex-bar').style.display = 'block';
+  exRender();
+}
+
+// Facet name -> the column it lives in on node_full.
+const EX_FIELD = { kind: 'kind', door: 'doors', domain: 'domains', concept: 'concepts', tag: 'tags' };
+
+function exValues(n, facet) {
+  return facet === 'kind' ? [n.kind] : (n[EX_FIELD[facet]] || []);
+}
+
+function exCount(facet, value) {
+  // Count against rows passing every OTHER filter, so picking one door does not
+  // zero every other door's count.
+  return exMatching(facet).filter(n => exValues(n, facet).includes(value)).length;
+}
+
+function exMatching(skipFacet) {
+  const q = (document.getElementById('ex-q')?.value || '').toLowerCase().trim();
+  return exNodes.filter(n => {
+    if (q && !(n.title || '').toLowerCase().includes(q)) return false;
+    for (const f of ['kind','door','domain','concept','tag']) {
+      if (f === skipFacet) continue;
+      const sel = exSel[f];
+      if (!sel.size) continue;
+      const vals = exValues(n, f);
+      if (![...sel].some(s => vals.includes(s))) return false;
+    }
+    return true;
+  });
+}
+
+function chip(field, value, label, count) {
+  const on = exSel[field].has(value) ? ' on' : '';
+  if (!count && !on) return '';
+  return `<button class="chip${on}" onclick="exToggle('${field}','${value.replace(/'/g,"\\'")}')">${escapeHtml(label)}<span class="n">${count}</span></button>`;
+}
+
+function exBuildFacets() {
+  const families = [...new Set(exDoors.map(d => d.family))];
+  const doorHtml = families.map(f => {
+    const inner = exDoors.filter(d => d.family === f)
+      .map(d => chip('door', d.id, d.label, exCount('door', d.id))).join('');
+    return inner ? `<div style="margin-bottom:0.35rem"><span class="chip fam">${escapeHtml(f)}</span>${inner}</div>` : '';
+  }).join('');
+
+  const kinds = KIND_ORDER.filter(k => exNodes.some(n => n.kind === k))
+    .map(k => chip('kind', k, k, exCount('kind', k))).join('');
+
+  const doms = exDomains.map(d => chip('domain', d.id, d.label, exCount('domain', d.id))).join('');
+
+  const topConcepts = Object.entries(exFreq.concept).sort((a,b) => b[1]-a[1]).slice(0, 30)
+    .map(([slug]) => chip('concept', slug, exConcepts[slug]?.label || slug, exCount('concept', slug))).join('');
+
+  const topTags = Object.entries(exFreq.tag).sort((a,b) => b[1]-a[1]).slice(0, 24)
+    .map(([slug]) => chip('tag', slug, slug.replace(/^folder-/,'📁 ').replace(/-/g,' '), exCount('tag', slug))).join('');
+
+  document.getElementById('ex-facets').innerHTML = `
+    <div class="facet"><div class="facet-label">Kind</div><div class="chips">${kinds}</div></div>
+    <div class="facet"><div class="facet-label">Doors</div>${doorHtml}</div>
+    <div class="facet"><div class="facet-label">Domains</div><div class="chips">${doms}</div></div>
+    <div class="facet"><div class="facet-label">Concepts — 30 most used</div><div class="chips">${topConcepts}</div></div>
+    <div class="facet"><div class="facet-label">Tags and folders</div><div class="chips">${topTags}</div></div>`;
+}
+
+function exToggle(field, value) {
+  exSel[field].has(value) ? exSel[field].delete(value) : exSel[field].add(value);
+  exLimit = 60;
+  exBuildFacets(); exRender();
+}
+
+function exClear() {
+  Object.values(exSel).forEach(s => s.clear());
+  document.getElementById('ex-q').value = '';
+  exLimit = 60;
+  exBuildFacets(); exRender();
+}
+
+function exRender() {
+  if (!exNodes) return;
+  const rows = exMatching(null);
+  const order = k => { const i = KIND_ORDER.indexOf(k); return i < 0 ? 99 : i; };
+  rows.sort((a,b) => order(a.kind) - order(b.kind) ||
+    (new Date(b.occurred_at || 0)) - (new Date(a.occurred_at || 0)));
+
+  document.getElementById('ex-count').textContent =
+    `${rows.length} of ${exNodes.length} items`;
+
+  const shown = rows.slice(0, exLimit);
+  document.getElementById('ex-results').innerHTML = shown.map(n => {
+    const bits = [...(n.doors||[]), ...(n.domains||[])].slice(0,4).join(' · ');
+    return `<div class="nrow" onclick="exOpen(${n.id})">
+      <span class="kind ${n.kind}">${n.kind}</span>
+      <div class="nrow-body">
+        <div class="nrow-title">${escapeHtml(n.title || '(no title)')}</div>
+        <div class="nrow-meta">${escapeHtml(bits)}${n.url ? ' · link' : ''}</div>
+      </div></div>`;
+  }).join('') || '<p class="empty">Nothing matches those filters.</p>';
+
+  if (rows.length > exLimit) {
+    document.getElementById('ex-results').insertAdjacentHTML('beforeend',
+      `<button class="btn btn-ghost ex-more" onclick="exLimit+=100;exRender()">Show more (${rows.length - exLimit} left)</button>`);
+  }
+}
+
+async function exOpen(id) {
+  const panel = document.getElementById('ex-detail');
+  const card = document.getElementById('ex-detail-card');
+  panel.classList.add('open');
+  card.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  const [{ data: node }, { data: related }] = await Promise.all([
+    sb.from('node').select('id,kind,title,body,url,source_table,source_id,occurred_at').eq('id', id).maybeSingle(),
+    sb.rpc('related_nodes', { target: id })
+  ]);
+  if (!node) { card.innerHTML = '<p class="empty">Could not load that one.</p>'; return; }
+
+  const meta = exNodes.find(n => n.id === id) || {};
+
+  // Group by reason, rarest shared thing first — a concept on 40 items says less
+  // than one on 2, so common ones sink and get dimmed.
+  const groups = {};
+  (related || []).forEach(r => (groups[r.why] = groups[r.why] || []).push(r));
+  const rarity = why => {
+    const m = why.match(/^shares concept: (.+)$/);
+    if (m) return exFreq.concept[m[1]] || 99;
+    if (why.startsWith('shares domain')) return 40;
+    return 0;                       // real edges always come first
+  };
+  const ordered = Object.keys(groups).sort((a,b) => rarity(a) - rarity(b));
+
+  card.innerHTML = `
+    <button class="detail-close" onclick="exCloseDetail()">×</button>
+    <span class="kind ${node.kind}">${node.kind}</span>
+    <h2 style="margin-top:0.6rem">${escapeHtml(node.title || '(no title)')}</h2>
+    <div class="card-meta">${escapeHtml(node.source_table)} · ${escapeHtml(node.source_id)}${node.occurred_at ? ' · ' + node.occurred_at.slice(0,10) : ''}</div>
+    ${(meta.doors||[]).concat(meta.domains||[]).map(x => `<span class="tag">${escapeHtml(x)}</span>`).join('')}
+    ${(meta.concepts||[]).map(c => `<span class="tag">${escapeHtml(exConcepts[c]?.label || c)}</span>`).join('')}
+    ${node.url ? `<div class="source-links"><a class="source-link" href="${escapeHtml(node.url)}" target="_blank" rel="noopener">${escapeHtml(node.url)}</a></div>` : ''}
+    ${node.body ? `<div class="detail-body">${escapeHtml(node.body.slice(0, 4000))}</div>` : ''}
+    <div style="margin-top:1.4rem"><div class="facet-label">Connected to — ${(related||[]).length} items</div>
+    ${ordered.length ? ordered.map(why => {
+      const weak = rarity(why) > 12 ? ' weak' : '';
+      const n = rarity(why);
+      return `<div class="rel-group${weak}">
+        <div class="rel-why">${escapeHtml(why)}${n > 1 && n < 99 ? ` <span class="rare">appears on ${n} items</span>` : ''}</div>
+        ${groups[why].map(r => `<div class="rel-item" onclick="exOpen(${r.id})">
+           <span class="kind ${r.kind}">${r.kind}</span>
+           <span>${escapeHtml(r.title || '(no title)')}</span></div>`).join('')}
+      </div>`;
+    }).join('') : '<p class="empty">Nothing connects to this yet.</p>'}
+    </div>`;
+  card.scrollIntoView({ block: 'start' });
+}
+
+function exCloseDetail() { document.getElementById('ex-detail').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') exCloseDetail(); });
+
+/* ══════════════════════════════════════════════════════════════
+   TAGGING — live view of the tagging script
+   ══════════════════════════════════════════════════════════════ */
+
+let tgTimer = null, tgLastCount = null;
+
+function startTagging() { loadTagging(); if (!tgTimer) tgTimer = setInterval(loadTagging, 5000); }
+function stopTagging()  { if (tgTimer) { clearInterval(tgTimer); tgTimer = null; } }
+
+async function loadTagging() {
+  const [total, tagged] = await Promise.all([
+    sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture'),
+    sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture').not('tagged_at', 'is', null)
+  ]);
+  const t = total.count || 0, d = tagged.count || 0;
+  const pct = t ? Math.round(d / t * 100) : 0;
+  document.getElementById('tg-fill').style.width = pct + '%';
+  document.getElementById('tg-stats').innerHTML =
+    `<p class="sub" style="margin-bottom:0.6rem">${d} of ${t} captures tagged — ${pct}%</p>`;
+
+  const moving = tgLastCount !== null && d > tgLastCount;
+  document.getElementById('tg-live').textContent =
+    moving ? `running — ${d - tgLastCount} since last refresh` : (tgLastCount === null ? '' : 'idle');
+  tgLastCount = d;
+
+  const { data } = await sb.from('node_full')
+    .select('id,title,body,url,tagged_at,tagged_model,doors,domains,concepts,tags')
+    .eq('kind', 'capture').not('tagged_at', 'is', null)
+    .order('tagged_at', { ascending: false }).limit(30);
+
+  document.getElementById('tg-recent').innerHTML = (data || []).map(n => {
+    // Folder tags came from Twitter and are kept. Entities are what the model added.
+    const folders  = (n.tags || []).filter(x => x.startsWith('folder-'));
+    const entities = (n.tags || []).filter(x => !x.startsWith('folder-'));
+    const empty = !(n.doors || n.domains || n.concepts || entities.length);
+    // The whole item, so you can actually tell whether the tags are right.
+    const text = (n.body && n.body.length > (n.title || '').length) ? n.body : (n.title || '');
+    return `<div class="card" style="padding:0.9rem">
+      <div class="card-header">
+        <div style="flex:1;min-width:0">
+          <div class="card-title" style="font-weight:400;line-height:1.5">${escapeHtml(text.slice(0, 600))}${text.length > 600 ? '…' : ''}</div>
+          <div class="card-meta">${folders.map(f => '📁 ' + f.replace('folder-','').replace(/-/g,' ')).join(' ') || 'no folder'} · ${n.tagged_at.slice(11,19)}</div>
+          ${n.url ? `<a class="source-link" style="margin-top:0.35rem" href="${escapeHtml(n.url)}" target="_blank" rel="noopener">${escapeHtml(n.url)}</a>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="tgUndo(${n.id})">Wrong</button>
+      </div>
+      <div style="margin-top:0.5rem">
+        ${empty ? '<span class="card-meta">left untagged on purpose</span>' : ''}
+        ${(n.doors||[]).map(d => `<span class="tag" style="background:#60a5fa22;color:#60a5fa">${escapeHtml(d)}</span>`).join('')}
+        ${(n.domains||[]).map(d => `<span class="tag" style="background:#4ade8022;color:var(--green)">${escapeHtml(d)}</span>`).join('')}
+        ${(n.concepts||[]).map(c => `<span class="tag">${escapeHtml(c)}</span>`).join('')}
+        ${entities.map(e => `<span class="tag" style="background:#f8717122;color:var(--red)">${escapeHtml(e)}</span>`).join('')}
+      </div></div>`;
+  }).join('') || '<p class="empty">Nothing tagged yet. Run the script.</p>';
+
+  loadPromote();
+}
+
+/* Entities the model invented, ranked by how often they came up. Anything
+   recurring is a concept you were missing, so promoting it is one click.
+   This is how the vocabulary grows from evidence instead of from guessing. */
+async function loadPromote() {
+  const { data } = await sb.from('node_tag')
+    .select('tag_id, tag!inner(id,slug,label,concept_id)')
+    .eq('origin', 'gemini').limit(4000);
+
+  const counts = {};
+  (data || []).forEach(r => {
+    const t = r.tag;
+    if (!t || t.concept_id || t.slug.startsWith('folder-')) return;
+    (counts[t.slug] = counts[t.slug] || { n: 0, id: t.id, label: t.label }).n++;
+  });
+
+  const ranked = Object.entries(counts).sort((a, b) => b[1].n - a[1].n).slice(0, 40);
+  const repeated = ranked.filter(([, v]) => v.n > 1);
+  if (!ranked.length) { document.getElementById('tg-promote').innerHTML = ''; return; }
+
+  const doorOpts = exDoors.length ? exDoors : (await sb.from('door').select('id,label').order('sort')).data || [];
+  document.getElementById('tg-promote').innerHTML = `
+    <div class="card">
+      <div class="facet-label">New things the model found — ${repeated.length} came up more than once</div>
+      <p class="sub" style="margin:0.4rem 0 0.8rem">Promote anything you would actually click on. It becomes a concept, and every item already carrying it gets linked straight away.</p>
+      <div class="chips">
+        ${ranked.map(([slug, v]) => `<button class="chip" onclick="tgPromote('${slug}',${v.id})">
+            ${escapeHtml(v.label)}<span class="n">${v.n}</span></button>`).join('')}
+      </div>
+      <select id="tg-promote-door" style="margin-top:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.4rem;font-family:var(--font-mono);font-size:0.75rem">
+        ${doorOpts.map(d => `<option value="${d.id}"${d.id === 'cross_door' ? ' selected' : ''}>${escapeHtml(d.label)}</option>`).join('')}
+      </select>
+      <span class="card-meta" style="margin-left:0.5rem">door for the next promotion</span>
+    </div>`;
+}
+
+async function tgPromote(slug, tagId) {
+  const doorId = document.getElementById('tg-promote-door').value;
+  const label = slug.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
+  const { data: concept, error } = await sb.from('concept')
+    .upsert({ slug, label, door_id: doorId, kind: 'Topic' }, { onConflict: 'slug' })
+    .select().single();
+  if (error) { toast('Could not promote: ' + error.message); return; }
+
+  await sb.from('tag').update({ concept_id: concept.id, mapping_origin: 'promoted' }).eq('id', tagId);
+
+  // Everything already carrying the tag now carries the concept too.
+  const { data: holders } = await sb.from('node_tag').select('node_id').eq('tag_id', tagId);
+  if (holders && holders.length) {
+    await sb.from('node_concept').upsert(
+      holders.map(h => ({ node_id: h.node_id, concept_id: concept.id, origin: 'promoted' })));
+  }
+  toast(`${label} is now a concept on ${holders ? holders.length : 0} items.`);
+  exNodes = null;          // explorer data is stale now
+  loadPromote();
+}
+
+// Strip everything the model added and put the item back in the queue.
+// Folder tags are left alone because they did not come from the model.
+async function tgUndo(id) {
+  await Promise.all([
+    sb.from('node_concept').delete().eq('node_id', id).eq('origin', 'gemini'),
+    sb.from('node_door').delete().eq('node_id', id).eq('origin', 'gemini'),
+    sb.from('node_domain').delete().eq('node_id', id).eq('origin', 'gemini'),
+    sb.from('node_tag').delete().eq('node_id', id).eq('origin', 'gemini')
+  ]);
+  await sb.from('node').update({ tagged_at: null, tagged_model: null }).eq('id', id);
+  toast('Cleared. It will be picked up again on the next run.');
+  loadTagging();
 }
 
 function toast(msg) {
