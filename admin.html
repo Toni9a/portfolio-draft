@@ -116,6 +116,24 @@
   .rel-item { padding: 0.35rem 0.5rem; border-radius: 6px; font-size: 0.83rem; cursor: pointer; display: flex; gap: 0.5rem; }
   .rel-item:hover { background: var(--bg); }
   .weak { opacity: 0.45; }
+
+  /* ---- Pics ---- */
+  .pics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; }
+  .pic-thumb { position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: pointer; background: var(--surface); border: 1px solid var(--border); }
+  .pic-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pic-folder { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.25rem 0.4rem; background: linear-gradient(transparent, rgba(0,0,0,0.75)); font-size: 0.62rem; font-family: var(--font-mono); color: #fff; opacity: 0; transition: opacity 0.12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pic-thumb:hover .pic-folder { opacity: 1; }
+  .pic-skel { background: linear-gradient(90deg, var(--surface) 25%, #1e1e1e 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  #pic-lightbox { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 50; overflow-y: auto; padding: 3rem 1rem; }
+  #pic-lightbox.open { display: block; }
+  #pic-lightbox-inner img { max-width: 100%; max-height: 55vh; object-fit: contain; border-radius: 8px; display: block; margin: 0 auto 1rem; }
+  .pic-chip { cursor: pointer; transition: opacity 0.12s; }
+  .pic-chip:hover { opacity: 0.7; }
+
+  /* ---- Account settings ---- */
+  #account-panel { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 60; align-items: center; justify-content: center; }
+  #account-panel.open { display: flex; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600&family=DM+Mono&display=swap" rel="stylesheet" />
@@ -124,10 +142,13 @@
 
 <div id="auth-screen">
   <h1>toni / admin</h1>
-  <p>Enter your email to receive a magic link.</p>
+  <p>Sign in with your password, or get a magic link if you haven't set one yet.</p>
   <input type="email" id="email-input" placeholder="your@email.com" style="max-width:300px" />
-  <button class="btn btn-primary" onclick="sendMagicLink()">Send magic link</button>
+  <input type="password" id="password-input" placeholder="password (optional)" style="max-width:300px" onkeydown="if(event.key==='Enter') signInPassword()" />
+  <button class="btn btn-primary" onclick="signInPassword()">Sign in</button>
+  <button class="btn btn-ghost btn-sm" onclick="sendMagicLink()">Or send magic link instead</button>
   <p id="auth-msg" style="color:var(--green);display:none">✓ Check your email</p>
+  <p id="auth-err" style="color:var(--red);display:none;font-size:0.8rem;max-width:300px;text-align:center"></p>
 </div>
 
 <div id="app">
@@ -137,7 +158,9 @@
     <button onclick="switchTab('digest', this)">Digest</button>
     <button onclick="switchTab('pending', this)">Pending<span id="pending-count" class="tag" style="display:none;margin-left:0.4rem"></span></button>
     <button onclick="switchTab('explore', this)">Explore</button>
+    <button onclick="switchTab('pics', this)">Pics</button>
     <button onclick="switchTab('tagging', this)">Tagging</button>
+    <button onclick="openAccountSettings()" style="margin-left:auto;opacity:0.5" title="Account settings">⚙</button>
   </nav>
   <main>
     <div id="tab-repos" class="tab active">
@@ -172,36 +195,73 @@
     <div id="tab-explore" class="tab">
       <h2>Explore</h2>
       <p class="sub">Everything in one place — captures, projects, repos, answers, roles. Filters stack, so picking a door and a domain shows only what is in both. Click anything to see what it connects to.</p>
-      <div id="ex-facets"><div class="loading"><div class="spinner"></div></div></div>
       <div class="ex-bar" id="ex-bar" style="display:none">
-        <input type="text" id="ex-q" placeholder="Search titles" oninput="exRender()" />
+        <div style="display:flex;gap:0.5rem">
+          <input type="text" id="ex-q" placeholder="Search titles, or press ⏎ to search by meaning" oninput="exRender()" onkeydown="if(event.key==='Enter'){event.preventDefault();exSemanticSearch()}" style="flex:1" />
+          <button class="btn btn-ghost btn-sm" onclick="exSemanticSearch()" title="Search by meaning, not just exact words">🔮 Search meaning</button>
+        </div>
         <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem">
           <span class="ex-count" id="ex-count"></span>
           <div style="flex:1"></div>
           <button class="btn btn-ghost btn-sm" onclick="exClear()">Clear filters</button>
         </div>
       </div>
+      <div id="ex-facets"><div class="loading"><div class="spinner"></div></div></div>
       <div id="ex-results"></div>
+    </div>
+
+    <div id="tab-pics" class="tab">
+      <h2>Pics</h2>
+      <p class="sub">Every archived image, browsable by folder. Click to enlarge and see its tags — comes from the same graph as Explore.</p>
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <select id="pics-folder" onchange="picsFolderChanged()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.4rem 0.6rem;font-family:var(--font-ui);font-size:0.85rem">
+          <option value="">All folders</option>
+        </select>
+        <span class="ex-count" id="pics-count"></span>
+      </div>
+      <div id="pics-facet-banner" style="display:none;margin-bottom:0.75rem"></div>
+      <div id="pics-grid" class="pics-grid"><div class="loading"><div class="spinner"></div></div></div>
+      <button class="btn btn-ghost" id="pics-more" style="display:none;width:100%;margin-top:1rem" onclick="loadPics(true)">Load more</button>
     </div>
 
     <div id="tab-tagging" class="tab">
       <h2>Tagging</h2>
-      <p class="sub">Watch <code style="color:var(--accent)">python scripts/tag_captures.py</code> as it runs. Refreshes every 5 seconds. Folders are never changed — this only adds doors, concepts and entities on top.</p>
+      <p class="sub">Watch <code style="color:var(--accent)">python scripts/tag_captures.py</code> (text) and <code style="color:var(--accent)">python scripts/tag_images.py</code> (visual) as they run. Refreshes every 5 seconds. Folders are never changed — this only adds doors, concepts and entities on top.</p>
       <div id="tg-stats"></div>
       <div class="progress-bar"><div class="progress-fill" id="tg-fill" style="width:0"></div></div>
-      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+      <div id="tg-stats-img" style="margin-top:1.1rem"></div>
+      <div class="progress-bar"><div class="progress-fill" id="tg-fill-img" style="width:0;background:#60a5fa"></div></div>
+      <div style="display:flex;align-items:center;gap:0.75rem;margin:1rem 0">
         <span class="ex-count" id="tg-live"></span>
         <div style="flex:1"></div>
         <button class="btn btn-ghost btn-sm" onclick="loadTagging()">Refresh now</button>
       </div>
       <div id="tg-promote"></div>
+      <div class="facet-label" style="margin-top:1.5rem;margin-bottom:0.5rem">Recently tagged — text pass</div>
       <div id="tg-recent"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="facet-label" style="margin-top:1.5rem;margin-bottom:0.5rem">Recently tagged — visual pass</div>
+      <div id="tg-recent-img"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   </main>
 </div>
 
 <div id="ex-detail" onclick="if(event.target===this) exCloseDetail()">
   <div class="detail-card" id="ex-detail-card"></div>
+</div>
+
+<div id="pic-lightbox" onclick="if(event.target===this) closePicLightbox()">
+  <div class="detail-card" id="pic-lightbox-inner"></div>
+</div>
+
+<div id="account-panel" onclick="if(event.target===this) closeAccountSettings()">
+  <div class="detail-card" style="max-width:360px">
+    <button class="detail-close" onclick="closeAccountSettings()">×</button>
+    <h2 style="margin-bottom:0.4rem">Set a password</h2>
+    <p class="sub" style="margin-bottom:1rem">Skip the magic-link email next time — set one once and sign in directly.</p>
+    <input type="password" id="new-password" placeholder="New password (8+ characters)" style="margin-bottom:0.75rem" />
+    <button class="btn btn-primary btn-sm" onclick="savePassword()">Save password</button>
+    <p id="password-msg" style="color:var(--green);display:none;margin-top:0.6rem;font-size:0.85rem">✓ Password set — use it next time you sign in</p>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -228,9 +288,32 @@ async function sendMagicLink() {
   // /admin in production, but a plain local server needs the real /admin.html.
   const redirectTo = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-  if (!error) document.getElementById('auth-msg').style.display = 'block';
-  else toast('Error: ' + error.message);
+  const errEl = document.getElementById('auth-err');
+  if (!error) { document.getElementById('auth-msg').style.display = 'block'; errEl.style.display = 'none'; }
+  else { errEl.textContent = error.message; errEl.style.display = 'block'; }
 }
+async function signInPassword() {
+  const email = document.getElementById('email-input').value.trim();
+  const password = document.getElementById('password-input').value;
+  const errEl = document.getElementById('auth-err');
+  if (!email) { toast('Enter your email first'); return; }
+  if (!password) { sendMagicLink(); return; } // no password entered — fall back to magic link
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
+  else { errEl.style.display = 'none'; }
+}
+function openAccountSettings() { document.getElementById('account-panel').classList.add('open'); }
+function closeAccountSettings() { document.getElementById('account-panel').classList.remove('open'); }
+async function savePassword() {
+  const password = document.getElementById('new-password').value;
+  if (!password || password.length < 8) { toast('Use at least 8 characters'); return; }
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) { toast('Error: ' + error.message); return; }
+  document.getElementById('password-msg').style.display = 'block';
+  document.getElementById('new-password').value = '';
+  toast('Password set ✓ — use it next time you sign in');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAccountSettings(); });
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -247,6 +330,7 @@ function switchTab(name, btn) {
   if (name === 'digest') loadDigest();
   if (name === 'pending') loadPending();
   if (name === 'explore') loadExplore();
+  if (name === 'pics') loadPics();
   if (name === 'tagging') startTagging(); else stopTagging();
 }
 
@@ -668,6 +752,28 @@ let exDoors = [], exDomains = [], exConcepts = {};
 let exFreq = { concept: {}, tag: {} };   // how common each one is, for ranking
 const exSel = { kind: new Set(), door: new Set(), domain: new Set(), concept: new Set(), tag: new Set() };
 let exLimit = 60;
+let exSemanticResults = null, exSemanticQuery = '';  // set when a "search meaning" query is active
+
+// Real semantic search, not tag matching — embeds the query with the same
+// model used to embed every node (see scripts/embed_nodes.py) and ranks by
+// cosine similarity via the match_nodes() RPC. Finds things like "drones and
+// teaching" even when nothing is literally tagged with either word.
+async function exSemanticSearch() {
+  const q = (document.getElementById('ex-q').value || '').trim();
+  if (!q) { toast('Type something to search for first'); return; }
+  toast('Searching by meaning…');
+  const { data, error } = await sb.functions.invoke('semantic-search', { body: { query: q, limit: 30 } });
+  if (error) { toast('Semantic search failed: ' + error.message); return; }
+  exSemanticResults = data?.results || [];
+  exSemanticQuery = q;
+  exRender();
+}
+
+function exClearSemantic() {
+  exSemanticResults = null;
+  exSemanticQuery = '';
+  exRender();
+}
 
 const KIND_ORDER = ['project','repo','answer','capture','commentary','venture','role','education'];
 
@@ -772,12 +878,33 @@ function exToggle(field, value) {
 function exClear() {
   Object.values(exSel).forEach(s => s.clear());
   document.getElementById('ex-q').value = '';
+  exSemanticResults = null;
+  exSemanticQuery = '';
   exLimit = 60;
   exBuildFacets(); exRender();
 }
 
 function exRender() {
   if (!exNodes) return;
+
+  if (exSemanticResults) {
+    const byId = new Map(exNodes.map(n => [n.id, n]));
+    const rows = exSemanticResults.map(r => byId.get(r.id) || r).filter(Boolean);
+    document.getElementById('ex-count').textContent =
+      `${rows.length} semantic match${rows.length === 1 ? '' : 'es'} for "${exSemanticQuery}"`;
+    const banner = `<div style="margin-bottom:0.75rem"><span class="chip on">🔮 ${escapeHtml(exSemanticQuery)}<span class="tag-x" style="margin-left:0.4rem" onclick="exClearSemantic()" title="Back to filters">×</span></span></div>`;
+    document.getElementById('ex-results').innerHTML = banner + (rows.length ? rows.map(n => {
+      const bits = [...(n.doors||[]), ...(n.domains||[])].slice(0,4).join(' · ');
+      return `<div class="nrow" onclick="exOpen(${n.id})">
+        <span class="kind ${n.kind}">${n.kind}</span>
+        <div class="nrow-body">
+          <div class="nrow-title">${escapeHtml(n.title || '(no title)')}</div>
+          <div class="nrow-meta">${escapeHtml(bits)}${n.url ? ' · link' : ''}</div>
+        </div></div>`;
+    }).join('') : '<p class="empty">Nothing came back for that.</p>');
+    return;
+  }
+
   const rows = exMatching(null);
   const order = k => { const i = KIND_ORDER.indexOf(k); return i < 0 ? 99 : i; };
   rows.sort((a,b) => order(a.kind) - order(b.kind) ||
@@ -857,6 +984,186 @@ function exCloseDetail() { document.getElementById('ex-detail').classList.remove
 document.addEventListener('keydown', e => { if (e.key === 'Escape') exCloseDetail(); });
 
 /* ══════════════════════════════════════════════════════════════
+   PICS — visual grid of archived R2 images, backed by presign-media
+   ══════════════════════════════════════════════════════════════ */
+
+let picsOffset = 0, picsFolder = '', picsFoldersPopulated = false;
+let picsFacetFilter = null; // { kind: 'concept'|'tag'|'door', id, label, sourceIds } — set by clicking a chip in the lightbox
+const PICS_PAGE = 60;
+
+function renderPicsFacetBanner() {
+  const el = document.getElementById('pics-facet-banner');
+  if (!picsFacetFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `<span class="chip on">${escapeHtml(picsFacetFilter.label)}<span class="tag-x" style="margin-left:0.4rem" onclick="clearPicsFacetFilter()" title="Clear filter">×</span></span>
+    <span class="ex-count" style="margin-left:0.6rem">everything else tagged with this</span>`;
+}
+
+function clearPicsFacetFilter() {
+  picsFacetFilter = null;
+  picsOffset = 0;
+  document.getElementById('pics-grid').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  renderPicsFacetBanner();
+  loadPics(false);
+}
+
+// Called when a door/concept/tag chip is clicked inside the lightbox — filters
+// the grid to every other image carrying that same tag, so you can browse by
+// idea instead of by folder. This is the whole point of tagging the images.
+async function picsFilterByFacet(kind, id, label) {
+  closePicLightbox();
+  const table = kind === 'concept' ? 'node_concept' : kind === 'tag' ? 'node_tag' : 'node_door';
+  const idCol = kind === 'concept' ? 'concept_id' : kind === 'tag' ? 'tag_id' : 'door_id';
+  toast('Filtering…');
+  const { data: nodeLinks, error: linkErr } = await sb.from(table).select('node_id').eq(idCol, id);
+  if (linkErr) { toast('Filter failed: ' + linkErr.message); return; }
+  const nodeIds = [...new Set((nodeLinks || []).map(l => l.node_id))];
+  if (!nodeIds.length) { toast(`Nothing else tagged with "${label}" yet`); return; }
+  const { data: nodes, error: nodeErr } = await sb.from('node').select('source_id').eq('source_table', 'inbox').in('id', nodeIds);
+  if (nodeErr) { toast('Filter failed: ' + nodeErr.message); return; }
+  const sourceIds = [...new Set((nodes || []).map(n => n.source_id))];
+  if (!sourceIds.length) { toast(`Nothing else tagged with "${label}" yet`); return; }
+  picsFacetFilter = { kind, id, label, sourceIds };
+  document.getElementById('pics-folder').value = '';
+  picsFolder = '';
+  picsOffset = 0;
+  document.getElementById('pics-grid').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  renderPicsFacetBanner();
+  loadPics(false);
+}
+
+async function populatePicsFolders() {
+  if (picsFoldersPopulated) return;
+  if (!folderOptions.length) await loadFolderOptions();
+  const sel = document.getElementById('pics-folder');
+  folderOptions.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.folder;
+    opt.textContent = `${f.folder} (${f.count})`;
+    sel.appendChild(opt);
+  });
+  picsFoldersPopulated = true;
+}
+
+function picsFolderChanged() {
+  picsFolder = document.getElementById('pics-folder').value;
+  picsOffset = 0;
+  document.getElementById('pics-grid').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  loadPics(false);
+}
+
+async function loadPics(append) {
+  await populatePicsFolders();
+  if (!append) picsOffset = 0;
+
+  let query = sb.from('inbox')
+    .select('id,folder,stored_media,url,full_text,created_at', { count: 'exact' })
+    .not('stored_media', 'is', null)
+    .order('created_at', { ascending: false })
+    .range(picsOffset, picsOffset + PICS_PAGE - 1);
+  if (picsFolder) query = query.eq('folder', picsFolder);
+  if (picsFacetFilter) query = query.in('id', picsFacetFilter.sourceIds);
+
+  const { data, count, error } = await query;
+  if (error) { console.error('loadPics failed:', error); return; }
+  const items = (data || []).filter(d => (d.stored_media || []).length > 0);
+
+  const countEl = document.getElementById('pics-count');
+  if (count != null) countEl.textContent = `${count} archived image${count === 1 ? '' : 's'}`;
+
+  const grid = document.getElementById('pics-grid');
+  if (!append) grid.innerHTML = '';
+  if (!append && !items.length) {
+    grid.innerHTML = '<p class="empty">No archived images in this folder yet.</p>';
+    document.getElementById('pics-more').style.display = 'none';
+    return;
+  }
+
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'pic-thumb pic-skel';
+    div.id = `pic-${item.id}`;
+    div.onclick = () => openPicLightbox(item);
+    div.innerHTML = `<div class="pic-folder">${escapeHtml(item.folder || '')}</div>`;
+    grid.appendChild(div);
+  });
+
+  const keys = items.map(i => i.stored_media[0]);
+  if (keys.length) {
+    const { data: presignData, error: presignError } = await sb.functions.invoke('presign-media', { body: { keys } });
+    if (presignError) {
+      console.error('presign-media failed:', presignError);
+    } else {
+      items.forEach(item => {
+        const url = presignData?.urls?.[item.stored_media[0]];
+        const el = document.getElementById(`pic-${item.id}`);
+        if (el && url) {
+          el.classList.remove('pic-skel');
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.src = url;
+          img.alt = (item.full_text || '').slice(0, 80);
+          el.prepend(img);
+        }
+      });
+    }
+  }
+
+  picsOffset += PICS_PAGE;
+  document.getElementById('pics-more').style.display = items.length < PICS_PAGE ? 'none' : 'block';
+}
+
+async function openPicLightbox(item) {
+  const box = document.getElementById('pic-lightbox');
+  const inner = document.getElementById('pic-lightbox-inner');
+  inner.innerHTML = '<button class="detail-close" onclick="closePicLightbox()">×</button><div class="loading"><div class="spinner"></div></div>';
+  box.classList.add('open');
+
+  const key = (item.stored_media || [])[0];
+  let imgUrl = '';
+  if (key) {
+    const { data } = await sb.functions.invoke('presign-media', { body: { keys: [key] } });
+    imgUrl = data?.urls?.[key] || '';
+  }
+
+  // Tags/concepts/doors live in the graph tables, keyed off node.source_id = inbox.id.
+  const { data: nodeRow } = await sb.from('node').select('id')
+    .eq('source_table', 'inbox').eq('source_id', item.id).maybeSingle();
+  let tagsHtml = '<div class="card-meta">Not tagged yet.</div>';
+  if (nodeRow) {
+    const [{ data: concepts }, { data: tags }, { data: doors }] = await Promise.all([
+      sb.from('node_concept').select('concept_id, concept:concept_id(label)').eq('node_id', nodeRow.id),
+      sb.from('node_tag').select('tag_id, tag:tag_id(label)').eq('node_id', nodeRow.id),
+      sb.from('node_door').select('door_id, door:door_id(label)').eq('node_id', nodeRow.id),
+    ]);
+    const chipMeta = [
+      ...(doors || []).map(d => ({ kind: 'door', id: d.door_id, label: d.door?.label || '', style: 'background:#4ade8022;color:var(--green)' })),
+      ...(concepts || []).map(c => ({ kind: 'concept', id: c.concept_id, label: c.concept?.label || '', style: '' })),
+      ...(tags || []).map(t => ({ kind: 'tag', id: t.tag_id, label: t.tag?.label || '', style: 'opacity:0.75' })),
+    ].filter(c => c.label);
+    const chips = chipMeta.map(c =>
+      `<span class="tag pic-chip" style="${c.style}" data-kind="${c.kind}" data-id="${escapeHtml(String(c.id))}" data-label="${escapeHtml(c.label)}">${escapeHtml(c.label)}</span>`
+    ).join('');
+    if (chips) tagsHtml = `<div style="display:flex;flex-wrap:wrap;gap:0.2rem;margin-bottom:0.5rem">${chips}</div><div class="card-meta" style="margin-bottom:0.5rem">Tap a tag to see everything else it links to</div>`;
+  }
+
+  inner.innerHTML = `
+    <button class="detail-close" onclick="closePicLightbox()">×</button>
+    ${imgUrl ? `<img src="${imgUrl}" alt="" />` : '<p class="empty">Image unavailable</p>'}
+    <div class="card-meta" style="margin-bottom:0.4rem">📁 ${escapeHtml(item.folder || 'unfiled')} · ${new Date(item.created_at).toLocaleDateString()}</div>
+    ${item.full_text ? `<div style="font-size:0.9rem;line-height:1.5;margin-bottom:0.5rem">${escapeHtml(item.full_text).slice(0,400)}</div>` : ''}
+    ${tagsHtml}
+    ${item.url ? `<a href="${item.url}" target="_blank" rel="noopener" class="source-link">↗ Open original</a>` : ''}
+  `;
+  inner.querySelectorAll('.pic-chip').forEach(el => {
+    el.addEventListener('click', () => picsFilterByFacet(el.dataset.kind, el.dataset.id, el.dataset.label));
+  });
+}
+
+function closePicLightbox() { document.getElementById('pic-lightbox').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePicLightbox(); });
+
+/* ══════════════════════════════════════════════════════════════
    TAGGING — live view of the tagging script
    ══════════════════════════════════════════════════════════════ */
 
@@ -866,15 +1173,23 @@ function startTagging() { loadTagging(); if (!tgTimer) tgTimer = setInterval(loa
 function stopTagging()  { if (tgTimer) { clearInterval(tgTimer); tgTimer = null; } }
 
 async function loadTagging() {
-  const [total, tagged] = await Promise.all([
+  const [total, tagged, totalImg, taggedImg] = await Promise.all([
     sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture'),
-    sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture').not('tagged_at', 'is', null)
+    sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture').not('tagged_at', 'is', null),
+    sb.from('inbox').select('id', { count: 'exact', head: true }).not('media_urls', 'is', null),
+    sb.from('node').select('id', { count: 'exact', head: true }).eq('kind', 'capture').not('image_tagged_at', 'is', null)
   ]);
   const t = total.count || 0, d = tagged.count || 0;
   const pct = t ? Math.round(d / t * 100) : 0;
   document.getElementById('tg-fill').style.width = pct + '%';
   document.getElementById('tg-stats').innerHTML =
-    `<p class="sub" style="margin-bottom:0.6rem">${d} of ${t} captures tagged — ${pct}%</p>`;
+    `<p class="sub" style="margin-bottom:0.6rem">Text pass — ${d} of ${t} captures tagged — ${pct}%</p>`;
+
+  const ti = totalImg.count || 0, di = taggedImg.count || 0;
+  const pcti = ti ? Math.round(di / ti * 100) : 0;
+  document.getElementById('tg-fill-img').style.width = pcti + '%';
+  document.getElementById('tg-stats-img').innerHTML =
+    `<p class="sub" style="margin-bottom:0.6rem">Visual pass — ${di} of ${ti} images tagged — ${pcti}%</p>`;
 
   const moving = tgLastCount !== null && d > tgLastCount;
   document.getElementById('tg-live').textContent =
@@ -911,6 +1226,34 @@ async function loadTagging() {
       </div></div>`;
   }).join('') || '<p class="empty">Nothing tagged yet. Run the script.</p>';
 
+  const { data: imgData } = await sb.from('node_full')
+    .select('id,title,body,url,image_tagged_at,image_tagged_model,doors,domains,concepts,tags')
+    .eq('kind', 'capture').not('image_tagged_at', 'is', null)
+    .order('image_tagged_at', { ascending: false }).limit(20);
+
+  document.getElementById('tg-recent-img').innerHTML = (imgData || []).map(n => {
+    const folders  = (n.tags || []).filter(x => x.startsWith('folder-'));
+    const entities = (n.tags || []).filter(x => !x.startsWith('folder-'));
+    const empty = !(n.doors || n.domains || n.concepts || entities.length);
+    const text = (n.body && n.body.length > (n.title || '').length) ? n.body : (n.title || '');
+    return `<div class="card" style="padding:0.9rem">
+      <div class="card-header">
+        <div style="flex:1;min-width:0">
+          <div class="card-title" style="font-weight:400;line-height:1.5">${escapeHtml(text.slice(0, 600))}${text.length > 600 ? '…' : ''}</div>
+          <div class="card-meta">${n.image_tagged_model === 'unfetchable' ? '⚠️ image would not load' : (folders.map(f => '📁 ' + f.replace('folder-','').replace(/-/g,' ')).join(' ') || 'no folder')} · ${n.image_tagged_at.slice(11,19)}</div>
+          ${n.url ? `<a class="source-link" style="margin-top:0.35rem" href="${escapeHtml(n.url)}" target="_blank" rel="noopener">${escapeHtml(n.url)}</a>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="tgUndo(${n.id})">Wrong</button>
+      </div>
+      <div style="margin-top:0.5rem">
+        ${empty ? '<span class="card-meta">left untagged on purpose</span>' : ''}
+        ${(n.doors||[]).map(d => `<span class="tag" style="background:#60a5fa22;color:#60a5fa">${escapeHtml(d)}</span>`).join('')}
+        ${(n.domains||[]).map(d => `<span class="tag" style="background:#4ade8022;color:var(--green)">${escapeHtml(d)}</span>`).join('')}
+        ${(n.concepts||[]).map(c => `<span class="tag">${escapeHtml(c)}</span>`).join('')}
+        ${entities.map(e => `<span class="tag" style="background:#f8717122;color:var(--red)">${escapeHtml(e)}</span>`).join('')}
+      </div></div>`;
+  }).join('') || '<p class="empty">Nothing image-tagged yet. Run tag_images.py.</p>';
+
   loadPromote();
 }
 
@@ -920,7 +1263,7 @@ async function loadTagging() {
 async function loadPromote() {
   const { data } = await sb.from('node_tag')
     .select('tag_id, tag!inner(id,slug,label,concept_id)')
-    .eq('origin', 'gemini').limit(4000);
+    .in('origin', ['gemini', 'gemini-image']).limit(4000);
 
   const counts = {};
   (data || []).forEach(r => {
@@ -975,12 +1318,12 @@ async function tgPromote(slug, tagId) {
 // Folder tags are left alone because they did not come from the model.
 async function tgUndo(id) {
   await Promise.all([
-    sb.from('node_concept').delete().eq('node_id', id).eq('origin', 'gemini'),
-    sb.from('node_door').delete().eq('node_id', id).eq('origin', 'gemini'),
-    sb.from('node_domain').delete().eq('node_id', id).eq('origin', 'gemini'),
-    sb.from('node_tag').delete().eq('node_id', id).eq('origin', 'gemini')
+    sb.from('node_concept').delete().eq('node_id', id).in('origin', ['gemini', 'gemini-image']),
+    sb.from('node_door').delete().eq('node_id', id).in('origin', ['gemini', 'gemini-image']),
+    sb.from('node_domain').delete().eq('node_id', id).in('origin', ['gemini', 'gemini-image']),
+    sb.from('node_tag').delete().eq('node_id', id).in('origin', ['gemini', 'gemini-image'])
   ]);
-  await sb.from('node').update({ tagged_at: null, tagged_model: null }).eq('id', id);
+  await sb.from('node').update({ tagged_at: null, tagged_model: null, image_tagged_at: null, image_tagged_model: null }).eq('id', id);
   toast('Cleared. It will be picked up again on the next run.');
   loadTagging();
 }
