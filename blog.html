@@ -113,6 +113,32 @@
       color: rgba(255,255,255,0.3);
     }
 
+    .photo-strip-label {
+      font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); margin-bottom: 1.25rem;
+    }
+    .photo-strip {
+      display: flex; gap: 1.1rem; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 2.75rem;
+    }
+    .photo-strip img {
+      width: 128px; height: 160px; object-fit: cover; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.4);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      display: block;
+    }
+    .photo-strip a:nth-child(1) img { transform: rotate(-4deg); }
+    .photo-strip a:nth-child(2) img { transform: rotate(3deg); }
+    .photo-strip a:nth-child(3) img { transform: rotate(-2deg); }
+    .photo-strip a:nth-child(4) img { transform: rotate(2deg); }
+    .photo-strip a:nth-child(5) img { transform: rotate(-3deg); }
+    .photo-strip a:nth-child(6) img { transform: rotate(4deg); }
+    .photo-strip img:hover {
+      transform: rotate(0deg) scale(1.05);
+      box-shadow: 0 18px 40px rgba(91,184,255,0.18);
+    }
+
     .back-link {
       display: inline-flex; align-items: center; gap: 0.5rem;
       font-size: 0.8rem; color: rgba(255,255,255,0.3);
@@ -179,6 +205,17 @@
       <span class="blog-tag">running</span>
       <span class="blog-tag">ideas</span>
     </div>
+
+    <p class="photo-strip-label">a few from the camera roll, while this builds</p>
+    <div class="photo-strip">
+      <a href="assetsforsite/blog/photo-sunset.jpg" target="_blank"><img src="assetsforsite/blog/photo-sunset.jpg" alt="Toni at sunset by the water" loading="lazy"></a>
+      <a href="assetsforsite/blog/photo-suit-square.jpg" target="_blank"><img src="assetsforsite/blog/photo-suit-square.jpg" alt="Toni in a suit in a city square" loading="lazy"></a>
+      <a href="assetsforsite/blog/photo-closeup.jpg" target="_blank"><img src="assetsforsite/blog/photo-closeup.jpg" alt="Toni close up portrait" loading="lazy"></a>
+      <a href="assetsforsite/blog/photo-laptop-doorstep.jpg" target="_blank"><img src="assetsforsite/blog/photo-laptop-doorstep.jpg" alt="Toni working on a laptop on a doorstep" loading="lazy"></a>
+      <a href="assetsforsite/blog/photo-mirror-arsenal.jpg" target="_blank"><img src="assetsforsite/blog/photo-mirror-arsenal.jpg" alt="Toni mirror selfie in an Arsenal shirt" loading="lazy"></a>
+      <a href="assetsforsite/blog/photo-arsenal-side.jpg" target="_blank"><img src="assetsforsite/blog/photo-arsenal-side.jpg" alt="Toni side profile in an Arsenal shirt" loading="lazy"></a>
+    </div>
+
     <a class="back-link" href="index.html">← back to portfolio</a>
   </div>
 </main>
