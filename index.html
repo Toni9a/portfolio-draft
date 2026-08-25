@@ -27,6 +27,7 @@
       --hat-artisting:   #6EE7B7;
       --hat-engineering: #5BB8FF;
       --hat-marketing:   #FBBF24;
+      --hat-contracting: #A78BFA;
       --dot:    #5BB8FF;
       --surf:   #0e0e0e;
       --border: rgba(255,255,255,0.07);
@@ -164,6 +165,7 @@
     .hero-nav-link[data-hat="artisting"]   .hnl-dot { background: var(--hat-artisting); }
     .hero-nav-link[data-hat="engineering"] .hnl-dot { background: var(--hat-engineering); }
     .hero-nav-link[data-hat="marketing"]   .hnl-dot { background: var(--hat-marketing); }
+    .hero-nav-link[data-hat="contracting"] .hnl-dot { background: var(--hat-contracting); }
 
     /* ── Flower Card ── */
     .hero-right {
@@ -186,6 +188,8 @@
       font-size: 0.72rem; color: rgba(255,255,255,0.08); letter-spacing: 0.14em;
     }
 
+
+
     /* ══════════════════════════════════
        SECTION COMMON
     ══════════════════════════════════ */
@@ -206,7 +210,7 @@
     }
 
     /* ══════════════════════════════════
-       WORK — subsections per hat
+       WORK: subsections per hat
     ══════════════════════════════════ */
     #work { border-top: 1px solid var(--border); }
 
@@ -239,6 +243,7 @@
     .hat-pill.artisting   { background: rgba(110,231,183,0.12); color: var(--hat-artisting); }
     .hat-pill.engineering { background: rgba(91,184,255,0.12);  color: var(--hat-engineering); }
     .hat-pill.marketing   { background: rgba(251,191,36,0.12);  color: var(--hat-marketing); }
+    .hat-pill.contracting { background: rgba(167,139,250,0.12); color: var(--hat-contracting); }
 
     .hat-section-desc {
       font-size: 0.8rem; color: rgba(255,255,255,0.3);
@@ -246,14 +251,22 @@
     }
 
     .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
+          display: grid;
+          grid-template-rows: repeat(2, auto);
+          grid-auto-columns: calc((100% - 2px) / 3);
+          grid-auto-flow: column;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          gap: 1px;
+          background: var(--border);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+        }
+        .projects-grid::-webkit-scrollbar { display: none; }
+        .projects-grid > .project-card { scroll-snap-align: start; }
     .project-card {
       background: #030303; padding: 1.6rem;
       display: flex; flex-direction: column; gap: 0.8rem;
@@ -388,6 +401,108 @@
 
     /* about side spacing */
     .about-side { display: flex; flex-direction: column; gap: 2rem; }
+  
+    /* ── Bio Intro ── */
+    .bio-intro { border-bottom: 1px solid var(--border); padding: 3rem 0; }
+    .bio-intro-text { font-size: 1.05rem; line-height: 1.8; color: rgba(255,255,255,0.72); max-width: 680px; }
+    .bio-intro-text strong { color: #fff; font-weight: 600; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #111; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; width: 100%; max-width: 560px;
+      max-height: 85vh; overflow-y: auto;
+      transform: translateY(14px); transition: transform 0.22s;
+    }
+    .modal-backdrop.open .modal-box { transform: translateY(0); }
+    .modal-bar { height: 4px; border-radius: 16px 16px 0 0; }
+    .modal-inner { padding: 1.75rem; }
+    .modal-close {
+      float: right; background: none; border: none;
+      color: rgba(255,255,255,0.35); font-size: 1.2rem;
+      cursor: pointer; margin: -0.15rem -0.15rem 0 0; line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: #fff; }
+    .modal-period { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 0.5rem; }
+    .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.3; }
+    .modal-desc { color: rgba(255,255,255,0.68); line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
+    .modal-note {
+      font-style: italic; color: rgba(255,255,255,0.5); font-size: 0.88rem;
+      line-height: 1.65; border-left: 3px solid rgba(255,255,255,0.12);
+      padding-left: 1rem; margin-bottom: 1.25rem; display: none;
+    }
+    .modal-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+    .modal-link {
+      display: inline-block; padding: 0.55rem 1.1rem;
+      border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+      text-decoration: none; background: rgba(255,255,255,0.08);
+      color: #fff; transition: background 0.15s;
+    }
+    .modal-link:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Card hover ── */
+    .project-card { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .project-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
+
+  
+    /* ── Hero bio ── */
+    .hero-bio-wrap { margin: 1.5rem 0 2rem; overflow: hidden; }
+    .hero-bio {
+      font-size: 0.82rem; line-height: 1.75;
+      color: rgba(255,255,255,0.52); max-width: 360px;
+      opacity: 0; transform: translateX(-18px);
+      animation: bio-slide 1.4s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
+    }
+    .hero-bio-muted { color: rgba(255,255,255,0.3); }
+    @keyframes bio-slide { to { opacity: 1; transform: translateX(0); } }
+
+    /* ── Dot-tile constant pulse animation ── */
+    @keyframes dot-pulse {
+      0%,100% { opacity: 0.92; }
+      50%      { opacity: 0.35; }
+    }
+    .dot-tile .dot.lit.pulsing {
+      animation: dot-pulse 1.6s ease-in-out infinite;
+    }
+    .dot-tile .dot.hover-boost {
+      opacity: 1 !important;
+      animation-play-state: paused;
+    }
+
+    /* ── Grid scroll indicator ── */
+    .grid-scroll-indicator {
+      display: flex; align-items: center; justify-content: center;
+      gap: 5px; margin-top: 0.75rem; height: 14px;
+    }
+    .gsi-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .gsi-dot.active {
+      background: rgba(255,255,255,0.7);
+      transform: scale(1.3);
+    }
+    @keyframes gsi-hint {
+      0%,100% { transform: translateX(0) scale(1.3); }
+      50%      { transform: translateX(3px) scale(1.3); }
+    }
+    .gsi-dot.active.hint { animation: gsi-hint 0.8s ease-in-out 3; }
+
+  
+    .hat-sub-label { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.22); margin: 2rem 0 0.85rem; }
+    .card-status { font-size: 0.6rem; letter-spacing: 0.1em; padding: 0.12rem 0.5rem; border-radius: 100px; background: rgba(251,191,36,0.12); color: var(--amber); display: inline-block; margin-bottom: 0.2rem; }
+    .card-status.idea { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); }
+
   </style>
 </head>
 <body>
@@ -442,8 +557,15 @@
       <span class="n-toni">Toni</span>
       <span class="n-esan">Esan</span>
     </h1>
-
-    <div class="hero-nav-links">
+    <div class="hero-bio-wrap">
+      <p class="hero-bio">Engineering &times; AI &times; Creative product thinking. Building things that bridge disciplines and solve real problems with taste. <span class="hero-bio-muted">MSc Applied AI, Cranfield &middot; Technical Officer, Leveret AI.</span></p>
+    </div>
+<div class="hero-nav-links">
+      <div class="hero-nav-link" data-hat="contracting" onclick="navTo('contracting')">
+        <span class="hnl-dot"></span>
+        <span class="hnl-label">contracting</span>
+        <span class="hnl-arrow">→</span>
+      </div>
       <div class="hero-nav-link" data-hat="thinking" onclick="navTo('thinking')">
         <span class="hnl-dot"></span>
         <span class="hnl-label">thinking</span>
@@ -476,7 +598,8 @@
 </section>
 
 <!-- ══════ WORK ══════ -->
-<div id="work" style="border-top:1px solid var(--border); position:relative; overflow:hidden;">
+
+      <div id="work" style="border-top:1px solid var(--border); position:relative; overflow:hidden;">
   <svg class="leaf-deco leaf-work-tr" viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <use href="#leaf-branch"/>
   </svg>
@@ -484,197 +607,605 @@
     <p class="section-label">Selected work</p>
     <h2 class="section-title">Things I've built &amp; shipped</h2>
 
+    <!-- CONTRACTING -->
+    <div class="hat-section" id="contracting">
+      <div class="hat-section-header">
+        <div class="hat-thumb">
+          <img src="assetsforsite/Contracting_hat_purple.jpg" alt=""
+            onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
+        </div>
+        <div>
+          <h3 class="hat-section-title">
+            <span class="hat-pill contracting">contracting</span>
+            client builds &amp; freelance
+          </h3>
+        </div>
+      </div>
+      <div class="projects-grid">
+        <div class="project-card"
+       data-note="Avalon Insights is my AI consulting company. I build bespoke AI workflows and run training programmes for organisations."
+       data-link="https://toniesan.com">
+          
+          <p class="card-period">2025–Present</p>
+          <h3 class="card-title">Avalon Insights AI Consulting</h3>
+          <p class="card-desc">AI upskilling and workflow automation across finance, construction, charity and public sector. Work has included AI workflows and dashboards for a specialist lender broker (Claude skills: capture-split-context, digitise-phone-notes, draft-credit-paper), a construction company (tender packs, CIS tax), a wealth management firm (trade reconciliation, investor letters), and trusts across the West Midlands (grant writing, board reporting).</p>
+          <p class="card-metric">Birmingham City Council · West Midlands Trusts</p>
+          <div class="card-tags"><span class="tag">Claude Cowork</span><span class="tag">AI Workflows</span><span class="tag">Consulting</span><span class="tag">Upskilling</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Contracted data engineering work.">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Gymscrap</h3>
+          <p class="card-desc">Freelance engineering build. Scraping and data pipeline project for a fitness data client.</p>
+          <p class="card-metric">Delivered to spec</p>
+          <div class="card-tags"><span class="tag">Python</span><span class="tag">Web Scraping</span><span class="tag">Data Pipeline</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Contracted build for a chef/hospitality client.">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">ChefHelp</h3>
+          <p class="card-desc">Freelance AI product build for a client in the food/hospitality space.</p>
+          <p class="card-metric">Client delivery</p>
+          <div class="card-tags"><span class="tag">AI Product</span><span class="tag">Hospitality</span><span class="tag">Freelance</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Designed and built the digital presence for Taha's private dining brand.">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Dining with Taha</h3>
+          <p class="card-desc">Client website and digital presence for a private dining experience brand.</p>
+          <p class="card-metric">Live client site</p>
+          <div class="card-tags"><span class="tag">Web</span><span class="tag">Client Build</span><span class="tag">Hospitality</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Contracted build. An AI command centre for interview preparation.">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">Derrick Interview Command Centre</h3>
+          <p class="card-desc">Custom AI-powered interview prep and command centre tool built for a client.</p>
+          <p class="card-metric">Client delivery</p>
+          <div class="card-tags"><span class="tag">AI Tool</span><span class="tag">Interview Prep</span><span class="tag">Freelance</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Built a personalised face-gallery experience as a commissioned birthday project.">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">60th Birthday Face Gallery</h3>
+          <p class="card-desc">Custom face-recognition powered birthday gallery, a one-off client commission.</p>
+          <p class="card-metric">Delivered</p>
+          <div class="card-tags"><span class="tag">Face Detection</span><span class="tag">Gallery</span><span class="tag">Client Build</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Pastoral AI assistant. Collaborating on an existing POC and planning a blog post about it.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">PastorAssist</h3>
+          <p class="card-desc">AI assistant for pastoral/clergy workflows. Currently in progress. Another developer built the initial POC, I'm expanding and will blog about the collaboration.</p>
+          <p class="card-metric">In progress · collaborating</p>
+          <div class="card-tags"><span class="tag">AI Assistant</span><span class="tag">In Progress</span><span class="tag">Collaboration</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Portfolio of client web builds: Gloteem, event brands, and more."
+       data-link="https://gloteem.com">
+          
+          <p class="card-period">2022–Present</p>
+          <h3 class="card-title">Client Websites & Consulting</h3>
+          <p class="card-desc">Ongoing freelance web builds and social/digital consulting for small businesses and brands. Clients include Gloteem and others.</p>
+          <p class="card-metric">Multiple live sites</p>
+          <div class="card-tags"><span class="tag">Web Design</span><span class="tag">Freelance</span><span class="tag">Digital</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Designed and delivered a 3-part AI upskilling programme for BMTA members.">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">BMTA Workshop Programme</h3>
+          <p class="card-desc">Led a 3-session AI training programme for the British Textile Machinery Association. Session 1: brand voice and marketing AI (Marlow case study). Session 2: AI ethics and customer support agents. Session 3: multi-source email agents and live Google Sheet automation.</p>
+          <p class="card-metric">3 sessions delivered</p>
+          <div class="card-tags"><span class="tag">Training</span><span class="tag">AI Workshops</span><span class="tag">BMTA</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Technical advisory and build work at Leveret.">
+          
+          <p class="card-period">2024–Present</p>
+          <h3 class="card-title">Leveret, Technical Officer</h3>
+          <p class="card-desc">Technical Officer at Leveret, a startup focused on pitching for funding and building early-stage AI product.</p>
+          <p class="card-metric">Ongoing role</p>
+          <div class="card-tags"><span class="tag">Startup</span><span class="tag">Technical Lead</span><span class="tag">Funding Pitch</span></div>
+        </div>
+      </div>
+    </div>
     <!-- THINKING -->
     <div class="hat-section" id="thinking">
       <div class="hat-section-header">
         <div class="hat-thumb">
-          <img src="assetsforsite/thinking_hat.png" alt=""
+          <img src="assetsforsite/Thinking_hat_tan.png" alt=""
             onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
         </div>
         <div>
           <h3 class="hat-section-title">
             <span class="hat-pill thinking">thinking</span>
-            AI, code &amp; systems
+            systems, tools &amp; experiments
           </h3>
-          <p class="hat-section-desc">Machine learning, computer vision, autonomous systems, software engineering</p>
         </div>
       </div>
       <div class="projects-grid">
-        <div class="project-card">
-          <p class="card-period">June 2024 – Present</p>
-          <h3 class="card-title">Leveret AI — Dental X-Ray Diagnosis</h3>
-          <p class="card-desc">CV platform for automated dental X-ray diagnosis deployed into NHS beta clinics. Led dataset curation, beta testing, and bridged engineers with clinical end users.</p>
-          <p class="card-metric">~27% early adoption across NHS beta clinics</p>
-          <div class="card-tags"><span class="tag">Python</span><span class="tag">YOLO</span><span class="tag">Roboflow</span><span class="tag">Healthcare AI</span></div>
+        <div class="project-card"
+       data-note="Montedera is both a thinking and artisting project, exploring ideas through visual and cultural lenses."
+       data-link="https://claudeera.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Montedera</h3>
+          <p class="card-desc">A personal project exploring culture, aesthetics and creative thinking. Sits between tech and art. Also in the artisting hat.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Creative</span><span class="tag">Culture</span><span class="tag">Exploration</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">Feb 2025</p>
-          <h3 class="card-title">Bundesliga AI Hackathon — Pose Classification</h3>
-          <p class="card-desc">Automated pipeline classifying thousands of media day football photos into 16 pose categories. YOLO + transformers on Amazon SageMaker with GPU instances.</p>
-          <div class="card-tags"><span class="tag">YOLO</span><span class="tag">Transformers</span><span class="tag">SageMaker</span><span class="tag">PyTorch</span></div>
-        </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="Combined my half-marathon training with an AI health coaching app I built for myself.">
+          
           <p class="card-period">2024</p>
-          <h3 class="card-title">Deep RL for Autonomous Driving (MSc)</h3>
-          <p class="card-desc">DQN and PPO agents on OpenAI Gymnasium CarRacing. MDP formulation, 4-frame stacking, auxiliary sensor features. GPU-accelerated on MacBook Metal.</p>
-          <div class="card-tags"><span class="tag">DQN</span><span class="tag">PPO</span><span class="tag">OpenAI Gym</span><span class="tag">TensorBoard</span></div>
+          <h3 class="card-title">Healthcoach + Halfmara</h3>
+          <p class="card-desc">Personal AI health coaching tool merged with a half-marathon training tracker. Integrated workout scheduling, nutrition logging, and coaching feedback.</p>
+          <p class="card-metric">Personal tool, ongoing</p>
+          <div class="card-tags"><span class="tag">Health</span><span class="tag">Running</span><span class="tag">AI Coach</span></div>
         </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="I built this because I wanted a no-friction way to log gym sessions and keep streaks going.">
+          
           <p class="card-period">2024</p>
-          <h3 class="card-title">Computer Vision — CIFAR-10 &amp; UAV Detection (MSc)</h3>
-          <p class="card-desc">FCN, CNN, and ResNet50V2 transfer learning on CIFAR-10. YOLOv8n vs Faster R-CNN for UAV detection with mAP/IoU benchmarking.</p>
-          <div class="card-tags"><span class="tag">ResNet50V2</span><span class="tag">YOLOv8n</span><span class="tag">Faster R-CNN</span><span class="tag">Keras</span></div>
+          <h3 class="card-title">Telegram Gym Streaks</h3>
+          <p class="card-desc">Telegram bot that tracks gym visits and maintains streak data, a daily accountability system built for personal use.</p>
+          <p class="card-metric">Active personal tool</p>
+          <div class="card-tags"><span class="tag">Telegram Bot</span><span class="tag">Fitness</span><span class="tag">Habits</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2023–2024</p>
-          <h3 class="card-title">RAG System for Sales Engineering</h3>
-          <p class="card-desc">Bespoke RAG pipeline automating PDF-to-CSV extraction and LLM-based retrieval for a sales team. Cut manual processing overhead significantly.</p>
-          <div class="card-tags"><span class="tag">Python</span><span class="tag">RAG</span><span class="tag">LLM</span><span class="tag">Supabase</span></div>
-        </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="An experiment in combining social media location data with maps.">
+          
           <p class="card-period">2024</p>
-          <h3 class="card-title">Automated Geospatial Data Pipeline</h3>
-          <p class="card-desc">Satellite imagery + API metadata + LLM-generated narratives for computer vision dataset construction. Contributed to a published research project.</p>
-          <div class="card-tags"><span class="tag">Satellite imagery</span><span class="tag">LLM</span><span class="tag">CV dataset</span><span class="tag">Python</span></div>
+          <h3 class="card-title">Instagram × Google Maps</h3>
+          <p class="card-desc">Exploration project: mapping Instagram location data to Google Maps to surface geo-tagged content patterns.</p>
+          <p class="card-metric">Research / exploration</p>
+          <div class="card-tags"><span class="tag">Instagram</span><span class="tag">Maps</span><span class="tag">Data</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Building a physio tracking app to manage my own recovery and exercises.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">Physio App</h3>
+          <p class="card-desc">Personal physiotherapy tracking and exercise prescription app, in progress.</p>
+          <p class="card-metric">In progress</p>
+          <div class="card-tags"><span class="tag">Health</span><span class="tag">Physio</span><span class="tag">In Progress</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Inspired by an external POC. Will write a blog post linking to it and exploring the concept."
+       data-link="https://github.com">
+          
+        <p class="card-status">Concept</p>
+          <p class="card-period">Concept</p>
+          <h3 class="card-title">Meta Glasses Face Detection</h3>
+          <p class="card-desc">Concept for face detection using Meta smart glasses. Someone else already built a proof-of-concept version. I'll link to it and blog about it.</p>
+          <p class="card-metric">POC exists externally</p>
+          <div class="card-tags"><span class="tag">Face Detection</span><span class="tag">Meta</span><span class="tag">Concept</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Concept for a cooking companion, same idea as JScooks."
+       data-link="https://jscooks.vercel.app">
+          
+        <p class="card-status">Concept</p>
+          <p class="card-period">Concept</p>
+          <h3 class="card-title">JScooks / JasonCooks</h3>
+          <p class="card-desc">A cooking companion app concept: meal planning, recipe surfacing, and cooking assistant.</p>
+          <p class="card-metric">Concept / early stage</p>
+          <div class="card-tags"><span class="tag">Cooking</span><span class="tag">App Concept</span><span class="tag">Food</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Built to solve the real problem of sorting and ordering photos for a birthday slideshow.">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">Birthday Slideshow Ordering</h3>
+          <p class="card-desc">Tool for automatically ordering and curating birthday slideshow photos, built as a thinking/organising project.</p>
+          <p class="card-metric">Shipped</p>
+          <div class="card-tags"><span class="tag">Photos</span><span class="tag">Automation</span><span class="tag">Curation</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Building a system to make YouTube video content semantically searchable.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">RAG for YouTube</h3>
+          <p class="card-desc">Retrieval-augmented generation pipeline for YouTube content. Index videos and query their content semantically.</p>
+          <p class="card-metric">In progress</p>
+          <div class="card-tags"><span class="tag">RAG</span><span class="tag">YouTube</span><span class="tag">NLP</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Would love to build this: a map that tracks % of a city you've actually walked through.">
+          
+        <p class="card-status idea">idea</p>
+          <p class="card-period">Idea</p>
+          <h3 class="card-title">Explored % App</h3>
+          <p class="card-desc">An app that tracks what percentage of a city or area you've physically explored, gamifying urban exploration.</p>
+          <p class="card-metric">Idea stage</p>
+          <div class="card-tags"><span class="tag">Maps</span><span class="tag">Gamification</span><span class="tag">Idea</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Inspired by how music is tied to memory. Want to make that connection explicit.">
+          
+        <p class="card-status idea">idea</p>
+          <p class="card-period">Idea</p>
+          <h3 class="card-title">Spotify Memory</h3>
+          <p class="card-desc">An app that surfaces Spotify listening history as personal memory. "You were listening to this when..."</p>
+          <p class="card-metric">Idea stage</p>
+          <div class="card-tags"><span class="tag">Spotify</span><span class="tag">Memory</span><span class="tag">Music</span></div>
         </div>
       </div>
     </div>
-
     <!-- ARTISTING -->
     <div class="hat-section" id="artisting">
       <div class="hat-section-header">
         <div class="hat-thumb">
-          <img src="assetsforsite/artisting_hat.png" alt=""
+          <img src="assetsforsite/Artisting_hat_mint.png" alt=""
             onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
         </div>
         <div>
           <h3 class="hat-section-title">
             <span class="hat-pill artisting">artisting</span>
-            design, brand &amp; culture
+            creative builds &amp; making
           </h3>
-          <p class="hat-section-desc">Product design, visual identity, MagKits, cinema</p>
         </div>
       </div>
       <div class="projects-grid">
-        <div class="project-card">
-          <p class="card-period">Dec 2022 – Present</p>
-          <h3 class="card-title">MagKits — iPhone Accessory Brand</h3>
-          <p class="card-desc">MagSafe wallet brand built around football clubs. Full stack: product design in Blender &amp; Photoshop, Shopify store, supply chain, social content. Founded &amp; bootstrapped.</p>
-          <p class="card-metric">500k+ followers grown for a client within 2 years</p>
-          <div class="card-tags"><span class="tag">Blender</span><span class="tag">Photoshop</span><span class="tag">Shopify</span><span class="tag">Branding</span></div>
+        <div class="project-card"
+       data-note="Built because lyric videos take ages to make manually. This automates the whole thing."
+       data-link="https://github.com/toniesan">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">LyricVid</h3>
+          <p class="card-desc">Auto-generates lyric videos from songs. Syncs lyrics to audio and exports as video.</p>
+          <p class="card-metric">Shipped</p>
+          <div class="card-tags"><span class="tag">Video</span><span class="tag">Music</span><span class="tag">Automation</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2021</p>
-          <h3 class="card-title">Fitbod Smart Speaker — Industrial Design</h3>
-          <p class="card-desc">Physical smart speaker embodying the Fitbod brand. Full CAD in SolidWorks, 3D-printed prototype, and KeyShot studio renders. 1st class result.</p>
-          <div class="card-tags"><span class="tag">SolidWorks</span><span class="tag">KeyShot</span><span class="tag">3D Printing</span></div>
+        <div class="project-card"
+       data-note="Built to unify my writing workflow."
+       data-link="https://github.com/toniesan">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">Write-sync</h3>
+          <p class="card-desc">A writing sync tool that aligns creative writing and productivity in one workspace.</p>
+          <p class="card-metric">Shipped</p>
+          <div class="card-tags"><span class="tag">Writing</span><span class="tag">Productivity</span><span class="tag">Creative</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2022 – Present</p>
-          <h3 class="card-title">Client Interactive Websites</h3>
-          <p class="card-desc">Vue.js interactive sites with dynamic animations and Shopify integrations for e-commerce clients. From brief to live, fast.</p>
-          <div class="card-tags"><span class="tag">Vue.js</span><span class="tag">Shopify</span><span class="tag">Liquid</span><span class="tag">Vercel</span></div>
+        <div class="project-card"
+       data-note="What are you wearing to match what you're listening to?">
+          
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Spotify Outfit Match</h3>
+          <p class="card-desc">Matches your current Spotify listening mood to an outfit recommendation, API-driven.</p>
+          <p class="card-metric">Shipped</p>
+          <div class="card-tags"><span class="tag">Spotify</span><span class="tag">Fashion</span><span class="tag">API</span></div>
         </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="Building a tool to turn my ChatGPT conversations into usable study cards.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">CCard from GPT Chats</h3>
+          <p class="card-desc">Extracts and generates flashcard-style content from GPT conversations, learning from your own AI chats.</p>
+          <p class="card-metric">In progress</p>
+          <div class="card-tags"><span class="tag">Learning</span><span class="tag">GPT</span><span class="tag">Flashcards</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Designed and built the interactive site for Timikeys, including an mp3 player and animation system."
+       data-link="https://timikeys.com">
+          
+          <p class="card-period">2024</p>
+          <h3 class="card-title">Timikeys Project Site</h3>
+          <p class="card-desc">Built an mp3 player and custom animations for the Timikeys project site. Interactive music and motion design.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Music</span><span class="tag">Animation</span><span class="tag">Web</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Built the demo site for A3 Tutoring."
+       data-link="https://a3tutoring.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">A3 Tutoring Demo</h3>
+          <p class="card-desc">Demo site for A3 Tutoring, a clean, animated landing page for a tutoring service.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Web Design</span><span class="tag">Education</span><span class="tag">Landing Page</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Designed and built a digital wedding programme."
+       data-link="https://weddinggal.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Wedding Program</h3>
+          <p class="card-desc">Digital wedding programme, custom design and interactive flow for a wedding.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Web Design</span><span class="tag">Event</span><span class="tag">Custom</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Montedera sits between thinking and making. A personal creative project."
+       data-link="https://claudeera.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Montedera</h3>
+          <p class="card-desc">Cultural and aesthetic exploration project, part thinking, part artistry. A creative platform.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Creative</span><span class="tag">Culture</span><span class="tag">Visual</span></div>
+        </div>
+        <div class="project-card"
+       data-note="I use Midjourney to explore visual ideas. Not overthinking it, just making images.">
+          
+          <p class="card-period">Ongoing</p>
+          <h3 class="card-title">Midjourney & AI Image Making</h3>
+          <p class="card-desc">I make images. Using Midjourney and other AI tools to explore visual ideas, moods and concepts.</p>
+          <p class="card-metric">Ongoing practice</p>
+          <div class="card-tags"><span class="tag">Midjourney</span><span class="tag">AI Art</span><span class="tag">Visual</span></div>
+        </div>
+        <div class="project-card"
+       data-note="My Letterboxd log. I take film seriously."
+       data-link="https://boxd.it/5YsGb">
+          
           <p class="card-period">Ongoing</p>
           <h3 class="card-title">Cinema &amp; Film</h3>
-          <p class="card-desc">Obsessive film watcher. From A24 to Nollywood. Logging, ranking, and occasionally over-analysing on Letterboxd.</p>
-          <div class="card-tags"><span class="tag">Letterboxd</span><span class="tag">Film criticism</span></div>
-          <a href="https://boxd.it/5YsGb" target="_blank" style="font-size:0.75rem;color:var(--hat-artisting);margin-top:0.2rem;display:inline-block;">→ letterboxd ↗</a>
+          <p class="card-desc">A sustained engagement with cinema: watching, logging, thinking about film.</p>
+          <p class="card-metric">Ongoing</p>
+          <div class="card-tags"><span class="tag">Film</span><span class="tag">Cinema</span><span class="tag">Culture</span></div>
         </div>
       </div>
     </div>
-
     <!-- ENGINEERING -->
     <div class="hat-section" id="engineering">
       <div class="hat-section-header">
         <div class="hat-thumb">
-          <img src="assetsforsite/engineering_hat.png" alt=""
+          <img src="assetsforsite/Engineering_hat_blue.png" alt=""
             onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
         </div>
         <div>
           <h3 class="hat-section-title">
             <span class="hat-pill engineering">engineering</span>
-            mechanical &amp; physical
+            software, AI &amp; mechanical design
           </h3>
-          <p class="hat-section-desc">Product design, CAD, simulations, autonomous systems, hardware</p>
         </div>
       </div>
+      <p class="hat-sub-label">Software &amp; AI</p>
       <div class="projects-grid">
-        <div class="project-card">
-          <p class="card-period">2021</p>
-          <h3 class="card-title">Electric Scooter Dissertation — 1st Class</h3>
-          <p class="card-desc">Technical comparison of Pure Electric vs Xiaoming — battery architecture, voltage sag under load, performance analysis in MATLAB/Simulink.</p>
-          <div class="card-tags"><span class="tag">MATLAB</span><span class="tag">Simulink</span><span class="tag">Battery diagnostics</span><span class="tag">EVs</span></div>
+        <div class="project-card"
+       data-note="My MSc dissertation. Combined Lidar sensor data with a nudging UI for autonomous vehicle feedback."
+       data-link="https://lidarnudge.vercel.app">
+          
+          <p class="card-period">2024–2025</p>
+          <h3 class="card-title">MSc Lidar Nudge Dashboard</h3>
+          <p class="card-desc">MSc dissertation project. Real-time Lidar data visualisation dashboard with behavioural nudging for AV systems. Built at Cranfield.</p>
+          <p class="card-metric">Distinction · Live</p>
+          <div class="card-tags"><span class="tag">Lidar</span><span class="tag">AV</span><span class="tag">Dashboards</span><span class="tag">MSc</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2016</p>
-          <h3 class="card-title">Chillybox — Medical Storage for Rural Africa</h3>
-          <p class="card-desc">Insulated blood transport box for East Africa's heat constraints. Thermodynamic simulation and CAD. Built at Imperial College London.</p>
-          <div class="card-tags"><span class="tag">SolidWorks</span><span class="tag">Thermodynamics</span><span class="tag">Social Impact</span></div>
+        <div class="project-card"
+       data-note="Bundled all my Cranfield MSc project work: 6 ML modules, deep RL, CV, geospatial, RAG.">
+          
+          <p class="card-period">2024–2025</p>
+          <h3 class="card-title">Cranfield MSc Research Pack</h3>
+          <p class="card-desc">Full suite of MSc module projects: Machine Learning (6 modules), Deep RL agent, CV with CIFAR-10, Geospatial pipeline, RAG sales system. All Cranfield University work.</p>
+          <p class="card-metric">MSc · Distinction</p>
+          <div class="card-tags"><span class="tag">Machine Learning</span><span class="tag">Deep RL</span><span class="tag">Computer Vision</span><span class="tag">Cranfield</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2019</p>
-          <h3 class="card-title">Navya Autonomous Vehicle — Route Training</h3>
-          <p class="card-desc">Trained a Navya AV on urban routes using Xbox controller inputs. Gathered structured public feedback on AV perception in a live city environment.</p>
-          <div class="card-tags"><span class="tag">Autonomous vehicles</span><span class="tag">Control systems</span><span class="tag">UX research</span></div>
+        <div class="project-card"
+       data-note="GDP project at Cranfield, building AI tools for engineering design workflows.">
+          
+          <p class="card-period">2024–2025</p>
+          <h3 class="card-title">Cranfield GDP: Generative Prompt Pipeline</h3>
+          <p class="card-desc">Group Design Project at Cranfield. Built a generative AI prompt pipeline for engineering design assistance.</p>
+          <p class="card-metric">Group project · Cranfield</p>
+          <div class="card-tags"><span class="tag">Generative AI</span><span class="tag">Prompt Engineering</span><span class="tag">Engineering Design</span></div>
         </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="Built Cornerstore to solve real stock management pain points for small shops."
+       data-link="https://cornerstockv2.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Cornerstore</h3>
+          <p class="card-desc">Inventory and stock management system for small retailers, a full-stack web app.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Full Stack</span><span class="tag">Inventory</span><span class="tag">Retail</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Built to speed up photo ordering workflows. Takes a batch and sorts them.">
+          
           <p class="card-period">2024</p>
-          <h3 class="card-title">Cyber-Physical Systems — Multi-Agent Consensus (MSc)</h3>
-          <p class="card-desc">Leader-follower temperature control with QPSK wireless comms, XOR encryption, and FPGA-ready HDL implementation in MATLAB/Simulink.</p>
-          <div class="card-tags"><span class="tag">MATLAB</span><span class="tag">Simulink</span><span class="tag">QPSK</span><span class="tag">FPGA/HDL</span></div>
+          <h3 class="card-title">Photo Order Helper</h3>
+          <p class="card-desc">Tool that automatically sorts and orders a batch of photos intelligently, saving hours of manual curation.</p>
+          <p class="card-metric">Shipped</p>
+          <div class="card-tags"><span class="tag">Computer Vision</span><span class="tag">Automation</span><span class="tag">Photos</span></div>
         </div>
-        <div class="project-card">
+        <div class="project-card"
+       data-note="Using CV segmentation models to analyse gym footage. Not finished yet.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">Gym Segmentation</h3>
+          <p class="card-desc">Computer vision project, segmenting gym equipment and poses from images for workout analysis.</p>
+          <p class="card-metric">In progress</p>
+          <div class="card-tags"><span class="tag">Computer Vision</span><span class="tag">Segmentation</span><span class="tag">Fitness</span></div>
+        </div>
+        <div class="project-card"
+       data-note="CV pipeline for detecting and categorising clothing items, work in progress.">
+          
+        <p class="card-status">In progress</p>
+          <p class="card-period">In Progress</p>
+          <h3 class="card-title">Clothing Autodetect</h3>
+          <p class="card-desc">Automated clothing detection and classification from images using computer vision.</p>
+          <p class="card-metric">In progress</p>
+          <div class="card-tags"><span class="tag">Computer Vision</span><span class="tag">Fashion</span><span class="tag">Classification</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Concept stage. Using CV to understand customer purchase behaviour.">
+          
+        <p class="card-status">Concept</p>
+          <p class="card-period">Concept</p>
+          <h3 class="card-title">CV for Purchase Detection</h3>
+          <p class="card-desc">Computer vision concept for detecting purchase intent or product interaction in retail environments.</p>
+          <p class="card-metric">Concept</p>
+          <div class="card-tags"><span class="tag">Computer Vision</span><span class="tag">Retail</span><span class="tag">Concept</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Bundesliga data hackathon. Rapid build, fun problem.">
+          
+          <p class="card-period">Feb 2025</p>
+          <h3 class="card-title">Bundesliga Hackathon</h3>
+          <p class="card-desc">Hackathon project built around Bundesliga data, analysis and visualisation under time pressure.</p>
+          <p class="card-metric">Hackathon</p>
+          <div class="card-tags"><span class="tag">Data</span><span class="tag">Football</span><span class="tag">Hackathon</span></div>
+        </div>
+      </div>
+      <p class="hat-sub-label" style="margin-top:2rem">Mechanical &amp; Physical Design</p>
+      <div class="projects-grid">
+        <div class="project-card"
+       data-note="Product design project. A speaker designed specifically for gym and fitness environments.">
+          
           <p class="card-period">2021</p>
-          <h3 class="card-title">Automatic Gear Shift System — Road Bikes</h3>
-          <p class="card-desc">Sensor and laser-based automatic derailleur system optimising gear shifts for road cyclists under variable terrain and speed.</p>
-          <div class="card-tags"><span class="tag">Laser measurement</span><span class="tag">Sensors</span><span class="tag">CAD</span></div>
+          <h3 class="card-title">Fitbod Smart Speaker</h3>
+          <p class="card-desc">Designed a smart speaker for fitness environments. Full industrial design process in SolidWorks and KeyShot rendering.</p>
+          <p class="card-metric">Product Design</p>
+          <div class="card-tags"><span class="tag">SolidWorks</span><span class="tag">KeyShot</span><span class="tag">Industrial Design</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Designed and built a smart cot with sensors and automated soothing responses.">
+          
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Smart Cot</h3>
+          <p class="card-desc">Arduino-powered smart cot system, sensors and automated responses for infant sleep monitoring.</p>
+          <p class="card-metric">Mechatronics</p>
+          <div class="card-tags"><span class="tag">Arduino</span><span class="tag">Mechatronics</span><span class="tag">IoT</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Gear shift mechanism design, a full mechanical prototyping project.">
+          
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Gear Shift System</h3>
+          <p class="card-desc">Mechanical gear shift mechanism, designed and prototyped as part of mechanical engineering coursework.</p>
+          <p class="card-metric">Mechanical Design</p>
+          <div class="card-tags"><span class="tag">Mechanical</span><span class="tag">Prototyping</span><span class="tag">CAD</span></div>
+        </div>
+        <div class="project-card"
+       data-note="My undergrad engineering dissertation. Electric scooter design and powertrain optimisation.">
+          
+          <p class="card-period">2021</p>
+          <h3 class="card-title">Electric Scooter Dissertation</h3>
+          <p class="card-desc">Engineering dissertation on electric scooter design, powertrain optimisation and urban mobility.</p>
+          <p class="card-metric">First-class dissertation</p>
+          <div class="card-tags"><span class="tag">Electric Vehicle</span><span class="tag">Powertrain</span><span class="tag">Dissertation</span></div>
+        </div>
+        <div class="project-card"
+       data-note="I use 3D printing for practical problems: mounts, cases, handles. Whatever needs making.">
+          
+          <p class="card-period">Ongoing</p>
+          <h3 class="card-title">3D Printing Projects</h3>
+          <p class="card-desc">I regularly 3D print custom items: continuity camera mount for MacBook &amp; phone, custom phone cases, kitchen handles and more.</p>
+          <p class="card-metric">Ongoing · personal &amp; practical</p>
+          <div class="card-tags"><span class="tag">3D Printing</span><span class="tag">CAD</span><span class="tag">Product</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Worked with Navya AV systems, exposure to real autonomous vehicle engineering.">
+          
+          <p class="card-period">2019</p>
+          <h3 class="card-title">Navya AV</h3>
+          <p class="card-desc">Project experience with Navya autonomous vehicles. Engineering involvement in AV systems and testing.</p>
+          <p class="card-metric">AV Engineering</p>
+          <div class="card-tags"><span class="tag">Autonomous Vehicles</span><span class="tag">Engineering</span><span class="tag">AV</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Knock on a surface, light responds. Simple concept, satisfying build.">
+          
+          <p class="card-period">2020</p>
+          <h3 class="card-title">Knock-to-Light</h3>
+          <p class="card-desc">Knock-activated lighting system, a mechatronics project using vibration sensing to trigger light responses.</p>
+          <p class="card-metric">Mechatronics</p>
+          <div class="card-tags"><span class="tag">Mechatronics</span><span class="tag">Sensors</span><span class="tag">Arduino</span></div>
+        </div>
+        <div class="project-card"
+       data-note="An early engineering project from my time at Imperial.">
+          
+          <p class="card-period">2016</p>
+          <h3 class="card-title">Chillybox, Imperial</h3>
+          <p class="card-desc">Engineering project at Imperial College, early systems/design work.</p>
+          <p class="card-metric">Imperial College</p>
+          <div class="card-tags"><span class="tag">Engineering</span><span class="tag">Imperial</span><span class="tag">Systems Design</span></div>
         </div>
       </div>
     </div>
-
     <!-- MARKETING -->
     <div class="hat-section" id="marketing">
       <div class="hat-section-header">
         <div class="hat-thumb">
-          <img src="assetsforsite/marketing_hat.png" alt=""
+          <img src="assetsforsite/Marketing_hat_yellow.png" alt=""
             onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
         </div>
         <div>
           <h3 class="hat-section-title">
             <span class="hat-pill marketing">marketing</span>
-            growth, ops &amp; consulting
+            brand, growth &amp; commercial
           </h3>
-          <p class="hat-section-desc">Business development, social strategy, events operations, client consulting</p>
         </div>
       </div>
       <div class="projects-grid">
-        <div class="project-card">
-          <p class="card-period">Dec 2022 – Present</p>
-          <h3 class="card-title">Digital &amp; Automation Consulting</h3>
-          <p class="card-desc">Self-employed. AI-assisted web builds, Shopify stores, VBA automation scripts, and workflow optimisation for SME clients across London.</p>
-          <div class="card-tags"><span class="tag">Shopify</span><span class="tag">VBA</span><span class="tag">Automation</span><span class="tag">Web dev</span></div>
+        <div class="project-card"
+       data-note="MagKits is a brand I built from scratch. Grew it to 500k+ through video and influencer work.">
+          
+          <p class="card-period">2022–Present</p>
+          <h3 class="card-title">MagKits Brand</h3>
+          <p class="card-desc">Built and grew the MagKits brand: video editing, working with influencers, and building a social following of 500k+.</p>
+          <p class="card-metric">500k+ reach</p>
+          <div class="card-tags"><span class="tag">Brand Building</span><span class="tag">Video Editing</span><span class="tag">Influencers</span><span class="tag">Social</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">Jan 2024 – Present</p>
-          <h3 class="card-title">Santander HQ — Events &amp; Operations Systems</h3>
-          <p class="card-desc">Excel dashboards cutting spend ~15%. QR registration system deployed across 300+ client events, cutting check-in time by ~20%.</p>
-          <p class="card-metric">~15% spend reduction · ~20% faster check-in · 300+ events</p>
-          <div class="card-tags"><span class="tag">Excel</span><span class="tag">VBA</span><span class="tag">QR systems</span><span class="tag">Events</span></div>
+        <div class="project-card"
+       data-note="Ongoing work helping clients with their web presence and social strategy. Gloteem is one example."
+       data-link="https://gloteem.com">
+          
+          <p class="card-period">2022–Present</p>
+          <h3 class="card-title">Client Websites &amp; Social Consulting</h3>
+          <p class="card-desc">Digital marketing and web presence consulting for small businesses and brands. Examples include Gloteem, event brands and others.</p>
+          <p class="card-metric">Multiple clients</p>
+          <div class="card-tags"><span class="tag">Digital Marketing</span><span class="tag">Web</span><span class="tag">Consulting</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">2022 – Present</p>
-          <h3 class="card-title">Social Media Growth — 500k+ Followers</h3>
-          <p class="card-desc">Strategy, content creation, and campaign management growing a client's presence from 0 to 500k+ followers in 2 years across platforms.</p>
-          <p class="card-metric">500k+ followers in 2 years</p>
-          <div class="card-tags"><span class="tag">Content strategy</span><span class="tag">Growth</span><span class="tag">Brand building</span></div>
+        <div class="project-card"
+       data-note="Event operations work at Santander HQ. Built and ran QR-based registration systems for live events.">
+          
+          <p class="card-period">2024–Present</p>
+          <h3 class="card-title">Santander HQ &amp; QR Events Ops</h3>
+          <p class="card-desc">Worked at Santander HQ. Event operations including QR code registration systems and digital event infrastructure.</p>
+          <p class="card-metric">Santander HQ</p>
+          <div class="card-tags"><span class="tag">Events</span><span class="tag">QR Systems</span><span class="tag">Operations</span><span class="tag">Santander</span></div>
         </div>
-        <div class="project-card">
-          <p class="card-period">June 2024 – Present</p>
-          <h3 class="card-title">Leveret AI — Business Development</h3>
-          <p class="card-desc">Merged market research with technical feasibility to shape product use-cases. Bridged engineer-to-clinician communication. Competitor analysis.</p>
-          <div class="card-tags"><span class="tag">Market research</span><span class="tag">Stakeholder comms</span><span class="tag">Healthcare</span></div>
+        <div class="project-card"
+       data-note="Prepped and pitched GNSS technology to clients and stakeholders at LiviaSoft.">
+          
+          <p class="card-period">2019–2020</p>
+          <h3 class="card-title">LiviaSoft GNSS Pitch</h3>
+          <p class="card-desc">Prepared and pitched GNSS technology projects at LiviaSoft, bridging engineering and commercial stakeholders.</p>
+          <p class="card-metric">Pitch &amp; BD</p>
+          <div class="card-tags"><span class="tag">GNSS</span><span class="tag">Pitch</span><span class="tag">Business Development</span></div>
+        </div>
+        <div class="project-card"
+       data-note="BD and pitch work at Leveret, building the commercial case and seeking funding.">
+          
+          <p class="card-period">2024–Present</p>
+          <h3 class="card-title">Leveret AI: Pitch &amp; BD</h3>
+          <p class="card-desc">Business development and funding pitch work at Leveret AI, positioning the product and pitching for investment.</p>
+          <p class="card-metric">Funding pitch</p>
+          <div class="card-tags"><span class="tag">Startup</span><span class="tag">Pitch</span><span class="tag">BD</span><span class="tag">AI</span></div>
+        </div>
+        <div class="project-card"
+       data-note="Avalon's training arm, running AI workshops and programmes for organisations."
+       data-link="https://toniesan.com">
+          
+          <p class="card-period">2025–Present</p>
+          <h3 class="card-title">Avalon Insights AI Training</h3>
+          <p class="card-desc">Public-facing AI training and upskilling programmes through Avalon Insights.</p>
+          <p class="card-metric">Enterprise training</p>
+          <div class="card-tags"><span class="tag">AI Training</span><span class="tag">Upskilling</span><span class="tag">Enterprise</span></div>
         </div>
       </div>
     </div>
@@ -691,7 +1222,7 @@
       <div class="ai-card">
         <div class="ai-card-header"><span class="ai-badge badge-claude">Claude</span></div>
         <h3 class="ai-card-title">This Portfolio Site</h3>
-        <p class="ai-card-desc">Designed and built in a single session with Claude Code. Layout, dot-matrix nav animations, content — all from a PDF brief.</p>
+        <p class="ai-card-desc">Designed and built in a single session with Claude Code. Layout, dot-matrix nav animations, content, all from a PDF brief.</p>
       </div>
       <div class="ai-card">
         <div class="ai-card-header"><span class="ai-badge badge-multi">Claude + GPT</span></div>
@@ -706,7 +1237,7 @@
       <div class="ai-card">
         <div class="ai-card-header"><span class="ai-badge badge-gpt">GPT-4</span></div>
         <h3 class="ai-card-title">VBA Automation Scripts</h3>
-        <p class="ai-card-desc">Excel dashboards and automation workflows for Santander HQ — resource tracking, event registration, and reporting, built fast.</p>
+        <p class="ai-card-desc">Excel dashboards and automation workflows for Santander HQ. Resource tracking, event registration, and reporting, built fast.</p>
       </div>
       <div class="ai-card">
         <div class="ai-card-header"><span class="ai-badge badge-claude">Claude</span></div>
@@ -715,7 +1246,7 @@
       </div>
       <div class="ai-card">
         <div class="ai-card-header"><span class="ai-badge badge-multi">Claude + Gemini</span></div>
-        <h3 class="ai-card-title">More coming — building constantly</h3>
+        <h3 class="ai-card-title">More coming, building constantly</h3>
         <p class="ai-card-desc">Half marathon training tools, gym CV apps, location memory maps, Spotify memory layers… ideas are cheap, shipping is the work.</p>
       </div>
     </div>
@@ -772,10 +1303,10 @@
     <div class="about-grid">
       <div>
         <div class="about-bio">
-          <p>I'm <strong>Toni Esan</strong> — based in London. I sit at the intersection of engineering rigour, AI application, and creative product thinking. Not a pure researcher, not a pure developer — someone who <strong>builds things that bridge disciplines</strong> and solves real problems with taste.</p>
-          <p>Currently finishing an <strong>MSc in Applied AI at Cranfield</strong> (Distinction, September 2025) while working as Technical Officer at <strong>Leveret AI</strong> — a CV startup bringing AI diagnostics to NHS dental clinics. Before that: Design Engineering at Aston (1st class).</p>
-          <p>I've trained autonomous vehicles, grown social accounts to half a million followers, and built dental AI products used in real clinics. I wear a lot of hats — <em>literally</em>.</p>
-          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Currently training for a half marathon — running is the thinking time.</p>
+          <p>I'm <strong>Toni Esan</strong>, based in London. I work across engineering, AI and creative product thinking. I'm not a pure researcher and not a pure developer. I <strong>build things that bridge disciplines</strong> and solve real problems with taste.</p>
+          <p>Completed an <strong>MSc in Applied AI at Cranfield</strong> (Distinction, July 2025) while working as Technical Officer at <strong>Leveret AI</strong>, a CV startup bringing AI diagnostics to NHS dental clinics. Before that, I was working in industry as a mechanical engineer, honing in on software engineering skills and web automations.</p>
+          <p>I've worked with autonomous vehicles since 2019, before Waymo made self-driving mainstream. I've grown social accounts to half a million followers, built dental AI products used in real clinics, and now run my own AI consulting practice. I wear a lot of hats, <em>literally</em>.</p>
+          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Currently training for a half marathon. Running is the thinking time.</p>
         </div>
         <div style="margin-top:3rem;">
           <p class="side-label" style="margin-bottom:0.75rem">Blog</p>
@@ -799,8 +1330,8 @@
         <div>
           <p class="side-label">Education</p>
           <div class="contact-links">
-            <span class="contact-link" style="cursor:default">MSc Applied AI — Cranfield (Distinction)</span>
-            <span class="contact-link" style="cursor:default">BEng Design Engineering — Aston (1st)</span>
+            <span class="contact-link" style="cursor:default">MSc Applied AI, Cranfield (Distinction)</span>
+            <span class="contact-link" style="cursor:default">BEng Design Engineering, Aston (1st)</span>
           </div>
         </div>
         <div>
@@ -826,7 +1357,7 @@
 
 <!-- ══════ FOOTER ══════ -->
 <footer>
-  <p>Toni Esan — London, UK</p>
+  <p>Toni Esan, London, UK</p>
   <p>
     <a href="mailto:oluwatoniesan@gmail.com">oluwatoniesan@gmail.com</a>
     &nbsp;·&nbsp;
@@ -836,7 +1367,55 @@
   </p>
 </footer>
 
+<!-- ══════ MODAL ══════ -->
+<div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div id="modal-bar" class="modal-bar"></div>
+    <div class="modal-inner">
+      <button id="modal-close" class="modal-close" aria-label="Close">✕</button>
+      <p id="modal-period" class="modal-period"></p>
+      <h3 id="modal-title" class="modal-title"></h3>
+      <p id="modal-desc" class="modal-desc"></p>
+      <p id="modal-note" class="modal-note"></p>
+      <div id="modal-tags" class="modal-tags"></div>
+      <a id="modal-link" class="modal-link" target="_blank" rel="noopener noreferrer">View project ↗</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
+
+
 <script>
+  // ── Grid scroll indicators ───────────────────────────────────────────────
+  document.querySelectorAll('.projects-grid').forEach(grid => {
+    const cards = grid.querySelectorAll('.project-card');
+    const totalCols = Math.ceil(cards.length / 2);
+    const visibleCols = 3;
+    if (totalCols <= visibleCols) return; // no overflow, skip
+
+    const indicator = document.createElement('div');
+    indicator.className = 'grid-scroll-indicator';
+    const dots = [];
+    for (let i = 0; i < totalCols - visibleCols + 1; i++) {
+      const d = document.createElement('span');
+      d.className = 'gsi-dot' + (i === 0 ? ' active hint' : '');
+      indicator.appendChild(d);
+      dots.push(d);
+    }
+    grid.parentNode.insertBefore(indicator, grid.nextSibling);
+
+    grid.addEventListener('scroll', () => {
+      const colW = grid.scrollWidth / totalCols;
+      const scrolledCols = Math.round(grid.scrollLeft / colW);
+      dots.forEach((d, i) => {
+        d.classList.toggle('active', i === scrolledCols);
+        d.classList.remove('hint');
+      });
+    }, { passive: true });
+  });
+
   // ── Nav scroll (renamed to avoid conflict with window.scrollTo) ─────
   function navTo(id) {
     const el = document.getElementById(id);
@@ -862,17 +1441,84 @@
     });
     tile.appendChild(grid);
 
+    // constantly pulse the lit dots for this tile (now that they exist)
+    [...grid.querySelectorAll('.dot[data-active="1"]')].forEach((d, i) => {
+      d.classList.add('lit', 'pulsing');
+      d.style.animationDelay = (i * 0.07) + 's';
+    });
+
+    // hover just gives the pattern a little extra brightness boost, it never
+    // touches 'lit' since that's what keeps the permanent pulse animation alive
     tile.addEventListener('mouseenter', () => {
       [...grid.querySelectorAll('.dot')]
         .filter(d => d.dataset.active === '1')
-        .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
+        .forEach((d, i) => setTimeout(() => d.classList.add('hover-boost'), i * 16));
     });
     tile.addEventListener('mouseleave', () => {
       [...grid.querySelectorAll('.dot')]
         .filter(d => d.dataset.active === '1')
-        .forEach((d, i) => setTimeout(() => d.classList.remove('lit'), i * 10));
+        .forEach((d, i) => setTimeout(() => d.classList.remove('hover-boost'), i * 10));
     });
   });
+
+  // ── MODAL ────────────────────────────────────────────────────────────────
+  const HAT_COLORS = {
+    thinking: '#C4956A', artisting: '#6EE7B7',
+    engineering: '#5BB8FF', marketing: '#FBBF24', contracting: '#A78BFA'
+  };
+
+  const mBackdrop = document.getElementById('modal-backdrop');
+  const mBar      = document.getElementById('modal-bar');
+  const mPeriod   = document.getElementById('modal-period');
+  const mTitle    = document.getElementById('modal-title');
+  const mDesc     = document.getElementById('modal-desc');
+  const mNote     = document.getElementById('modal-note');
+  const mTags     = document.getElementById('modal-tags');
+  const mLink     = document.getElementById('modal-link');
+
+  function openModal(card) {
+    const section = card.closest('.hat-section');
+    const pill    = section && section.querySelector('.hat-pill');
+    const hatKey  = pill ? [...pill.classList].find(c => c !== 'hat-pill') : '';
+    const color   = HAT_COLORS[hatKey] || '#fff';
+
+    mBar.style.background = color;
+    mPeriod.textContent   = card.querySelector('.card-period')?.textContent || '';
+    mTitle.textContent    = card.querySelector('.card-title')?.textContent  || '';
+    mDesc.textContent     = card.querySelector('.card-desc')?.textContent   || '';
+
+    const note = card.dataset.note || '';
+    mNote.textContent   = note ? '\u201c' + note + '\u201d' : '';
+    mNote.style.display = note ? 'block' : 'none';
+
+    mTags.innerHTML = '';
+    card.querySelectorAll('.tag').forEach(t => {
+      const s = document.createElement('span');
+      s.className = 'tag'; s.textContent = t.textContent;
+      mTags.appendChild(s);
+    });
+
+    const link = card.dataset.link || '';
+    if (link) { mLink.href = link; mLink.style.display = 'inline-block'; }
+    else       { mLink.style.display = 'none'; }
+
+    mBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('click', () => openModal(card));
+  });
+
+  mBackdrop.addEventListener('click', e => {
+    if (e.target === mBackdrop) closeModal();
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  function closeModal() {
+    mBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
 </script>
-</body>
-</html>
