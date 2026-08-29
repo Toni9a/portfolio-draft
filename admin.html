@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Toni — Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
     --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
@@ -109,6 +110,85 @@
   .detail-card { max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
   .detail-close { float: right; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
   .detail-close:hover { color: var(--text); }
+
+  /* ── Blog tab ── */
+  .blog-post-card { display: flex; align-items: center; gap: 1rem; }
+  .blog-status { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px; flex-shrink: 0; }
+  .blog-status.draft { background: #f8717122; color: var(--red); }
+  .blog-status.published { background: #4ade8022; color: var(--green); }
+
+  .blog-editor-card { max-width: 1160px; }
+  .blog-editor-grid { display: flex; gap: 1.75rem; margin-top: 0.25rem; align-items: flex-start; }
+  .blog-editor-fields { flex: 1 1 380px; min-width: 300px; display: flex; flex-direction: column; }
+  .blog-editor-fields input, .blog-editor-fields textarea { margin-top: 0.3rem; }
+  .blog-editor-preview {
+    flex: 1 1 380px; min-width: 300px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.5rem; max-height: 85vh; overflow-y: auto; position: sticky; top: 1rem;
+  }
+  @media (max-width: 860px) {
+    .blog-editor-grid { flex-direction: column; }
+    .blog-editor-preview { position: static; max-height: none; }
+  }
+
+  .blog-image-strip { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.75rem; }
+  .blog-image-thumb { position: relative; width: 84px; height: 84px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+  .blog-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .blog-image-thumb .bi-remove {
+    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,0.65); color: #fff; border: none; cursor: pointer; font-size: 0.7rem; line-height: 1;
+  }
+  .blog-image-thumb .bi-remove:hover { background: var(--red); }
+  .blog-image-thumb .bi-copy {
+    position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 0.55rem; text-align: center;
+    background: rgba(0,0,0,0.65); color: #fff; border: none; cursor: pointer; padding: 0.1rem 0; border-radius: 3px;
+  }
+
+  .blog-preview-render { font-family: Georgia, 'Times New Roman', serif; line-height: 1.75; color: rgba(255,255,255,0.85); }
+  .blog-preview-render .bp-cover { width: 100%; border-radius: 8px; margin-bottom: 1.25rem; display: block; }
+  .blog-preview-render .bp-title { font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; line-height: 1.25; }
+  .blog-preview-render .bp-excerpt { font-family: var(--font-ui); color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; font-style: italic; }
+  .blog-preview-render h1, .blog-preview-render h2, .blog-preview-render h3 { font-family: var(--font-ui); color: #fff; margin: 1.5rem 0 0.6rem; line-height: 1.3; }
+  .blog-preview-render p { margin-bottom: 1rem; }
+  .blog-preview-render a { color: var(--accent); }
+  .blog-preview-render img { max-width: 100%; border-radius: 6px; margin: 1rem 0; }
+  .blog-preview-render code { font-family: var(--font-mono); background: var(--surface); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+  .blog-preview-render pre { background: var(--surface); padding: 0.9rem; border-radius: 6px; overflow-x: auto; }
+  .blog-preview-render blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
+  .blog-preview-render ul, .blog-preview-render ol { padding-left: 1.4rem; margin-bottom: 1rem; }
+
+  .linkcheck-block { margin-bottom: 0.9rem; }
+  .linkcheck-block .facet-label { color: var(--muted); }
+  .lc-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.5rem; font-size: 0.83rem; }
+  .lc-item .lc-quote { color: #fff; font-style: italic; margin-bottom: 0.25rem; }
+  .lc-item .lc-reason { color: var(--muted); font-size: 0.78rem; }
+  .lc-item .lc-url { color: var(--accent); font-size: 0.78rem; word-break: break-all; }
+
+  .blog-sourcemat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.9rem 1.1rem; margin-bottom: 1.25rem;
+  }
+  .blog-sourcemat summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; list-style: none; }
+  .blog-sourcemat summary::-webkit-details-marker { display: none; }
+  .blog-sourcemat summary::before { content: '▸ '; color: var(--accent); }
+  .blog-sourcemat[open] summary::before { content: '▾ '; }
+  .sm-item { display: flex; gap: 0.75rem; align-items: flex-start; border-top: 1px solid var(--border); padding: 0.75rem 0; }
+  .sm-item:first-of-type { border-top: none; }
+  .sm-item-body { flex: 1; min-width: 0; }
+  .sm-item-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; margin-bottom: 0.3rem; }
+  .sm-item-take { font-size: 0.83rem; color: rgba(255,255,255,0.7); font-style: italic; border-left: 2px solid var(--accent); padding-left: 0.6rem; margin: 0.35rem 0; }
+  .sm-item.used { opacity: 0.5; }
+  .sm-item-audio { margin: 0.35rem 0; }
+  .sm-item-audio audio { width: 100%; max-width: 360px; height: 32px; }
+  .blog-flagged-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .blog-flagged-panel .facet-label { margin: 0 0 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .bf-item { display: flex; gap: 0.75rem; align-items: flex-start; border-top: 1px solid var(--border); padding: 0.75rem 0; }
+  .bf-item:first-of-type { border-top: none; }
+  .bf-item-body { flex: 1; min-width: 0; }
+  .bp-voice-audio { margin: 0.75rem 0; }
+  .bp-voice-audio audio { width: 100%; max-width: 420px; height: 32px; }
+  .bp-voice-pending { color: var(--muted); font-style: italic; font-size: 0.85rem; }
+  .sm-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.35rem 0; }
+  .sm-tag { font-size: 0.72rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(167,139,250,0.12); color: var(--accent); border: 1px solid rgba(167,139,250,0.25); }
   .detail-body { margin-top: 0.9rem; padding: 0.8rem; background: var(--bg); border-radius: 6px; font-size: 0.85rem; line-height: 1.65; color: #c8c8c8; white-space: pre-wrap; max-height: 260px; overflow-y: auto; }
   .rel-group { margin-top: 1.1rem; }
   .rel-why { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-bottom: 0.35rem; }
@@ -134,6 +214,9 @@
   /* ---- Account settings ---- */
   #account-panel { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 60; align-items: center; justify-content: center; }
   #account-panel.open { display: flex; }
+
+  #blog-editor { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 55; overflow-y: auto; padding: 3rem 1rem; }
+  #blog-editor.open { display: block; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600&family=DM+Mono&display=swap" rel="stylesheet" />
@@ -160,6 +243,7 @@
     <button onclick="switchTab('explore', this)">Explore</button>
     <button onclick="switchTab('pics', this)">Pics</button>
     <button onclick="switchTab('tagging', this)">Tagging</button>
+    <button onclick="switchTab('blog', this)">Blog</button>
     <button onclick="openAccountSettings()" style="margin-left:auto;opacity:0.5" title="Account settings">⚙</button>
   </nav>
   <main>
@@ -242,6 +326,26 @@
       <div class="facet-label" style="margin-top:1.5rem;margin-bottom:0.5rem">Recently tagged — visual pass</div>
       <div id="tg-recent-img"><div class="loading"><div class="spinner"></div></div></div>
     </div>
+
+    <div id="tab-blog" class="tab">
+      <h2>Blog</h2>
+      <p class="sub">Draft and preview blog posts before they're live — add images, and run a Gemini pass to catch promised links you forgot and suggest others worth adding.</p>
+
+      <div class="blog-flagged-panel">
+        <div class="facet-label">
+          <span>📰 Flagged for blog <span id="bf-count" class="card-meta"></span></span>
+          <button class="btn btn-ghost btn-sm" onclick="runVoiceBackfill()" id="bf-backfill-btn">🔊 Backfill voice audio</button>
+        </div>
+        <p class="card-meta" style="margin:0 0 0.5rem">Things you flagged with "📰 Flag for blog" in Pending or All Captures. Start a new draft straight from one, or open an existing draft and insert it there.</p>
+        <div id="blog-flagged-list"><div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div></div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="createDraftPost()">+ New draft</button>
+        <span class="ex-count" id="blog-count"></span>
+      </div>
+      <div id="blog-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
   </main>
 </div>
 
@@ -251,6 +355,73 @@
 
 <div id="pic-lightbox" onclick="if(event.target===this) closePicLightbox()">
   <div class="detail-card" id="pic-lightbox-inner"></div>
+</div>
+
+<div id="blog-editor" onclick="if(event.target===this) closeBlogEditor()">
+  <div class="detail-card blog-editor-card">
+    <button class="detail-close" onclick="closeBlogEditor()">×</button>
+    <div id="blog-editor-status" class="card-meta" style="margin-bottom:0.75rem"></div>
+
+    <details id="be-sourcemat-wrap" class="blog-sourcemat">
+      <summary>📰 Your flagged blog captures <span class="card-meta" id="be-sourcemat-count"></span></summary>
+      <p class="card-meta" style="margin:0.5rem 0 0.75rem">Things you flagged with "📰 Flag for blog" in Pending, plus any take you wrote on them. Click Insert to drop one into the draft below.</p>
+      <div id="be-sourcemat"><div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div></div>
+    </details>
+
+    <div class="blog-editor-grid">
+      <div class="blog-editor-fields">
+        <div class="facet-label">Title</div>
+        <input type="text" id="be-title" placeholder="Post title" oninput="renderBlogPreview()">
+
+        <div class="facet-label" style="margin-top:0.9rem">Slug</div>
+        <input type="text" id="be-slug" placeholder="url-friendly-slug">
+
+        <div class="facet-label" style="margin-top:0.9rem">Date (the day this actually happened/was taken — not when you wrote it up)</div>
+        <input type="date" id="be-captured-on" oninput="renderBlogPreview()">
+
+        <div class="facet-label" style="margin-top:0.9rem">Excerpt</div>
+        <textarea id="be-excerpt" placeholder="One or two sentences for the blog index card" style="min-height:60px"></textarea>
+
+        <div class="facet-label" style="margin-top:0.9rem">Cover image URL</div>
+        <input type="text" id="be-cover" placeholder="https://... (or upload below and copy a link)" oninput="renderBlogPreview()">
+
+        <div class="facet-label" style="margin-top:0.9rem">Body (Markdown)</div>
+        <textarea id="be-body" placeholder="Write the post here — Markdown supported." style="min-height:320px;font-family:var(--font-mono);font-size:0.85rem" oninput="renderBlogPreview()"></textarea>
+
+        <div class="facet-label" style="margin-top:0.9rem">Source URLs (one per line)</div>
+        <textarea id="be-sources" placeholder="https://..." style="min-height:70px;font-family:var(--font-mono);font-size:0.8rem"></textarea>
+
+        <div class="facet-label" style="margin-top:0.9rem">Related project ids (comma separated — matches repo slugs, e.g. montedera, gloteem)</div>
+        <input type="text" id="be-related" placeholder="montedera, gloteem">
+
+        <div class="facet-label" style="margin-top:0.9rem">Topic tags (comma separated)</div>
+        <input type="text" id="be-tags" placeholder="ai, product, consulting">
+
+        <div class="blog-images">
+          <div class="facet-label" style="margin-top:1.1rem">Images for this post</div>
+          <input type="file" id="be-image-input" accept="image/*" onchange="uploadBlogImage(event)">
+          <div id="be-image-strip" class="blog-image-strip"></div>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-top:1.25rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveBlogPost()">Save draft</button>
+          <button class="btn btn-ghost btn-sm" id="be-publish-btn" onclick="publishBlogPost()">Publish</button>
+          <button class="btn btn-ghost btn-sm" id="be-unpublish-btn" style="display:none" onclick="unpublishBlogPost()">Unpublish</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteBlogPost()" style="color:var(--red);margin-left:auto">Delete</button>
+        </div>
+
+        <div style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
+          <button class="btn btn-ghost btn-sm" onclick="runLinkCheck()">🔮 Check links (Gemini)</button>
+          <div id="be-linkcheck" style="display:none;margin-top:0.9rem"></div>
+        </div>
+      </div>
+
+      <div class="blog-editor-preview">
+        <div class="facet-label">Live preview — approximates the published post</div>
+        <div id="be-preview" class="blog-preview-render"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="account-panel" onclick="if(event.target===this) closeAccountSettings()">
@@ -332,6 +503,7 @@ function switchTab(name, btn) {
   if (name === 'explore') loadExplore();
   if (name === 'pics') loadPics();
   if (name === 'tagging') startTagging(); else stopTagging();
+  if (name === 'blog') { loadBlogList(); loadBlogFlaggedPanel(); }
 }
 
 async function loadRepos() {
@@ -1333,6 +1505,496 @@ function toast(msg) {
   el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   BLOG — draft/preview blog posts before publish, with images
+   and a Gemini pass for missing/suggested links.
+   ══════════════════════════════════════════════════════════════ */
+
+let blogCurrentId = null;
+let blogImageRows = [];
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function loadBlogList() {
+  const { data, error } = await sb.from('published_posts')
+    .select('id,title,slug,excerpt,published_at,updated_at')
+    .order('updated_at', { ascending: false });
+  const el = document.getElementById('blog-list');
+  if (error) { el.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
+  document.getElementById('blog-count').textContent = `${data.length} post${data.length === 1 ? '' : 's'}`;
+  if (!data.length) { el.innerHTML = '<p class="empty">No drafts yet. Click "+ New draft" to start one.</p>'; return; }
+
+  el.innerHTML = '';
+  data.forEach(p => {
+    const isPublished = !!p.published_at;
+    const div = document.createElement('div');
+    div.className = 'card blog-post-card';
+    div.style.cursor = 'pointer';
+    div.onclick = () => openBlogEditor(p.id);
+    div.innerHTML = `
+      <span class="blog-status ${isPublished ? 'published' : 'draft'}">${isPublished ? 'Published' : 'Draft'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="card-title">${escapeHtml(p.title || '(untitled)')}</div>
+        <div class="card-meta">${p.slug ? '/' + escapeHtml(p.slug) + ' · ' : ''}updated ${fmtDate(p.updated_at)}${isPublished ? ' · published ' + fmtDate(p.published_at) : ''}</div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+async function createDraftPost() {
+  const { data, error } = await sb.from('published_posts')
+    .insert({ title: 'Untitled post', slug: 'untitled-' + Date.now().toString(36), body_md: '' })
+    .select().single();
+  if (error) { toast('Failed to create draft: ' + error.message); return; }
+  await loadBlogList();
+  openBlogEditor(data.id);
+}
+
+async function openBlogEditor(id) {
+  const { data: post, error } = await sb.from('published_posts').select('*').eq('id', id).maybeSingle();
+  if (error || !post) { toast('Failed to load post: ' + (error?.message || 'not found')); return; }
+  blogCurrentId = post.id;
+
+  document.getElementById('be-title').value = post.title || '';
+  document.getElementById('be-slug').value = post.slug || '';
+  document.getElementById('be-captured-on').value = post.captured_on || '';
+  document.getElementById('be-excerpt').value = post.excerpt || '';
+  document.getElementById('be-cover').value = post.cover_image_url || '';
+  document.getElementById('be-body').value = post.body_md || '';
+  document.getElementById('be-sources').value = (post.source_urls || []).join('\n');
+  document.getElementById('be-related').value = (post.related_project_ids || []).join(', ');
+  document.getElementById('be-tags').value = (post.topic_tags || []).join(', ');
+
+  const isPublished = !!post.published_at;
+  document.getElementById('be-publish-btn').style.display = isPublished ? 'none' : 'inline-block';
+  document.getElementById('be-unpublish-btn').style.display = isPublished ? 'inline-block' : 'none';
+  document.getElementById('blog-editor-status').textContent = isPublished
+    ? `Published ${fmtDate(post.published_at)}`
+    : 'Draft — not live on the site yet';
+
+  document.getElementById('be-linkcheck').style.display = 'none';
+  document.getElementById('be-linkcheck').innerHTML = '';
+
+  renderBlogPreview();
+  await loadBlogImages(post.id);
+  await loadBlogSourceMaterial();
+
+  const editorEl = document.getElementById('blog-editor');
+  editorEl.classList.add('open');
+  editorEl.scrollTop = 0;
+  document.querySelector('.blog-editor-card').scrollTop = 0;
+}
+
+window.__voiceUrlCache = window.__voiceUrlCache || {};
+window.__voicePathById = window.__voicePathById || {};
+
+async function presignVoicePaths(paths) {
+  const need = [...new Set(paths)].filter(p => p && !window.__voiceUrlCache[p]);
+  if (!need.length) return;
+  try {
+    const { data, error } = await sb.functions.invoke('presign-media', { body: { keys: need } });
+    if (error) throw error;
+    Object.assign(window.__voiceUrlCache, (data && data.urls) || {});
+  } catch (err) {
+    console.error('presign-media failed:', err);
+  }
+}
+
+async function runVoiceBackfill() {
+  const btn = document.getElementById('bf-backfill-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Backfilling…';
+  try {
+    const { data, error } = await sb.functions.invoke('backfill-voice-audio', { body: {} });
+    if (error) throw error;
+    const archived = data?.archived ?? 0;
+    const failed = (data?.failed || []).length;
+    toast(`Backfill done — archived ${archived}${failed ? `, ${failed} failed` : ''}`);
+    await loadBlogFlaggedPanel();
+  } catch (err) {
+    toast('Backfill failed: ' + (err.message || err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+async function loadBlogFlaggedPanel() {
+  const wrap = document.getElementById('blog-flagged-list');
+  const { data, error } = await sb.from('inbox')
+    .select('id,full_text,url,source,raw_message_type,voice_audio_path,topic_tags,created_at')
+    .eq('is_blog_candidate', true)
+    .order('created_at', { ascending: false });
+
+  if (error) { wrap.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
+  document.getElementById('bf-count').textContent = data.length ? `(${data.length})` : '';
+  if (!data.length) {
+    wrap.innerHTML = '<p class="card-meta">Nothing flagged yet — flag captures with "📰 Flag for blog" in Pending or All Captures.</p>';
+    return;
+  }
+
+  const ids = data.map(d => d.id);
+  const { data: comments } = await sb.from('commentary').select('inbox_ids,body').overlaps('inbox_ids', ids);
+  const takeByItem = {};
+  (comments || []).forEach(c => (c.inbox_ids || []).forEach(id => { if (!takeByItem[id]) takeByItem[id] = c.body; }));
+
+  data.forEach(item => { if (item.voice_audio_path) window.__voicePathById[item.id] = item.voice_audio_path; });
+  await presignVoicePaths(data.map(d => d.voice_audio_path).filter(Boolean));
+
+  wrap.innerHTML = data.map(item => {
+    const take = takeByItem[item.id];
+    const preview = (item.full_text || '').slice(0, 200);
+    const isVoice = !!item.voice_audio_path;
+    const audioUrl = isVoice ? window.__voiceUrlCache[item.voice_audio_path] : null;
+    return `
+    <div class="bf-item" id="bf-${item.id}">
+      <div class="bf-item-body">
+        ${preview ? `<div class="sm-item-text">${escapeHtml(preview)}${(item.full_text || '').length > 200 ? '…' : ''}</div>` : ''}
+        ${(item.topic_tags || []).length ? `<div class="sm-tags">${item.topic_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        ${take ? `<div class="sm-item-take">"${escapeHtml(take)}"</div>` : ''}
+        ${isVoice ? (audioUrl
+          ? `<div class="sm-item-audio"><audio controls src="${audioUrl}"></audio></div>`
+          : `<div class="card-meta">🎙️ voice note — audio not archived yet${item.voice_audio_path ? '' : ' (click "Backfill voice audio" above)'}</div>`) : ''}
+        <div class="card-meta">${fmtDate(item.created_at)}${item.url ? ` · <a href="${item.url}" target="_blank" style="color:var(--accent)">source ↗</a>` : ''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="newDraftFromCapture('${item.id}')">+ New draft</button>
+    </div>`;
+  }).join('');
+
+  window.__blogFlaggedMaterial = data.reduce((acc, item) => { acc[item.id] = { ...item, take: takeByItem[item.id] }; return acc; }, {});
+}
+
+async function newDraftFromCapture(id) {
+  const { data, error } = await sb.from('published_posts')
+    .insert({ title: 'Untitled post', slug: 'untitled-' + Date.now().toString(36), body_md: '' })
+    .select().single();
+  if (error) { toast('Failed to create draft: ' + error.message); return; }
+  await loadBlogList();
+  await openBlogEditor(data.id);
+  insertSourceMaterial(id, window.__blogFlaggedMaterial ? window.__blogFlaggedMaterial[id] : null);
+}
+
+async function loadBlogSourceMaterial() {
+  const wrap = document.getElementById('be-sourcemat');
+  wrap.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
+
+  const { data, error } = await sb.from('inbox')
+    .select('id,full_text,url,source,raw_message_type,voice_audio_path,topic_tags,created_at')
+    .eq('is_blog_candidate', true)
+    .order('created_at', { ascending: false });
+
+  if (error) { wrap.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
+  document.getElementById('be-sourcemat-count').textContent = data.length ? `(${data.length})` : '';
+  if (!data.length) {
+    wrap.innerHTML = '<p class="card-meta">Nothing flagged yet — flag captures with "📰 Flag for blog" in the Pending tab and they\'ll show up here.</p>';
+    return;
+  }
+
+  const ids = data.map(d => d.id);
+  const { data: comments } = await sb.from('commentary').select('inbox_ids,body,created_at').overlaps('inbox_ids', ids).order('created_at', { ascending: false });
+  const takeByItem = {};
+  (comments || []).forEach(c => (c.inbox_ids || []).forEach(id => { if (!takeByItem[id]) takeByItem[id] = c.body; }));
+
+  const sourcesInDraft = (document.getElementById('be-sources').value || '').split('\n').map(s => s.trim());
+
+  data.forEach(item => { if (item.voice_audio_path) window.__voicePathById[item.id] = item.voice_audio_path; });
+  await presignVoicePaths(data.map(d => d.voice_audio_path).filter(Boolean));
+
+  wrap.innerHTML = data.map(item => {
+    const take = takeByItem[item.id];
+    const already = item.url && sourcesInDraft.includes(item.url);
+    const preview = (item.full_text || '').slice(0, 220);
+    const isVoice = !!item.voice_audio_path;
+    const audioUrl = isVoice ? window.__voiceUrlCache[item.voice_audio_path] : null;
+    return `
+    <div class="sm-item ${already ? 'used' : ''}" id="sm-${item.id}">
+      <div class="sm-item-body">
+        ${preview ? `<div class="sm-item-text">${escapeHtml(preview)}${(item.full_text || '').length > 220 ? '…' : ''}</div>` : ''}
+        ${(item.topic_tags || []).length ? `<div class="sm-tags">${item.topic_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        ${take ? `<div class="sm-item-take">"${escapeHtml(take)}"</div>` : ''}
+        ${isVoice ? (audioUrl
+          ? `<div class="sm-item-audio"><audio controls src="${audioUrl}"></audio></div>`
+          : `<div class="card-meta">🎙️ voice note — audio not archived yet</div>`) : ''}
+        <div class="card-meta">${fmtDate(item.created_at)}${item.url ? ` · <a href="${item.url}" target="_blank" style="color:var(--accent)">source ↗</a>` : ''}${already ? ' · already inserted' : ''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="insertSourceMaterial('${item.id}')">${already ? 'Insert again' : '+ Insert'}</button>
+    </div>`;
+  }).join('');
+
+  window.__blogSourceMaterial = data.reduce((acc, item) => { acc[item.id] = { ...item, take: takeByItem[item.id] }; return acc; }, {});
+}
+
+function insertSourceMaterial(id, fallbackItem) {
+  const item = (window.__blogSourceMaterial || {})[id] || fallbackItem;
+  if (!item) return;
+  const body = document.getElementById('be-body');
+  const chunk = (item.take ? item.take : (item.full_text || '')).trim();
+  const isVoice = !!item.voice_audio_path;
+  const insertion = `\n\n> ${chunk.replace(/\n/g, '\n> ')}\n` + (isVoice ? `\n[[voice:${id}]]\n` : '');
+  body.value = (body.value ? body.value + insertion : insertion.trimStart());
+
+  if (isVoice) window.__voicePathById[id] = item.voice_audio_path;
+
+  if (item.url) {
+    const sourcesEl = document.getElementById('be-sources');
+    const lines = sourcesEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!lines.includes(item.url)) {
+      lines.push(item.url);
+      sourcesEl.value = lines.join('\n');
+    }
+  }
+
+  // Carry over the tags Gemini already found for this capture (via Telegram)
+  // instead of starting the post's topic tags from scratch.
+  if ((item.topic_tags || []).length) {
+    const tagsEl = document.getElementById('be-tags');
+    const existing = tagsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+    item.topic_tags.forEach(t => { if (!existing.includes(t)) existing.push(t); });
+    tagsEl.value = existing.join(', ');
+  }
+
+  renderBlogPreview();
+  if (document.getElementById('blog-editor').classList.contains('open')) loadBlogSourceMaterial();
+  toast(isVoice ? 'Inserted into draft (with playable audio)' : 'Inserted into draft');
+}
+
+function closeBlogEditor() {
+  document.getElementById('blog-editor').classList.remove('open');
+  blogCurrentId = null;
+  blogImageRows = [];
+}
+
+window.__voicePresignInFlight = window.__voicePresignInFlight || new Set();
+
+function resolveVoiceTokens(html) {
+  const tokenRe = /(?:<p>)?\[\[voice:([a-zA-Z0-9-]+)\]\](?:<\/p>)?/g;
+  const pendingIds = [];
+  const resolved = html.replace(tokenRe, (match, id) => {
+    const path = window.__voicePathById[id];
+    const url = path ? window.__voiceUrlCache[path] : null;
+    if (url) {
+      return `<div class="bp-voice-audio"><audio controls src="${url}"></audio></div>`;
+    }
+    if (path) pendingIds.push(path);
+    return `<div class="bp-voice-pending">🎙️ loading audio…</div>`;
+  });
+  return { resolved, pendingIds };
+}
+
+function renderBlogPreview() {
+  const title = document.getElementById('be-title').value;
+  const excerpt = document.getElementById('be-excerpt').value;
+  const cover = document.getElementById('be-cover').value;
+  const capturedOn = document.getElementById('be-captured-on').value;
+  const body = document.getElementById('be-body').value;
+  let html = (window.marked ? marked.parse(body || '') : escapeHtml(body || '').replace(/\n/g, '<br>'));
+  const { resolved, pendingIds } = resolveVoiceTokens(html);
+  html = resolved;
+  document.getElementById('be-preview').innerHTML = `
+    ${cover ? `<img class="bp-cover" src="${escapeHtml(cover)}" alt="">` : ''}
+    <div class="bp-title">${escapeHtml(title || '(untitled)')}</div>
+    ${capturedOn ? `<div class="card-meta" style="margin:-0.5rem 0 0.75rem">${fmtDate(capturedOn)}</div>` : ''}
+    ${excerpt ? `<div class="bp-excerpt">${escapeHtml(excerpt)}</div>` : ''}
+    ${html || '<p style="color:var(--muted);font-style:italic">Nothing written yet.</p>'}
+  `;
+
+  const toFetch = pendingIds.filter(p => !window.__voicePresignInFlight.has(p));
+  if (toFetch.length) {
+    toFetch.forEach(p => window.__voicePresignInFlight.add(p));
+    presignVoicePaths(toFetch).then(() => {
+      toFetch.forEach(p => window.__voicePresignInFlight.delete(p));
+      renderBlogPreview();
+    });
+  }
+}
+
+function collectBlogFields() {
+  const sources = document.getElementById('be-sources').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const related = document.getElementById('be-related').value.split(',').map(s => s.trim()).filter(Boolean);
+  const tags = document.getElementById('be-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  return {
+    title: document.getElementById('be-title').value.trim() || 'Untitled post',
+    slug: document.getElementById('be-slug').value.trim(),
+    captured_on: document.getElementById('be-captured-on').value || null,
+    excerpt: document.getElementById('be-excerpt').value.trim() || null,
+    cover_image_url: document.getElementById('be-cover').value.trim() || null,
+    body_md: document.getElementById('be-body').value,
+    source_urls: sources,
+    related_project_ids: related,
+    topic_tags: tags,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function saveBlogPost() {
+  if (!blogCurrentId) return;
+  const fields = collectBlogFields();
+  const { error } = await sb.from('published_posts').update(fields).eq('id', blogCurrentId);
+  if (error) { toast('Save failed: ' + error.message); return; }
+  toast('Draft saved');
+  loadBlogList();
+}
+
+async function publishBlogPost() {
+  if (!blogCurrentId) return;
+  await saveBlogPost();
+  const { error } = await sb.from('published_posts').update({ published_at: new Date().toISOString() }).eq('id', blogCurrentId);
+  if (error) { toast('Publish failed: ' + error.message); return; }
+  toast('Published');
+  openBlogEditor(blogCurrentId);
+  loadBlogList();
+}
+
+async function unpublishBlogPost() {
+  if (!blogCurrentId) return;
+  if (!confirm('Unpublish this post? It will go back to being a private draft.')) return;
+  const { error } = await sb.from('published_posts').update({ published_at: null }).eq('id', blogCurrentId);
+  if (error) { toast('Failed: ' + error.message); return; }
+  toast('Unpublished — back to draft');
+  openBlogEditor(blogCurrentId);
+  loadBlogList();
+}
+
+async function deleteBlogPost() {
+  if (!blogCurrentId) return;
+  if (!confirm('Delete this post permanently? This also removes its uploaded images. This cannot be undone.')) return;
+  const { error } = await sb.from('published_posts').delete().eq('id', blogCurrentId);
+  if (error) { toast('Delete failed: ' + error.message); return; }
+  toast('Deleted');
+  closeBlogEditor();
+  loadBlogList();
+}
+
+async function loadBlogImages(postId) {
+  const strip = document.getElementById('be-image-strip');
+  strip.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
+  const { data, error } = await sb.functions.invoke('admin-post-media', { body: { action: 'list', post_id: postId } });
+  if (error) { strip.innerHTML = ''; toast('Failed to load images: ' + error.message); return; }
+  blogImageRows = data?.rows || [];
+  renderBlogImageStrip();
+}
+
+function renderBlogImageStrip() {
+  const strip = document.getElementById('be-image-strip');
+  if (!blogImageRows.length) { strip.innerHTML = '<p class="card-meta">No images added yet.</p>'; return; }
+  strip.innerHTML = '';
+  blogImageRows.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'blog-image-thumb';
+    div.innerHTML = `
+      <img src="${row.url}" alt="${escapeHtml(row.caption || '')}" loading="lazy">
+      <button class="bi-remove" title="Remove" onclick="deleteBlogImage('${row.id}')">×</button>
+      <button class="bi-copy" title="Copy markdown image link" onclick="copyImageMarkdown('${row.url.replace(/'/g, "\\'")}')">copy md</button>
+    `;
+    strip.appendChild(div);
+  });
+}
+
+async function uploadBlogImage(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file || !blogCurrentId) return;
+  toast('Uploading…');
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    const { data, error } = await sb.functions.invoke('admin-post-media', {
+      body: { action: 'upload', post_id: blogCurrentId, filename: file.name, contentType: file.type, contentBase64: base64 },
+    });
+    if (error) { toast('Upload failed: ' + error.message); return; }
+    toast('Image added');
+    await loadBlogImages(blogCurrentId);
+  };
+  reader.onerror = () => toast('Failed to read file');
+  reader.readAsDataURL(file);
+}
+
+async function deleteBlogImage(id) {
+  if (!confirm('Remove this image?')) return;
+  const { error } = await sb.functions.invoke('admin-post-media', { body: { action: 'delete', id } });
+  if (error) { toast('Failed: ' + error.message); return; }
+  await loadBlogImages(blogCurrentId);
+}
+
+function copyImageMarkdown(url) {
+  const md = `![](${url})`;
+  navigator.clipboard?.writeText(md);
+  toast('Markdown image link copied — note: this is a signed URL that expires in ~1hr, meant for previewing while drafting.');
+}
+
+async function runLinkCheck() {
+  if (!blogCurrentId) return;
+  await saveBlogPost();
+  const box = document.getElementById('be-linkcheck');
+  box.style.display = 'block';
+  box.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
+  const { data, error } = await sb.functions.invoke('blog-link-check', { body: { post_id: blogCurrentId } });
+  if (error) { box.innerHTML = `<p class="empty">Check failed: ${escapeHtml(error.message)}</p>`; return; }
+  renderLinkCheckResults(data);
+}
+
+window.__lcSuggestedTitle = null;
+window.__lcSuggestedTags = [];
+
+function useSuggestedTitle() {
+  if (!window.__lcSuggestedTitle) return;
+  document.getElementById('be-title').value = window.__lcSuggestedTitle;
+  renderBlogPreview();
+  toast('Title updated');
+}
+
+function useSuggestedTags() {
+  if (!window.__lcSuggestedTags.length) return;
+  const tagsEl = document.getElementById('be-tags');
+  const existing = tagsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+  window.__lcSuggestedTags.forEach(t => { if (!existing.includes(t)) existing.push(t); });
+  tagsEl.value = existing.join(', ');
+  toast('Tags added');
+}
+
+function renderLinkCheckResults(data) {
+  const box = document.getElementById('be-linkcheck');
+  if (data.note) { box.innerHTML = `<p class="card-meta">${escapeHtml(data.note)}</p>`; return; }
+
+  const missing = data.missing_links || [];
+  const suggestions = data.suggestions || [];
+  window.__lcSuggestedTitle = data.suggested_title || null;
+  window.__lcSuggestedTags = Array.isArray(data.suggested_tags) ? data.suggested_tags : [];
+  let html = '';
+
+  if (window.__lcSuggestedTitle) {
+    html += `<div class="linkcheck-block"><div class="facet-label">Suggested title</div>
+      <div class="lc-item"><div class="lc-quote">${escapeHtml(window.__lcSuggestedTitle)}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:0.4rem" onclick="useSuggestedTitle()">Use this title</button></div></div>`;
+  }
+
+  if (window.__lcSuggestedTags.length) {
+    html += `<div class="linkcheck-block"><div class="facet-label">Suggested topic tags</div>
+      <div class="sm-tags">${window.__lcSuggestedTags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:0.5rem" onclick="useSuggestedTags()">Add these tags</button></div>`;
+  }
+
+  html += '<div class="linkcheck-block"><div class="facet-label">Promised links not found</div>';
+  html += missing.length
+    ? missing.map(m => `<div class="lc-item"><div class="lc-quote">"${escapeHtml(m.quote)}"</div><div class="lc-reason">${escapeHtml(m.reason)}</div></div>`).join('')
+    : '<p class="card-meta">None found — every promised link seems to be there.</p>';
+  html += '</div>';
+
+  html += '<div class="linkcheck-block"><div class="facet-label">Suggested links / related things</div>';
+  html += suggestions.length
+    ? suggestions.map(s => `<div class="lc-item"><div class="lc-quote">${escapeHtml(s.label)}</div>${s.url ? `<div class="lc-url">${escapeHtml(s.url)}</div>` : ''}<div class="lc-reason">${escapeHtml(s.reason)}</div></div>`).join('')
+    : '<p class="card-meta">Nothing to add right now.</p>';
+  html += '</div>';
+
+  box.innerHTML = html;
+}
+
 
 init();
 </script>

@@ -146,6 +146,49 @@
     }
     .back-link:hover { color: var(--cyan); }
 
+    /* ── PUBLISHED POSTS ── */
+    #posts-wrap { width: 100%; max-width: 720px; position: relative; z-index: 1; }
+    .posts-eyebrow { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 1.5rem; text-align: center; }
+    .post-card {
+      display: block; padding: 1.75rem 0; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .post-card:hover { opacity: 0.75; }
+    .post-card:first-child { padding-top: 0; }
+    .post-card-title { font-size: 1.4rem; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+    .post-card-date { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); margin-bottom: 0.6rem; }
+    .post-card-excerpt { font-size: 0.92rem; font-weight: 300; line-height: 1.6; color: rgba(255,255,255,0.45); margin-bottom: 0.75rem; }
+    .post-card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    #post-detail {
+      position: fixed; inset: 0; z-index: 300; background: #030303;
+      overflow-y: auto; display: none; padding: 6rem 2rem 5rem;
+    }
+    #post-detail.open { display: block; }
+    .post-detail-inner { max-width: 680px; margin: 0 auto; }
+    .post-detail-back {
+      display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;
+      color: rgba(255,255,255,0.4); margin-bottom: 2.5rem; cursor: pointer; transition: color 0.2s;
+    }
+    .post-detail-back:hover { color: var(--cyan); }
+    .post-detail-date { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); margin-bottom: 1rem; }
+    .post-detail-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 1.25rem; }
+    .post-detail-cover { width: 100%; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border); display: block; }
+    .post-detail-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
+    .post-detail-body { font-size: 1rem; font-weight: 300; line-height: 1.85; color: rgba(255,255,255,0.75); }
+    .post-detail-body p { margin-bottom: 1.3rem; }
+    .post-detail-body h1, .post-detail-body h2, .post-detail-body h3 { font-weight: 400; margin: 2rem 0 1rem; color: #fff; }
+    .post-detail-body a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
+    .post-detail-body img { max-width: 100%; border-radius: 10px; margin: 1.5rem 0; }
+    .post-detail-body blockquote { border-left: 2px solid var(--cyan); padding-left: 1.1rem; color: rgba(255,255,255,0.55); font-style: italic; margin: 1.3rem 0; }
+    .post-detail-body ul, .post-detail-body ol { margin: 0 0 1.3rem 1.4rem; }
+    .post-voice-note { font-size: 0.8rem; color: rgba(255,255,255,0.3); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 0.6rem 0.9rem; margin: 1rem 0; }
+    .post-detail-sources { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .post-detail-sources-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 0.9rem; }
+    .post-detail-sources-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .post-detail-sources-list a { font-size: 0.85rem; color: var(--cyan); word-break: break-all; }
+    .post-detail-sources-list a:hover { text-decoration: underline; }
+
     /* subtle grid pattern in background */
     .bg-grid {
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -155,6 +198,8 @@
       background-size: 60px 60px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -190,7 +235,12 @@
 </nav>
 
 <main>
-  <div class="coming-soon-wrap">
+  <div id="posts-wrap" style="display:none">
+    <p class="posts-eyebrow">Toni Esan / Blog</p>
+    <div id="posts-list"></div>
+  </div>
+
+  <div class="coming-soon-wrap" id="coming-soon-wrap">
     <p class="blog-eyebrow">Toni Esan / Blog</p>
     <h1 class="blog-title">Coming<br><span>soon</span></h1>
     <p class="blog-desc">
@@ -220,7 +270,136 @@
   </div>
 </main>
 
+<div id="post-detail">
+  <div class="post-detail-inner" id="post-detail-inner"></div>
+</div>
+
 <script>
+  const SUPABASE_URL = 'https://dmlwcrbjetpgqacblvqp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
+  const sbBlog = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function escapeHtml(s) {
+    return (s || '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function fmtPostDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // Voice-note embeds ([[voice:ID]]) get a placeholder to start with, then a
+  // real <audio> player is swapped in once public-voice-presign confirms the
+  // id is genuinely embedded in this published post and returns a signed URL.
+  function resolvePublicVoiceTokens(html) {
+    return html.replace(/(?:<p>)?\[\[voice:([a-zA-Z0-9-]+)\]\](?:<\/p>)?/g, (m, id) =>
+      `<div class="post-voice-note" id="voice-ph-${id}" data-voice-id="${id}">🎙️ loading voice note…</div>`);
+  }
+
+  async function hydratePublicVoiceNotes(postId, bodyMd) {
+    const ids = [...new Set([...bodyMd.matchAll(/\[\[voice:([a-zA-Z0-9-]+)\]\]/g)].map(m => m[1]))];
+    if (!ids.length) return;
+    try {
+      const { data, error } = await sbBlog.functions.invoke('public-voice-presign', { body: { post_id: postId, voice_ids: ids } });
+      if (error) throw error;
+      const urls = (data && data.urls) || {};
+      ids.forEach(id => {
+        const el = document.getElementById('voice-ph-' + id);
+        if (!el) return;
+        if (urls[id]) {
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = urls[id];
+          audio.style.width = '100%';
+          audio.style.maxWidth = '420px';
+          el.replaceWith(audio);
+        } else {
+          el.textContent = '🎙️ voice note unavailable';
+        }
+      });
+    } catch (err) {
+      console.error('Failed to load voice note audio:', err);
+      ids.forEach(id => {
+        const el = document.getElementById('voice-ph-' + id);
+        if (el) el.textContent = '🎙️ voice note unavailable';
+      });
+    }
+  }
+
+  function renderPostDetail(post) {
+    const bodyHtml = resolvePublicVoiceTokens(window.marked ? marked.parse(post.body_md || '') : escapeHtml(post.body_md || ''));
+    const dateStr = fmtPostDate(post.captured_on || post.published_at);
+    const sources = Array.isArray(post.source_urls) ? post.source_urls.filter(Boolean) : [];
+    document.getElementById('post-detail-inner').innerHTML = `
+      <div class="post-detail-back" onclick="closePostDetail()">← back</div>
+      ${post.cover_image_url ? `<img class="post-detail-cover" src="${escapeHtml(post.cover_image_url)}" alt="">` : ''}
+      <div class="post-detail-date">${dateStr}</div>
+      <h1 class="post-detail-title">${escapeHtml(post.title || '')}</h1>
+      ${(post.topic_tags || []).length ? `<div class="post-detail-tags">${post.topic_tags.map(t => `<span class="blog-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      <div class="post-detail-body">${bodyHtml}</div>
+      ${sources.length ? `
+        <div class="post-detail-sources">
+          <div class="post-detail-sources-label">Sources</div>
+          <ul class="post-detail-sources-list">
+            ${sources.map(u => `<li><a href="${escapeHtml(u)}" target="_blank" rel="noopener">${escapeHtml(u)}</a></li>`).join('')}
+          </ul>
+        </div>` : ''}
+    `;
+    document.getElementById('post-detail').classList.add('open');
+    document.getElementById('post-detail').scrollTop = 0;
+    history.pushState({ post: post.slug }, '', '#' + post.slug);
+    hydratePublicVoiceNotes(post.id, post.body_md || '');
+  }
+
+  function closePostDetail() {
+    document.getElementById('post-detail').classList.remove('open');
+    history.pushState({}, '', 'blog.html');
+  }
+  window.closePostDetail = closePostDetail;
+
+  let __loadedPosts = [];
+
+  async function loadPublishedPosts() {
+    try {
+      const { data, error } = await sbBlog
+        .from('published_posts')
+        .select('id,title,slug,excerpt,body_md,cover_image_url,captured_on,topic_tags,published_at,source_urls')
+        .not('published_at', 'is', null)
+        .lte('published_at', new Date().toISOString())
+        .order('published_at', { ascending: false });
+      if (error || !data || !data.length) return;
+
+      __loadedPosts = data;
+      document.getElementById('coming-soon-wrap').style.display = 'none';
+      document.getElementById('posts-wrap').style.display = 'block';
+      document.getElementById('posts-list').innerHTML = data.map((p, i) => `
+        <div class="post-card" onclick="openPostBySlug('${p.slug}')">
+          <div class="post-card-date">${fmtPostDate(p.captured_on || p.published_at)}</div>
+          <div class="post-card-title">${escapeHtml(p.title || '(untitled)')}</div>
+          ${p.excerpt ? `<div class="post-card-excerpt">${escapeHtml(p.excerpt)}</div>` : ''}
+          ${(p.topic_tags || []).length ? `<div class="post-card-tags">${p.topic_tags.map(t => `<span class="blog-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        </div>
+      `).join('');
+
+      // Deep-link support: /blog.html#some-slug opens that post directly.
+      const hashSlug = decodeURIComponent(location.hash.slice(1));
+      if (hashSlug) {
+        const match = data.find(p => p.slug === hashSlug);
+        if (match) renderPostDetail(match);
+      }
+    } catch (err) {
+      console.error('Failed to load published posts:', err);
+    }
+  }
+
+  function openPostBySlug(slug) {
+    const post = __loadedPosts.find(p => p.slug === slug);
+    if (post) renderPostDetail(post);
+  }
+  window.openPostBySlug = openPostBySlug;
+
+  loadPublishedPosts();
+
   const PATTERNS = {
     E:     [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,0, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
     i:     [0,0,1,0,0, 0,0,0,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
