@@ -284,46 +284,61 @@ def fetch_tiktok_enrichment(url: str, inbox_id: str) -> tuple[list[str], str | N
     stored_keys = []
     transcript = None
 
+    work_dir = Path(f"/tmp/tiktok_captions_{inbox_id}")
+    work_dir.mkdir(exist_ok=True)
+
     try:
-        with yt_dlp.YoutubeDL({
+        # NOTE: extract_info(download=False) never populates a "data" key on
+        # subtitle/automatic_caption entries — those only carry a "url" to fetch
+        # the file from. Use download=True with skip_download so yt-dlp fetches
+        # only the subtitle files (not the video) and writes them to work_dir,
+        # then read them from disk. Mirrors fetch_youtube_captions() above.
+        tiktok_opts = {
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
             "writesubtitles": True,
             "writeautosub": True,
-            "subtitlesformat": "srt",
-            "outtmpl": f"/tmp/tiktok_{inbox_id}_%(id)s",
-        }) as ydl:
-            info = ydl.extract_info(url, download=False)
+            # TikTok usually only offers vtt/json, not srt directly — request srt
+            # with vtt as fallback, and convert whatever comes down to srt via
+            # ffmpeg so the glob below always finds a .srt file.
+            "subtitlesformat": "srt/vtt/best",
+            "outtmpl": str(work_dir / "tiktok_%(id)s"),
+            "postprocessors": [{"key": "FFmpegSubtitlesConvertor", "format": "srt"}],
+        }
+        if FFMPEG_LOCATION:
+            tiktok_opts["ffmpeg_location"] = FFMPEG_LOCATION
+
+        with yt_dlp.YoutubeDL(tiktok_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
             video_id = info.get("id")
 
-            # Try regular subtitles first
-            if info.get("subtitles"):
-                for lang, subs in info["subtitles"].items():
-                    for sub in subs:
-                        if isinstance(sub, dict) and sub.get("data"):
-                            key = f"tiktok/{inbox_id}/captions_{lang}.srt"
-                            s3.put_object(Bucket=R2_BUCKET, Key=key, Body=sub["data"])
-                            stored_keys.append(key)
-                            transcript = sub.get("data", "")[:2000]
-                            print(f"   ✓ Stored TikTok captions ({lang})")
-                            break
-                    if transcript:
-                        break
+            # yt-dlp doesn't reliably distinguish manual vs. auto captions in the
+            # filename, so just take whatever it wrote. Fall back to any raw
+            # subtitle file (e.g. .vtt) in case the srt conversion didn't run.
+            caption_files = sorted(work_dir.glob(f"tiktok_{video_id}.*.srt"))
+            if not caption_files:
+                caption_files = sorted(
+                    f for f in work_dir.glob(f"tiktok_{video_id}.*")
+                    if f.suffix in (".vtt", ".srt")
+                )
+            if caption_files:
+                cap_path = caption_files[0]
+                cap_content = cap_path.read_text()
+                lang_match = re.search(r"\.([a-zA-Z-]+)\.(?:srt|vtt)$", cap_path.name)
+                lang = lang_match.group(1) if lang_match else "unknown"
 
-            # Fall back to automatic captions if no subtitles
-            if not transcript and info.get("automatic_captions"):
-                for lang, captions in info["automatic_captions"].items():
-                    for caption in captions:
-                        if isinstance(caption, dict) and caption.get("data"):
-                            key = f"tiktok/{inbox_id}/captions_auto_{lang}.srt"
-                            s3.put_object(Bucket=R2_BUCKET, Key=key, Body=caption["data"])
-                            stored_keys.append(key)
-                            transcript = caption.get("data", "")[:2000]
-                            print(f"   ✓ Stored TikTok auto-captions ({lang})")
-                            break
-                    if transcript:
-                        break
+                transcript = "\n".join([
+                    line for line in cap_content.split("\n")
+                    if line.strip() and not re.match(r"^\d+$", line.strip())
+                    and not re.match(r"^\d{2}:\d{2}:\d{2}", line.strip())
+                    and not line.strip().startswith("WEBVTT")
+                ])[:2000]
+
+                key = f"tiktok/{inbox_id}/captions_{lang}{cap_path.suffix}"
+                s3.put_object(Bucket=R2_BUCKET, Key=key, Body=cap_content)
+                stored_keys.append(key)
+                print(f"   ✓ Stored TikTok captions ({lang}, {cap_path.suffix.lstrip('.')})")
 
             if not stored_keys:
                 print(f"   ⚠️  No captions found on this TikTok — falling back to audio + Whisper")
@@ -348,6 +363,16 @@ def fetch_tiktok_enrichment(url: str, inbox_id: str) -> tuple[list[str], str | N
             raise
         print(f"   ⚠️  TikTok failed: {e}")
         return [], None
+    finally:
+        for f in work_dir.glob("*"):
+            try:
+                f.unlink()
+            except OSError:
+                pass
+        try:
+            work_dir.rmdir()
+        except OSError:
+            pass
 
 
 def fetch_instagram_enrichment(url: str, inbox_id: str) -> tuple[list[str], str | None]:
@@ -357,13 +382,22 @@ def fetch_instagram_enrichment(url: str, inbox_id: str) -> tuple[list[str], str 
         return [], None
 
     try:
-        with yt_dlp.YoutubeDL({
+        insta_opts = {
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
             "writeinfojson": True,
             "outtmpl": f"/tmp/insta_{inbox_id}",
-        }) as ydl:
+        }
+        # Instagram requires a logged-in session for nearly everything now.
+        # Pull cookies from a local browser (default: chrome) rather than
+        # requiring a manual cookies.txt export. Override with
+        # INSTAGRAM_COOKIES_BROWSER=firefox/edge/safari/none in .env.
+        cookies_browser = os.environ.get("INSTAGRAM_COOKIES_BROWSER", "chrome").strip().lower()
+        if cookies_browser and cookies_browser != "none":
+            insta_opts["cookiesfrombrowser"] = (cookies_browser,)
+
+        with yt_dlp.YoutubeDL(insta_opts) as ydl:
             info = ydl.extract_info(url, download=True)
 
             # Store metadata
