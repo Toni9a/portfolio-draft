@@ -30,5 +30,17 @@ jobs:
       - name: Visual tagging pass
         run: python scripts/tag_images.py --all
 
+      - name: Sync blog posts and drafts into the graph
+        run: python scripts/sync_posts.py
+
+      - name: Tag blog posts and drafts
+        run: python scripts/tag_posts.py --all
+
+      - name: Sync commentary into the graph
+        run: python scripts/sync_commentary.py
+
+      - name: Tag commentary
+        run: python scripts/tag_posts.py --source commentary --all
+
       - name: Embed new nodes
         run: python scripts/embed_nodes.py

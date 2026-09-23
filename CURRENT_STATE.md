@@ -1,249 +1,214 @@
 # Portfolio — Current State
-**Date:** 2026-08-12 · **Last git push:** 2026-04-01
+
+**Date:** 2026-09-22 · **Branch:** `main`, in sync with `origin/main` · **Supersedes** the 2026-08-12 version
+
+Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
+
+Companion doc: `claude/system_atlas.md` — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
 ---
 
-## What exists
+## What changed since the last version
 
-### Files
-| File | Purpose |
+The 2026-08-12 version of this file is substantially out of date. Corrections:
+
+| It said | Actually ✅ |
 |---|---|
-| `index.html` | Main portfolio — 878 lines, single-file HTML/CSS/JS |
-| `blog.html` | Blog placeholder — "coming soon" screen only |
-| `admin.html` | Admin UI — magic-link auth, 4 tabs: Repos, Q&A, Digest, Pending (see below) |
-| `toni_esan_portfolio_unfin.json` | Full data source — projects, skills, experience, identity |
-| `toni_esan_portfolio_platform_prd.md` | Platform PRD written 2026-06-28 — full Astro rebuild spec |
-| `docs/telegram_ingest_prd.md` | Telegram capture bot PRD — implemented 2026-08-12 |
-| `portdesign.pdf` | Original design moodboard |
-| `assetsforsite/` | Hat images (thinking/artisting/engineering/marketing), hydrangea, name |
-| `context/` | CV PDF, Cranfield project docs, new cv aid doc |
-
-### Telegram capture bot (live, 2026-08-12)
-- Supabase edge function `telegram-ingest` deployed to `dmlwcrbjetpgqacblvqp`, webhook registered with BotFather bot `tonipp`
-- Routes voice notes (Gemini transcription + auto-tagging), links (dynamic folder-button keyboard, top 6 + full-list fallback), plain text (auto-tagged as "thought"), and a catch-all "other" bucket — all landing in `inbox` with `source` prefixed `telegram_`
-- Uses `gemini-flash-latest` alias (not a pinned version) after `gemini-2.5-flash` was retired mid-project without notice
-- Folder replies work with or without Telegram's explicit reply gesture (falls back to "most recent pending folder question for this user" if not an explicit reply)
-- Every bot confirmation message has an inline 🗑️ Delete button wired to the row's id
-- `folder1, folder2` syntax in a folder reply files under folder1 and adds the rest as `topic_tags` (chosen over an array-typed `folder` column to avoid touching `generate_digest.py`/admin queries elsewhere)
-- Security: `TELEGRAM_ALLOWED_USER_ID` whitelist + `X-Telegram-Bot-Api-Secret-Token` header check, both as edge function secrets (never in code)
-
-### Admin UI — Pending tab (new, 2026-08-12)
-- Added to `admin.html` alongside existing Repos/Q&A/Digest tabs, same visual system
-- "Needs folder" view: telegram-sourced rows with `folder IS NULL` (nav badge shows live count)
-- "All captures" view: every telegram-sourced row regardless of folder, with transcript/text/link preview, tags, and folder label
-- Inline folder-assignment input (re-filing supported) and delete, no schema changes — reuses the same `inbox` table the bot writes to
-
-### Live site sections (index.html)
-1. **Hero** — "Toni" cyan / "Esan" white, 4 hat nav links, hydrangea card
-2. **Work** — 4 hat subsections (thinking / artisting / engineering / marketing), 19 project cards
-3. **AI Built** — 6 cards (Claude, GPT, Gemini builds) — *not in JSON*
-4. **Consulting** — 4 service cards + CTA — *not in JSON*
-5. **About** — bio, contact, education, interests, languages
-6. **Footer**
-
-### Design system
-- Background: `#030303` · Cyan: `#5BB8FF` · Font: Space Grotesk 300/400/500/700
-- Hat colours: thinking `#C4956A` · artisting `#6EE7B7` · engineering `#5BB8FF` · marketing `#FBBF24`
-- Nav: 3 dot-matrix tiles (E → work, i → about, heart → blog.html), Resumé pill
-- Leaf SVG decoration in 3 corners
+| 4 hats, 19 project cards | **5 hats, 54 cards** — `feat/contracting-hat` was merged (PRs #1 and #2) and pushed |
+| `blog.html` is a "coming soon" placeholder | **Blog is live** — 486 lines, reads `published_posts`, renders posts, tags, sources and voice clips |
+| `published_posts` is empty | **15 rows** — 1 published, 14 abandoned empty drafts |
+| 460 captures untagged | **1** — the backlog was cleared, and tagging now runs weekly in CI |
+| Admin has 6 tabs | **6 tabs, different set** — Explore, Tagging, Pics, Pending, Q&A, Blog |
+| Nothing from the PRD has been built | Still true of the *Astro rebuild*, but the brain, blog and a live-data prototype now exist |
+| "In the Lab" ideas are not surfaced | **Most are now on the site** — see the remaining gaps below |
 
 ---
 
-## What the JSON has that the site doesn't show
+## Layer 2 — the site
 
-### "In the Lab" — 16 idea-stage projects (status: "idea")
-None are surfaced on the site. PRD calls for a dedicated section.
+### Live now ✅
 
-| ID | Title |
+| File | State |
 |---|---|
-| `magkit_photo_alert` | MagKit Auto Photo Alert & Album Viewer |
-| `plantain_detector` | Plantain Ripeness Detector (Meta glasses) |
-| `gym_segmentation` | Gym Segmentation & Muscle Visualisation |
-| `photo_order_helper` | Photo Order Helper (facial age sort) |
-| `clothing_3d_wardrobe` | Clothing Autodetect & Virtual Wardrobe |
-| `instagram_maps` | Instagram × Google Maps Integration |
-| `explored_map` | Explored — % of Area Explored App |
-| `spotify_memory` | Spotify Memory (photos + music timeline) |
-| `pacetune` | Pacetune (running playlists from pace splits) |
-| `rag_youtube` | RAG for YouTube Videos (quiz generation) |
-| `pastor_assist` | PastorAssist (sermon transcription + Telegram bot) |
-| `telegram_gym_streaks` | Telegram Gym Streaks |
-| `physio_app` | Physio App — Pain & Muscle Visualisation |
-| `cv_retail_analytics` | CV for Purchase Detection (Retail Analytics) |
-| `knock_to_light` | Knock-to-Light Translator |
-| `ccard_gpt` | CCard from GPT Chats (infographic cards) |
-| `spotify_outfit_match` | Spotify Outfit Match |
-| `keys_site` | Timikeys Project Site |
-| `meta_glasses_networking` | Meta Glasses — Event Face Detection & Networking |
+| `index.html` | 1,561 lines, single static file. Five hats: contracting, thinking, artisting, engineering, marketing. 54 project cards. **Zero live database calls** — every card's copy, quote and link is typed into `data-note` / `data-link` attributes by hand |
+| `blog.html` | 486 lines. Reads `published_posts` directly via the anon key. Post list, detail view, markdown, tags, sources section, voice playback via `public-voice-presign`, `#slug` deep links |
+| `admin.html` | 2,002 lines, single file, no build step. Six tabs: Explore, Tagging, Pics, Pending, Q&A, Blog |
 
-### Shipped projects missing from site
-| ID | Title |
-|---|---|
-| `cranfield_networks` | Aviation Network Analysis (NetworkX) |
-| `cranfield_predictive` | Predictive Maintenance — Aircraft Engines |
-| `cranfield_optimisation` | Search & Optimization (Genetic Algorithms) |
-| `aston_smart_cot` | Smart Cot for Baby Monitoring (Arduino) |
-| `livia_soft` | LiviaSoft — GNSS & Bluetooth Research |
+Design system: background `#030303` · Space Grotesk 300/400/500/700 · hat colours contracting `#A78BFA` · thinking `#C4956A` · artisting `#6EE7B7` · engineering `#5BB8FF` · marketing `#FBBF24`.
 
-### Skill clusters — not surfaced at all
-8 clusters defined in JSON with full skill lists and project cross-links. PRD calls for interactive nodes.
+### Built but never wired up: the "connected" prototype ✅
 
-| ID | Label |
-|---|---|
-| `ai_ml` | AI & Machine Learning |
-| `computer_vision` | Computer Vision |
-| `data_analytics` | Data Analytics & Simulation |
-| `product_engineering` | Product Engineering & Prototyping |
-| `web_software` | Web & Software Development |
-| `creative_media` | Creative & Visual Production |
-| `automation_iot` | Automation & IoT |
-| `business_consulting` | Business, Consulting & GTM |
+**This is the most important undocumented thing in the repo.** The long-standing "the site can't read the database" problem is further along than any doc says.
 
-### Experience timeline — only partially shown
-Site shows Leveret + Santander. JSON has 9 roles:
-- Leveret AI — Technical Officer (Jun 2024–Present)
-- Self-Employed Consulting — Founder (Dec 2022–Present)
-- Santander HQ — Events & Operations (Jan 2024–Present)
-- GXO Logistics / John Lewis — Product Engineer (Jan–Nov 2023)
-- Drain Doctor — Field Engineering Coordinator (Oct 2021–Jul 2022)
-- Beaconsfield Dental — IT Operator (Sep 2020–Feb 2021)
-- LiviaSoft Technologies — Research Assistant (Sep 2019–Apr 2020)
-- W Motors — Design Intern, Dubai (Apr 2018)
-- Navya — AV Work Experience (2019)
+- **`connected/index.html`** — 84 KB, dated 2026-08-25, **untracked in git**. It is `index.html` (same five hats, same 54 cards) *plus* a live data layer: it calls `functions/v1/public-project-data`.
+- **`public-project-data`** — a deployed, ACTIVE edge function (`verify_jwt: false`, created ~2026-08-26). `GET ?project_id=<slug>` returns that project's answered Q&A rows plus its GitHub repo metadata. It uses the service-role key server-side so the browser never gets direct access to `project_qna_sessions` or `github_sync_cache`, both of which are RLS-locked to `authenticated`. It filters out `[meta]` Q&A rows (internal curation answers) and never returns `raw_data`.
 
----
+So the read path from site → database exists, is deployed, and has a working front-end prototype. It has simply never replaced `index.html`. **Deciding whether to promote `connected/index.html` to the live site is the single highest-leverage open decision in this project.**
 
-## What the site has that isn't in the JSON
+Before promoting it: it was built 2026-08-25, so check it against the current `index.html` for any card edits made since, and confirm `public-project-data` still returns what the page expects.
 
-- **AI Built section** — 6 cards showcasing Claude/GPT/Gemini-assisted work
-- **Consulting section** — 4 service cards (AI automation, web builds, CV prototyping, social strategy)
-- **Leaf SVG decoration** — botanical motif across 3 sections
-
----
-
-## Stale content on live site
+### Stale content on the live site
 
 | Item | Site says | Should be |
 |---|---|---|
 | MSc status | "Distinction, September 2025" | Completed — graduated July 2025 |
-| Blog | "Coming soon" | Still placeholder — no posts |
 
 ---
 
-## PRD summary (toni_esan_portfolio_platform_prd.md)
+## Layer 1 — the brain (summary)
 
-Written 2026-06-28. Specifies a full platform rebuild — not just a site refresh.
-
-**Recommended stack:** Astro + React islands · Supabase (pgvector) · Vercel Cron · Browser extension (xarchive fork)
-
-**Three systems:**
-1. Core portfolio — Astro content collections from the JSON
-2. Cool News pipeline — Twitter bookmarks → digest → commentary → blog
-3. Project expansion pipeline — GitHub sync → Q&A intake → rich project pages
-
-**Build phases:**
-- Phase 0 — Astro parity rebuild (port JSON, match current visual)
-- Phase 1 — Brain foundations (Supabase schema, bookmark capture, review page)
-- Phase 2 — Pipeline automation (cron digest, publish flow, blog pages)
-- Phase 3 — Project pipeline (GitHub sync, Q&A intake, media galleries)
-- Phase 4 — Polish (repurpose flags, build logs, Obsidian mirror)
-
-**Nothing from the PRD has been built yet.** Still on the original single-file HTML site.
-
----
-
----
-
-## Knowledge graph (2026-08-13)
-
-The four sources now share one shape, so a single query answers "what else connects to this".
-The original tables were not changed. Nodes are a projection on top of them.
-
-### Numbers
+Full detail and verification queries in `claude/system_atlas.md`. Current shape ✅:
 
 | | |
 |---|---|
-| Nodes | 1,103 — 903 captures, 96 answers, 59 projects, 29 repos, 11 roles and qualifications, 4 ventures, 1 commentary |
-| Embedded | 1,103 of 1,103 |
-| Captures tagged | 443 of 903 |
-| Concepts | 251 |
-| Loose entities | 330 not yet promoted to concepts |
-| Links | 745 concept, 699 door, 146 domain, 1,330 tag, 128 edges |
+| `inbox` | 997 rows — 963 from X bookmarks, 34 from Telegram, across 24 folders |
+| `node` | 1,116 — 903 captures, 96 Q&A answers, 74 portfolio entries, 29 repos, 12 commentary, 2 posts/drafts |
+| Embedded | 1,116 of 1,116 |
+| Captures untagged | 1 |
+| Concepts | 251 · doors 12 · domains 13 · tags 2,254 · edges 128 |
+| Links | 2,787 concept · 1,890 door · 587 domain · 3,935 tag |
+| Q&A | 96 answered, **78 still unanswered** |
 
-### Tables
+Tagging and embedding run weekly in GitHub Actions (Mondays 06:00 UTC). Four runs so far, all green; the job currently finds nothing to do because the backlog is clear. It resumes real work when new captures arrive — which for bookmarks means running the Chrome extension export.
 
-`door` (11 doors in 4 families) · `concept` · `domain` · `tag` · `node` · `edge` ·
-and the joins `node_door`, `node_concept`, `node_domain`, `node_tag`.
+### Knowledge-graph design *(carried forward — still accurate)*
 
-View `node_full` gives a node with its doors, domains, concepts and tags as arrays. Its columns
-are listed explicitly rather than `select n.*`, because `*` freezes at creation and silently
-misses columns added later. Function `related_nodes(node_id)` returns everything one hop out with
-a reason attached. Function `match_nodes(vector, count)` does similarity search. All are
-`security_invoker` and revoked from `anon`.
+The four sources share one shape, so a single query answers "what else connects to this". The original tables were not changed; nodes are a projection on top of them.
 
-### Doors replaced skill clusters
+**Doors replaced skill clusters.** `product_engineering` became `design_engineering` and covers mechanical, hardware, robotics and 3D printing only, never web. `creative_media` and `creative_tech` are separate, because one is making media and the other is building creative software. `product_management` and `entrepreneurship` are new doors. Families: Intelligence, Building, Craft, Business.
 
-`product_engineering` became `design_engineering` and covers mechanical, hardware, robotics and
-3D printing only, never web. `creative_media` and `creative_tech` are separate, because one is
-making media and the other is building creative software. `product_management` and
-`entrepreneurship` are new doors. Families: Intelligence, Building, Craft, Business.
+**Domains are a second axis.** Discipline says what skill was used; domain says what world the work was in. This exists because several tagging answers tried to put an industry into the discipline field. Events and weddings is the largest domain by a distance, covering seven projects.
 
-### Domains are a second axis
+**Concepts have three tiers.** Technical concepts came from the portfolio JSON. Topic concepts were added afterwards, because the bookmarks are about what Toni is interested in and the JSON only described what he had built with — so drones, AR, wearables and AI-and-jobs had nowhere to go. Entities are freeform, and the Promote panel in the admin turns a recurring one into a real concept in one click.
 
-Discipline says what skill was used, domain says what world the work was in. This exists because
-several tagging answers tried to put an industry into the discipline field. Events and weddings
-is the largest domain by a distance, covering seven projects.
+**Privacy.** Every table has RLS on. The graph tables have no anonymous policy and `anon` grants are revoked, so they're blocked twice. `published_posts` keeps its public read policy, which is correct for the blog. Since 2026-08-29 every auth-only policy also carries an explicit `WITH CHECK` — without it, anyone holding the public anon key could write.
 
-### Concepts have three tiers
+**Model notes.** `text-embedding-004` is retired and 404s. `gemini-embedding-2` returns one blended vector when handed a list, so `embed_nodes.py` checks the count it gets back and drops to one call per item rather than assigning a wrong vector. `generate_digest.py` and `generate_questions.py` are still on the retired `google.generativeai` SDK; `tag_posts.py` needs the current `google-genai` SDK instead.
 
-Technical concepts came from the portfolio JSON. Topic concepts were added afterwards, because
-the bookmarks are about what Toni is interested in and the JSON only described what he had built
-with, so drones, AR, wearables and AI-and-jobs had nowhere to go. Entities are freeform, and the
-Promote panel in the admin turns a recurring one into a real concept in one click.
+---
 
-### Privacy
+## New since 2026-09-21: the query bot ✅
 
-Every table has RLS on. The graph tables have no anonymous policy and `anon` grants are revoked,
-so it is blocked twice. `published_posts` keeps its public read policy, which is correct for the
-future blog.
+A **second Telegram bot** now exists — `telegram-query` — for *querying* the second brain rather than capturing into it. Not mentioned in any other doc.
 
-## Scripts
+- Source: `supabase/functions/telegram-query/index.ts`, 30 KB, dated 2026-09-21 — **untracked in git**
+- Deployed and ACTIVE as `telegram-query`, version 1, `verify_jwt: false`
+- Auth: `X-Telegram-Bot-Api-Secret-Token` header plus a whitelist on the sender's Telegram user ID, both checked before touching the database
+- Its own secrets: `TG_QUERY_BOT_TOKEN`, `TG_QUERY_WEBHOOK_SECRET`; shares `TELEGRAM_ALLOWED_USER_ID`, `GEMINI_API_KEY`, `R2_*`, `SUPABASE_*`
+- Serves cards from the graph with semantic search (`match_nodes`), tag search, folder counts and related concepts, with R2 images presigned in-function
+- Live-tested end to end on 2026-09-22: text and photo replies, folder inference from misheard voice terms, related-tag chips. Working.
 
-| Script | What it does |
+All six database helpers from migration `telegram_query_bot_support` are confirmed present and working (an earlier version of this doc said two were missing — that was wrong, verified directly against `information_schema` on 2026-09-22, not carried forward):
+
+| Helper | Confirmed | Called by the bot |
+|---|---|---|
+| `bot_tag_search` | ✅ | 3× |
+| `bot_cards` | ✅ | 3× |
+| `bot_folder_counts` | ✅ | 2× |
+| `bot_related_concepts` | ✅ | 2× |
+| `bot_node_card` (view) | ✅ | 2× |
+| `bot_query_session` (table) | ✅ — has 1 live row from real use | 4× |
+
+---
+
+## New since 2026-09-22: captures/drafts/commentary all tag on their own now ✅
+
+The tagging pipeline now covers everything that gets written, not just published posts:
+
+- **`sync_posts.py`** — widened from published-only to any post/draft with real content (a non-placeholder title or ≥20 chars of body). Draft nodes get `kind='draft'` and no `url` (nothing to link to yet); published ones get `kind='post'` and their real `/blog/{slug}` url. Editing a synced post clears its embedding **and** `tagged_at`, and deletes its gemini-origin doors/domains/concepts/tags, so the next tagging run redoes it instead of leaving stale tags next to new content. `topic_tags` links are now fully reconciled each run (added and removed), not just added.
+  - **Bug found and fixed 2026-09-22:** the first version selected a non-existent `node_tag.id` column when reconciling `topic_tags` links (the real PK is the composite `(node_id, tag_id)`) — crashed the whole run on the first node processed, before it ever reached the new draft. Fixed; reran clean.
+- **`sync_commentary.py`** — new. Pushes `commentary` (the takes you write on a capture or a digest item) into the graph as their own nodes, `kind='commentary'`, so a thought is searchable the moment you write it, whether or not it ever becomes a post. Title is synthesised from the take's first line, since commentary has no title field. URL is set to the originating capture's URL when the take is about exactly one inbox item, left null for digest takes clustering several.
+- **`tag_posts.py`** — generalised with `--source {published_posts,commentary}` instead of being hardcoded to posts, so one tagger now covers both. Default model bumped from `gemini-3.5-flash-lite` (copied from `tag_captures.py`'s default without checking) to `gemini-3.7-flash`, matching `tag_images.py`. Your one published post was tagged once under the old default before this fix — cosmetic only, rerun with `--retag` if you want it redone.
+- **Workflow (`tag-and-embed.yml`)** now runs, in order: `tag_captures.py` → `tag_images.py` → `sync_posts.py` → `tag_posts.py --all` → `sync_commentary.py` → `tag_posts.py --source commentary --all` → `embed_nodes.py`. **Still uncommitted — see below.**
+- Result as of 2026-09-22: 12/12 commentary rows and 2/2 post/draft rows in the graph, all tagged, all embedded. Full node counts below are current.
+
+**Deliberately not done:** `related_project_ids` is still never populated on any post — matching post content against the project graph is a separate, bigger piece of work, out of scope for today.
+
+**Open question, needs you:** one `published_posts` row (`da88cf93…`) is a second `kind='draft'` node, still titled "Untitled post," with tags nearly identical to the published GEO post. Unclear whether it's a genuine second draft or an abandoned editor session on the same post before it went live. Not deleted — nothing here deletes anything.
+
+**Open question, needs you:** `tag_captures.py` is still on `gemini-3.5-flash-lite`, the one model version left unaudited. Everything else that does text tagging is now on `3.7-flash` or the `gemini-flash-latest` alias.
+
+---
+
+## Uncommitted and untracked work in the repo ⚠️
+
+The working copy contains real work that is not in git. None of it is on `origin`.
+
+**Modified, not committed:**
+
+| File | Change |
 |---|---|
-| `sync_portfolio.py` | Pushes the JSON into the graph. Run after editing the JSON. Clears the embedding on anything whose text changed. |
-| `tag_captures.py` | Tags captures against the concept list with `gemini-3.5-flash-lite`. Never touches `inbox.folder` and never creates an edge. Folder matching is case-insensitive. |
-| `embed_nodes.py` | Embeds nodes with `gemini-embedding-2` at 768 dimensions. |
-| `generate_embeddings.py` | Same, for `commentary`. |
-| `generate_digest.py`, `generate_questions.py` | Still on the retired `google.generativeai` SDK and `gemini-2.5-flash`. Not yet moved over. |
+| `.github/workflows/tag-and-embed.yml` | adds two steps between the visual tagging pass and embedding: `sync_posts.py`, then `tag_posts.py --all`. **Not pushed, so the live weekly job does not run them** |
+| `.gitignore` | adds `applicationZZ/` — job-search material, correctly kept out of a repo with a public remote |
 
-Model notes: `text-embedding-004` is retired and 404s. `gemini-embedding-2` returns one blended
-vector when handed a list, so `embed_nodes.py` checks the count it gets back and drops to one per
-call rather than assigning a wrong vector.
+**Untracked:**
 
-## Admin
+| Path | What it is |
+|---|---|
+| `scripts/sync_posts.py` | 2026-09-22, revised same day. Pushes posts AND real-content drafts into the graph — see "captures/drafts/commentary" section above for the full current behaviour. The `node_tag.id` bug is fixed |
+| `scripts/tag_posts.py` | 2026-09-22, revised same day. Now `--source`-generalised for both `published_posts` and `commentary`; default model is `gemini-3.7-flash` |
+| `scripts/sync_commentary.py` | 2026-09-22, new. Pushes `commentary` takes into the graph — see above |
+| `supabase/functions/telegram-query/` | the query bot above — deployed, but its source is untracked |
+| `connected/` | the live-data site prototype above |
+| `Toni-Avalon-Summary.md`, `toni-avalon-contextnew.md` | Avalon engagement context |
+| `assetsforsite/*.jpg/png` | new portraits and a white contracting hat |
+| `_to_delete/` | scratch |
 
-Six tabs now. Repos, Q&A, Digest, Pending, **Explore**, **Tagging**.
+**Also worth knowing:** `supabase/migrations/` contains only the three original August files. The RLS `WITH CHECK` fix and `telegram_query_bot_support` were applied straight to the database and never written back as migration files, so the repo cannot rebuild the current schema.
 
-Explore loads all 1,103 nodes once and filters in the browser. Filters stack across types and
-combine within a type. Clicking an item shows what it connects to, ordered by how rare the shared
-thing is, so real edges come first and common concepts like Python sink and are dimmed.
+---
 
-Tagging shows the script running live, refreshing every five seconds, with the item text and link
-so tags can be judged. Wrong strips only what the model added. Promote turns a recurring entity
-into a concept and links every item already carrying it.
+## What the JSON still has that the site doesn't
 
-The magic link now returns to `window.location.pathname`, so it works on `/admin.html` locally and
-`/admin` on Vercel.
+Most of the previous version's gap list has closed — the five-hat rebuild surfaced the idea-stage work. Verified still missing from `index.html` ✅:
+
+| ID | Title |
+|---|---|
+| `plantain_detector` | Plantain Ripeness Detector (Meta glasses) |
+| `cranfield_predictive` | Predictive Maintenance — Aircraft Engines |
+| `cranfield_networks` | Aviation Network Analysis (NetworkX) |
+
+Skill clusters are still not surfaced at all — eight clusters with full skill lists and project cross-links sit in the JSON, and the PRD calls for them as interactive nodes. The experience timeline is still partial: the JSON holds nine roles.
+
+`sync_portfolio.py` has not been run since **2026-08-13**, so the graph's copy of the portfolio predates the five-hat rebuild. It is not part of any schedule.
+
+---
+
+## A category of work that is in none of this
+
+`toni_esan_portfolio_unfin.json` only covers code projects. A large body of work — ChatGPT Work workflow suites, reusable skills, document packs, Apple Shortcuts, native apps, demo environments and training material — is in neither the JSON, the graph, nor the site. It is inventoried in `claude/portfolio_context_from_gpt.md`, which is currently its only structured record, along with an editorial brief for writing it up and an evidence map of source paths.
+
+---
 
 ## Still to do
 
-- **460 captures untagged** — interaction design 133, MJ aesthetic 114, web design 109, hard pics 101.
-  Mostly a handle and a link with the content in an image, so tagging sees little. Embeddings cover them.
-- **Images are never read.** `gemini-embedding-2` is multimodal, so a pass over `media_urls` is possible.
-  Costs about $0.00012 an image. Not attempted.
-- **330 loose entities.** Mostly company names, which make poor concepts. Promote selectively.
-- **78 unanswered Q&A questions** still sitting in the admin.
-- **`index.html` does not read the JSON.** The site is hand written and the JSON has never driven it.
-- **No claims layer yet.** The atomic reusable statements for job applications. Distil from the 96 answers.
-- **No publish step.** `published_posts` is still empty and `blog.html` is still a placeholder.
+**Decisions**
+- Promote `connected/index.html` to the live site, or fold its data layer into `index.html`? The read path is already deployed.
+- Commit the untracked work, or keep it local? Nothing above is on `origin`.
+
+**Fixes**
+- Push the workflow change, or the blog posts/commentary never sync in CI (it currently only runs locally, on demand).
+- Write the applied migrations back into `supabase/migrations/` (`telegram_query_bot_support` included).
+- MSc copy on the live site.
+- Decide the `tag_captures.py` model version (still 3.5-flash-lite) and the duplicate "Untitled post" draft — both flagged above, both need you, neither touched.
+
+**Known gaps**
+- `sync_portfolio.py` is stale and unscheduled.
+- 78 unanswered Q&A questions.
+- 13 empty draft rows in `published_posts` — the editor has no autosave, so abandoned drafts accumulate. (One further row now has real content and is a graphed `draft` node — see open question above.)
+- `related_project_ids` is never populated, so posts stay off the project graph.
+- Skill clusters and the full experience timeline are unrendered.
+- No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
+- YouTube enrichment has never executed; there are no YouTube captures at all.
+
+---
+
+## Related docs
+
+| Doc | For |
+|---|---|
+| `claude/system_atlas.md` | Layer 1 pipeline, verification queries, gotchas |
+| `claude/portfolio_context_from_gpt.md` | inventory of non-GitHub work + writing brief |
+| `claude/architecture.md` | build history and deeper background |
+| `toni_esan_portfolio_platform_prd.md` | the Astro rebuild spec — still unbuilt |
+| `second_brain_architecture.md` (repo root) | earlier graph write-up |
