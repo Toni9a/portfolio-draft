@@ -1,13 +1,33 @@
 # Portfolio — Current State
 
-**Date:** 2026-09-22 · **Branch:** `main`, in sync with `origin/main` · **Supersedes** the 2026-08-12 version
+**Date:** 2026-09-23 · **Branch:** `main` (`7a692b0`) · **Supersedes** the 2026-09-22 version
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
 
-> **2026-09-23: blog rebuild (uncommitted).** The Blog tab and `blog.html` were rebuilt: autosaving drafts (no more empty rows), a Gemini shape pass, Gemini cutouts, a graph and links panel, and the Codex editorial layout with the hydrangea footer. Four edge functions and three migrations are live. Details: `blog_editorial_rebuild_2026-09-23.md` (repo root). This supersedes the "14 empty drafts / no autosave" and "`related_project_ids` never populated" items below.
+## 2026-09-23: the blog rebuild (pushed, live) ✅
+
+Commit `6d8121d`, plus `7a692b0` for the `/blog/<slug>` rewrite. Full detail is in `blog_editorial_rebuild_2026-09-23.md` (repo root).
+
+- **Public blog** (`blog.html`): the Codex editorial layout from `SITE-HANDOFF.md`, with a serif title, opening paper note, numbered sections, pull quote, margin cutouts, "Sources & sparks" and the particle hydrangea footer. Posts live at `/blog/<slug>`. Under each article there is a reader zone: a collapsed voice note (1× / 1.5× / 2×), comments that need your approval before they appear, a mailing-list sign-up, "Also check this out" and links to X, LinkedIn and GitHub.
+- **Shared renderer** (`assets/blog/editorial.js`): the admin preview is the real page, loaded in an iframe. Posts are still plain markdown with a few conventions: `> ` opening note, `## [LABEL] Heading`, `>> ` pull quote, `[[cutout:id]]`, `[[image:id]]` and `[[voice:id]]`.
+- **Admin Blog tab**:
+  - Drafts are only created once they have real content (the same rule as `sync_posts.py`), then autosave. Live posts wait for "Update live post".
+  - Tabs:
+    - Write: links, images from a URL, sources & sparks.
+    - Shape: a verbatim Gemini pass, with the transcript kept in `transcript_md` and a sentence-by-sentence comparison.
+    - Images: Gemini cutouts with the three prototype cutouts as style references, green background keyed out to a transparent PNG, moved beside any section.
+    - Links & graph: graph status, plus the closest projects and takes.
+    - Details: slug, date and tags.
+  - A publish check blocks em dashes and images without alt text.
+  - The 💬 Readers panel approves comments and lists sign-ups.
+- **Supabase**:
+  - Edge functions: `blog-studio` and `public-post-media` are new. `blog-link-check`, `admin-post-media` and `public-voice-presign` are updated.
+  - Migrations: editorial fields, `transcript_md` hidden from the public key, `match_nodes_by_kind`, `blog_subscribers` and `blog_comments`. All are in `supabase/migrations/20260923*`.
+- **Security fix**: `blog-studio`, `blog-link-check` and `admin-post-media` now require a signed-in user. `verify_jwt` alone accepts the public anon key.
+- **Published GEO post**: now carries the Codex article and its three cutouts. The original text is kept in `transcript_md`.
 
 ---
 
@@ -18,8 +38,8 @@ The 2026-08-12 version of this file is substantially out of date. Corrections:
 | It said | Actually ✅ |
 |---|---|
 | 4 hats, 19 project cards | **5 hats, 54 cards** — `feat/contracting-hat` was merged (PRs #1 and #2) and pushed |
-| `blog.html` is a "coming soon" placeholder | **Blog is live** — 486 lines, reads `published_posts`, renders posts, tags, sources and voice clips |
-| `published_posts` is empty | **15 rows** — 1 published, 14 abandoned empty drafts |
+| `blog.html` is a "coming soon" placeholder | **Blog is live**, rebuilt 2026-09-23 in the editorial layout (see above) |
+| `published_posts` is empty | **3 rows**: 1 published (GEO), 2 drafts with real content. The 13 empty drafts were deleted on 2026-09-22, and the new editor cannot create more |
 | 460 captures untagged | **1** — the backlog was cleared, and tagging now runs weekly in CI |
 | Admin has 6 tabs | **6 tabs, different set** — Explore, Tagging, Pics, Pending, Q&A, Blog |
 | Nothing from the PRD has been built | Still true of the *Astro rebuild*, but the brain, blog and a live-data prototype now exist |
@@ -34,8 +54,8 @@ The 2026-08-12 version of this file is substantially out of date. Corrections:
 | File | State |
 |---|---|
 | `index.html` | 1,561 lines, single static file. Five hats: contracting, thinking, artisting, engineering, marketing. 54 project cards. **Zero live database calls** — every card's copy, quote and link is typed into `data-note` / `data-link` attributes by hand |
-| `blog.html` | 486 lines. Reads `published_posts` directly via the anon key. Post list, detail view, markdown, tags, sources section, voice playback via `public-voice-presign`, `#slug` deep links |
-| `admin.html` | 2,002 lines, single file, no build step. Six tabs: Explore, Tagging, Pics, Pending, Q&A, Blog |
+| `blog.html` | Editorial layout, rendered by `assets/blog/editorial.js`. Index and article views, `/blog/<slug>` through the `vercel.json` rewrite, images via `public-post-media`, voice via `public-voice-presign`, comments and sign-ups through the anon key (insert only) |
+| `admin.html` | About 2,900 lines, single file, no build step. Tabs: Repos, Q&A, Digest, Pending, Explore, Pics, Tagging, Blog. Blog has a full-screen editor with a live preview and the 💬 Readers panel |
 
 Design system: background `#030303` · Space Grotesk 300/400/500/700 · hat colours contracting `#A78BFA` · thinking `#C4956A` · artisting `#6EE7B7` · engineering `#5BB8FF` · marketing `#FBBF24`.
 
@@ -125,22 +145,29 @@ The tagging pipeline now covers everything that gets written, not just published
 - **Workflow (`tag-and-embed.yml`)** now runs, in order: `tag_captures.py` → `tag_images.py` → `sync_posts.py` → `tag_posts.py --all` → `sync_commentary.py` → `tag_posts.py --source commentary --all` → `embed_nodes.py`. **Still uncommitted — see below.**
 - Result as of 2026-09-22: 12/12 commentary rows and 2/2 post/draft rows in the graph, all tagged, all embedded. Full node counts below are current.
 
-**Deliberately not done:** `related_project_ids` is still never populated on any post — matching post content against the project graph is a separate, bigger piece of work, out of scope for today.
+**Update 2026-09-23:** `related_project_ids` and `commentary_ids` can now be set from the editor (Links & graph). Suggestions come from `blog-link-check` through `match_nodes_by_kind`, and you confirm each one.
 
-**Open question, needs you:** one `published_posts` row (`da88cf93…`) is a second `kind='draft'` node, still titled "Untitled post," with tags nearly identical to the published GEO post. Unclear whether it's a genuine second draft or an abandoned editor session on the same post before it went live. Not deleted — nothing here deletes anything.
+**Resolved 2026-09-23:** `da88cf93…` was reworked in place as the test draft, now titled "When Generative Engines Need *Human Influencers*".
 
 **Open question, needs you:** `tag_captures.py` is still on `gemini-3.5-flash-lite`, the one model version left unaudited. Everything else that does text tagging is now on `3.7-flash` or the `gemini-flash-latest` alias.
 
 ---
 
-## Uncommitted and untracked work in the repo ⚠️
+## Uncommitted and untracked work in the repo
 
-The working copy contains real work that is not in git. None of it is on `origin`.
+As of `7a692b0`, the blog work, `sync_posts.py`, `tag_posts.py`, `sync_commentary.py`, the workflow change and the `telegram-query` source are all committed. Still untracked, and deliberately left out:
 
-**Modified, not committed:**
-
-| File | Change |
+| Path | What it is |
 |---|---|
+| `connected/` | the live-data site prototype, still unpromoted |
+| `Toni-Avalon-Summary.md`, `toni-avalon-contextnew.md` | Avalon engagement context |
+| `assetsforsite/*.jpg/png` | new portraits and a white contracting hat |
+| `_to_delete/` | scratch, including `codex-cutouts/`, which is safe to delete |
+| `assetsforsite/portdesign [Auto-saved].pptx` | modified by PowerPoint autosave |
+
+**Migrations:** the 2026-09-23 migrations are in `supabase/migrations/20260923*`. The earlier RLS `WITH CHECK` fix and `telegram_query_bot_support` were applied straight to the database and are still not written back, so the repo still can't rebuild the whole schema.
+
+---|---|
 | `.github/workflows/tag-and-embed.yml` | adds two steps between the visual tagging pass and embedding: `sync_posts.py`, then `tag_posts.py --all`. **Not pushed, so the live weekly job does not run them** |
 | `.gitignore` | adds `applicationZZ/` — job-search material, correctly kept out of a repo with a public remote |
 
@@ -187,19 +214,19 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 **Decisions**
 - Promote `connected/index.html` to the live site, or fold its data layer into `index.html`? The read path is already deployed.
-- Commit the untracked work, or keep it local? Nothing above is on `origin`.
 
 **Fixes**
-- Push the workflow change, or the blog posts/commentary never sync in CI (it currently only runs locally, on demand).
-- Write the applied migrations back into `supabase/migrations/` (`telegram_query_bot_support` included).
+- Write the older applied migrations back into `supabase/migrations/` (`telegram_query_bot_support` and the RLS fix).
+- Five older edge functions still accept the public anon key as if it were a signed-in user: `retag-item`, `semantic-search`, `answer-question`, `presign-media`, `backfill-voice-audio`. Give them the same check as the blog functions.
+- Mailing list: sign-ups are stored in `blog_subscribers`, but nothing sends yet. It needs Resend (or similar), an unsubscribe link and a double opt-in.
 - MSc copy on the live site.
-- Decide the `tag_captures.py` model version (still 3.5-flash-lite) and the duplicate "Untitled post" draft — both flagged above, both need you, neither touched.
+- Decide the `tag_captures.py` model version (still 3.5-flash-lite).
 
 **Known gaps**
 - `sync_portfolio.py` is stale and unscheduled.
 - 78 unanswered Q&A questions.
-- 13 empty draft rows in `published_posts` — the editor has no autosave, so abandoned drafts accumulate. (One further row now has real content and is a graphed `draft` node — see open question above.)
-- `related_project_ids` is never populated, so posts stay off the project graph.
+- `match_nodes()` (HNSW, ef_search 40) only ever returns about 40 nodes, so semantic search elsewhere misses anything ranked lower. The blog now uses the exact-scan `match_nodes_by_kind` instead.
+- The live blog's Codex slug is still `untitled-mtdm8gna`. It can be renamed in Details, but that breaks existing links.
 - Skill clusters and the full experience timeline are unrendered.
 - No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
 - YouTube enrichment has never executed; there are no YouTube captures at all.
@@ -212,7 +239,8 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 |---|---|
 | `system_atlas.md` (repo root) | Layer 1 pipeline, verification queries, gotchas |
 | `portfolio_context_from_gpt.md` (repo root) | inventory of non-GitHub work + writing brief |
-| `admin_drafts_rebuild_brief.md` (repo root) | 2026-09-22 handoff brief for reworking the admin Blog/drafts UI around the tagging pipeline |
+| `admin_drafts_rebuild_brief.md` (repo root) | 2026-09-22 handoff brief for reworking the admin Blog/drafts UI around the tagging pipeline (now done) |
+| `blog_editorial_rebuild_2026-09-23.md` (repo root) | what the blog rebuild changed, in detail |
 | `toni_esan_portfolio_platform_prd.md` | the Astro rebuild spec — still unbuilt |
 | `second_brain_architecture.md` (repo root) | earlier graph write-up |
 
