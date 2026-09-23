@@ -1,486 +1,673 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog — Toni Esan</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Toni Esan's field notes: voice notes, shaped into essays.">
+  <title>Blog | Toni Esan</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23090a0b'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%236aa7d2' stroke-width='3'/%3E%3Cpath d='M19 25h26M32 20v25' stroke='%23f4f0e8' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <!--
+    Editorial blog, from the Codex handoff (SITE-HANDOFF.md, 2026-09).
+    One page, two views: the index (/blog) and an article (/blog/<slug>,
+    via the rewrite in vercel.json; #slug and ?p=slug also work, which is
+    how it runs on a plain local server). Rendering lives in
+    /assets/blog/editorial.js so the admin preview (blog.html?preview=1 in an
+    iframe) shows exactly what will be published.
+    All asset paths are absolute because this page is served at /blog/<slug>.
+  -->
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0a0b0c;
+      --paper: #f0ede5;
+      --paper-dim: #b8b4ad;
+      --blue: #6a9fc4;
+      --blue-soft: #a8c6d7;
+      --orange: #c36b36;
+      --line: rgba(240, 237, 229, .16);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      background: #030303;
-      color: #fff;
-      font-family: 'Space Grotesk', sans-serif;
-      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(circle at 20% 8%, rgba(69, 116, 147, .12), transparent 26rem), #050607;
+      color: var(--paper);
+      font-family: var(--sans);
       overflow-x: hidden;
     }
-    a { color: inherit; text-decoration: none; }
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none; z-index: 20; opacity: .12;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+    a { color: inherit; }
+    img { display: block; max-width: 100%; }
 
-    :root {
-      --cyan:   #5BB8FF;
-      --dot:    #5BB8FF;
-      --surf:   #0e0e0e;
-      --border: rgba(255,255,255,0.07);
-    }
+    .reading-progress { position: fixed; z-index: 40; top: 0; left: 0; width: var(--read, 0%); height: 3px; background: var(--blue); }
 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      padding: 1.5rem 2.5rem;
-      display: flex; align-items: flex-start; justify-content: space-between;
+    .site-header {
+      width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 24px 0 20px;
+      display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line);
     }
-    .nav-group { display: flex; flex-direction: column; gap: 0.45rem; }
-    .nav-group.row { flex-direction: row; align-items: center; gap: 0.75rem; }
-    .nav-pill {
-      display: inline-flex; align-items: center;
-      height: 28px; padding: 0 1rem;
-      border: 1.5px solid #4ECDC4; border-radius: 100px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.77rem; font-weight: 500; color: #4ECDC4;
-      letter-spacing: 0.04em; cursor: pointer; background: transparent;
-      transition: background 0.2s;
-    }
-    .nav-pill:hover { background: rgba(78,205,196,0.12); }
-    .dot-tile {
-      width: 84px; height: 84px;
-      background: #0c0c0c; border-radius: 18px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0; transition: background 0.2s;
-    }
-    .dot-tile:hover { background: #141414; }
-    .dot-tile.active { background: #141414; outline: 1px solid rgba(91,184,255,0.3); }
-    .dot-grid {
+    .brand { font: 700 .77rem/1 var(--mono); letter-spacing: .22em; text-decoration: none; }
+    .header-note { color: var(--paper-dim); font: .68rem/1.25 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .header-links { display: flex; align-items: center; gap: 28px; }
+    .home-link { color: var(--paper); font: 600 .76rem/1.25 var(--mono); letter-spacing: .08em; text-decoration: none; }
+    .home-link:hover, .home-link:focus-visible, .brand:hover, .brand:focus-visible { color: var(--blue-soft); text-decoration: underline; text-underline-offset: 4px; }
+
+    .article-shell { position: relative; width: min(1180px, calc(100% - 40px)); margin: 0 auto; min-height: 60vh; }
+
+    /* ── article ── */
+    .article-header { position: relative; padding: clamp(72px, 10vw, 138px) 0 clamp(64px, 8vw, 112px); border-bottom: 1px solid var(--line); }
+    .issue-line { display: flex; align-items: center; gap: 12px; color: var(--blue-soft); font: 700 .72rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .issue-line::before { content: ""; width: 38px; height: 1px; background: currentColor; }
+    h1 { max-width: 970px; margin: 24px 0 25px; font: 400 clamp(3.5rem, 8vw, 7.4rem)/.88 var(--serif); letter-spacing: -.055em; text-wrap: balance; }
+    h1 em { color: var(--blue-soft); font-weight: 400; }
+    .deck { max-width: 670px; margin: 0; color: var(--paper-dim); font-size: clamp(1.05rem, 1.7vw, 1.28rem); line-height: 1.65; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 34px; }
+    .tags span { padding: 7px 11px; border: 1px solid rgba(168, 198, 215, .26); border-radius: 999px; color: rgba(240, 237, 229, .66); font: .67rem/1 var(--mono); }
+
+    .article-grid {
       display: grid;
-      grid-template-columns: repeat(5, 7px);
-      grid-template-rows: repeat(7, 7px);
-      gap: 4px;
+      grid-template-columns: minmax(140px, 1fr) minmax(0, 690px) minmax(140px, 1fr);
+      column-gap: clamp(28px, 5vw, 74px);
+      padding-top: 72px;
     }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--dot); opacity: 0.13;
-      transition: opacity 0.18s ease;
-    }
-    .dot.lit { opacity: 0.92; }
+    .margin-note { position: sticky; top: 40px; align-self: start; color: rgba(240, 237, 229, .45); font: .68rem/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .margin-note strong { display: block; margin-bottom: 10px; color: var(--blue-soft); font-weight: 500; }
+    .article-body { grid-column: 2; min-width: 0; }
 
-    /* ── MAIN ── */
-    main {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 8rem 2.5rem 4rem;
-      position: relative;
+    .lead-note {
+      position: relative; margin: 0 0 68px; padding: 24px 28px 25px 32px;
+      color: var(--ink); background: var(--paper);
+      clip-path: polygon(0 3%, 98% 0, 100% 92%, 2% 100%);
+      font: italic 1.22rem/1.55 var(--serif); transform: rotate(-.4deg);
     }
+    .article-body p.lead-note { margin: 0 0 68px; color: var(--ink); font: italic 1.22rem/1.55 var(--serif); letter-spacing: 0; }
+    .lead-note::before { content: "A QUICK TAKE"; display: block; margin-bottom: 10px; color: #3c6888; font: 700 .66rem/1 var(--mono); letter-spacing: .17em; font-style: normal; }
 
-    /* leaf decoration */
-    .leaf-deco {
-      position: fixed; pointer-events: none; z-index: 0;
-    }
+    .section { position: relative; margin: 0 0 84px; }
+    .section-number { display: block; margin-bottom: 12px; color: var(--orange); font: 700 .7rem/1 var(--mono); letter-spacing: .17em; }
+    .article-body h2 { margin: 0 0 28px; font: 400 clamp(2rem, 4vw, 3.3rem)/1.02 var(--serif); letter-spacing: -.035em; text-wrap: balance; }
+    .article-body h3 { margin: 1.6em 0 .6em; font: 400 1.6rem/1.1 var(--serif); }
+    .article-body p, .article-body li { color: #d4d0c9; font: 400 clamp(1.06rem, 1.5vw, 1.2rem)/1.82 var(--sans); letter-spacing: -.012em; }
+    .article-body p { margin: 0 0 1.35em; }
+    .article-body ul, .article-body ol { margin: 0 0 1.35em; padding-left: 1.3em; }
+    .article-body a:not(.source-card) { color: var(--blue-soft); text-underline-offset: 3px; }
+    .article-body blockquote:not(.pull-quote) { margin: 0 0 1.35em; padding-left: 1.1em; border-left: 2px solid var(--blue); color: var(--paper-dim); font-style: italic; }
+    .article-body p.drop::first-letter { float: left; margin: .07em .11em 0 0; color: var(--paper); font: 400 4.1em/.74 var(--serif); }
+    .article-body code { font: .9em var(--mono); background: rgba(240,237,229,.08); padding: .1em .35em; border-radius: 4px; }
 
-    .coming-soon-wrap {
-      text-align: center;
-      position: relative; z-index: 1;
-      max-width: 560px;
+    .pull-quote {
+      position: relative; margin: 90px -80px; padding: 54px 72px 58px;
+      color: #091014; background: #8db5cc;
+      clip-path: polygon(1% 4%, 100% 0, 98% 96%, 0 100%);
+      font: 400 clamp(2rem, 4.5vw, 3.8rem)/1.02 var(--serif); letter-spacing: -.045em;
     }
+    .pull-quote::before { content: "\201C"; position: absolute; top: 8px; left: 20px; color: rgba(9, 16, 20, .22); font-size: 5rem; }
 
-    .blog-eyebrow {
-      font-size: 0.7rem; letter-spacing: 0.2em;
-      text-transform: uppercase; color: rgba(255,255,255,0.25);
-      margin-bottom: 1.5rem;
-    }
+    /* Cutouts sit in the margins beside the passage that follows them. The
+       anchor has no height; the image hangs off it into the side column,
+       sized to whatever room the viewport leaves. */
+    .cutout-anchor { position: relative; height: 0; }
+    .cutout { position: absolute; z-index: 2; top: 0; pointer-events: none; filter: saturate(.74) contrast(.96); }
+    .cutout-lead .cutout, .cutout-left .cutout { right: calc(100% + 18px); }
+    .cutout-right .cutout { left: calc(100% + 18px); }
+    .cutout-lead .cutout { width: min(390px, 27vw, calc((100vw - 690px) / 2 - 20px)); transform: rotate(-7deg); top: -40px; }
+    .cutout-left .cutout { width: min(270px, 20vw, calc((100vw - 690px) / 2 - 20px)); transform: rotate(-5deg); }
+    .cutout-right .cutout { width: min(305px, 22vw, calc((100vw - 690px) / 2 - 20px)); transform: rotate(4deg); }
 
-    .blog-title {
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      font-weight: 300; letter-spacing: -0.03em;
-      line-height: 1; margin-bottom: 1.5rem;
-    }
-    .blog-title span { color: var(--cyan); }
+    .inline-figure { margin: 44px 0; }
+    .inline-figure img { width: 100%; border-radius: 4px; }
+    .inline-figure figcaption { margin-top: 10px; color: rgba(240,237,229,.5); font: .7rem/1.4 var(--mono); letter-spacing: .06em; }
 
-    .blog-desc {
-      font-size: 1rem; font-weight: 300; line-height: 1.75;
-      color: rgba(255,255,255,0.4); margin-bottom: 2.5rem;
-    }
+    /* The original recording: a collapsed strip under the opening note. */
+    .voice-note { margin: 0 0 56px; border: 1px solid rgba(168,198,215,.22); border-left: 3px solid var(--blue); border-radius: 2px 14px 14px 2px; background: #0b0f12; }
+    .voice-note summary { display: flex; align-items: center; gap: 14px; padding: 12px 16px 12px 14px; cursor: pointer; list-style: none; user-select: none; }
+    .voice-note summary::-webkit-details-marker { display: none; }
+    .voice-note summary:focus-visible { outline: 1px solid var(--blue-soft); outline-offset: 3px; border-radius: 10px; }
+    .lead-note + .voice-note { margin-top: -36px; }
+    .vn-icon { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--paper); display: grid; place-items: center; }
+    .vn-icon::before { content: ""; width: 10px; height: 15px; border-radius: 6px; border: 2px solid var(--ink); box-shadow: 0 5px 0 -3px var(--ink); }
+    .vn-label { flex: 1; color: var(--blue-soft); font: 700 .66rem/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .vn-label b { color: rgba(240,237,229,.35); font-weight: 400; }
+    .vn-time { color: rgba(240,237,229,.5); font: .7rem/1 var(--mono); }
+    .vn-toggle { color: var(--paper); font: 700 .66rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .vn-toggle::after { content: "Play ↓"; }
+    .voice-note[open] .vn-toggle::after { content: "Hide ↑"; }
+    .vn-body { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 16px 14px 62px; }
+    .vn-body audio { flex: 1 1 260px; min-width: 0; height: 36px; color-scheme: dark; }
+    .vn-speeds { display: inline-flex; border: 1px solid rgba(240,237,229,.18); border-radius: 999px; overflow: hidden; }
+    .vn-speeds button { padding: 8px 12px; border: 0; background: transparent; color: rgba(240,237,229,.65); font: 700 .7rem/1 var(--mono); cursor: pointer; }
+    .vn-speeds button + button { border-left: 1px solid rgba(240,237,229,.12); }
+    .vn-speeds button[aria-pressed="true"] { background: var(--paper); color: var(--ink); }
+    .vn-speeds button:hover:not([aria-pressed="true"]) { color: var(--paper); }
+    .vn-speeds button:focus-visible { outline: 2px solid var(--blue-soft); outline-offset: -2px; }
+    .voice-note.unavailable .vn-toggle::after { content: "Unavailable"; color: var(--paper-dim); }
+    /* photos and logos dropped in by URL */
+    .article-body p img { display: inline-block; max-width: 100%; height: auto; border-radius: 4px; vertical-align: middle; }
+    .article-body p:has(> img:only-child) { margin: 44px 0; }
+    .media-missing { margin: 0 0 1.35em; padding: 10px 12px; border: 1px dashed var(--orange); color: var(--orange); font: .72rem var(--mono); }
 
-    .blog-tags {
-      display: flex; flex-wrap: wrap; gap: 0.5rem;
-      justify-content: center; margin-bottom: 3rem;
-    }
-    .blog-tag {
-      font-size: 0.72rem; padding: 0.3rem 0.85rem;
-      border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.3);
-    }
+    .sources { margin: 100px 0 120px; padding-top: 30px; border-top: 1px solid var(--line); }
+    .sources h2 { margin-bottom: 22px !important; font: 700 .72rem/1 var(--mono) !important; letter-spacing: .16em !important; text-transform: uppercase; }
+    .source-card { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 14px; padding: 17px 0; border-bottom: 1px solid var(--line); color: var(--paper); text-decoration: none; }
+    .source-card:hover .source-arrow, .source-card:focus-visible .source-arrow { transform: translate(4px, -4px); }
+    .source-card:focus-visible { outline: 1px solid var(--blue-soft); outline-offset: 4px; }
+    .source-index { color: var(--orange); font: .7rem/1 var(--mono); }
+    .source-title { font-size: .98rem; line-height: 1.35; overflow-wrap: anywhere; }
+    .source-domain { display: block; margin-top: 4px; color: rgba(240,237,229,.42); font: .67rem/1.3 var(--mono); }
+    .source-arrow { color: var(--blue-soft); transition: transform .2s ease; }
 
-    .photo-strip-label {
-      font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
-      color: rgba(255,255,255,0.25); margin-bottom: 1.25rem;
+    /* ── index ── */
+    .index-header { padding: clamp(72px, 10vw, 138px) 0 clamp(48px, 6vw, 80px); border-bottom: 1px solid var(--line); }
+    .index-header .deck { margin-top: 6px; }
+    .post-list { list-style: none; margin: 0 0 120px; padding: 0; }
+    .post-row { border-bottom: 1px solid var(--line); }
+    .post-link {
+      display: grid; grid-template-columns: 72px minmax(0, 1fr) 150px; gap: clamp(16px, 3vw, 40px);
+      align-items: center; padding: 40px 0; text-decoration: none; color: inherit;
     }
-    .photo-strip {
-      display: flex; gap: 1.1rem; justify-content: center; flex-wrap: wrap;
-      margin-bottom: 2.75rem;
-    }
-    .photo-strip img {
-      width: 128px; height: 160px; object-fit: cover; border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 14px 32px rgba(0,0,0,0.4);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      display: block;
-    }
-    .photo-strip a:nth-child(1) img { transform: rotate(-4deg); }
-    .photo-strip a:nth-child(2) img { transform: rotate(3deg); }
-    .photo-strip a:nth-child(3) img { transform: rotate(-2deg); }
-    .photo-strip a:nth-child(4) img { transform: rotate(2deg); }
-    .photo-strip a:nth-child(5) img { transform: rotate(-3deg); }
-    .photo-strip a:nth-child(6) img { transform: rotate(4deg); }
-    .photo-strip img:hover {
-      transform: rotate(0deg) scale(1.05);
-      box-shadow: 0 18px 40px rgba(91,184,255,0.18);
-    }
+    .post-no { align-self: start; padding-top: 10px; color: var(--orange); font: 700 .72rem/1 var(--mono); letter-spacing: .17em; }
+    .post-meta { color: var(--blue-soft); font: 700 .68rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 14px; }
+    .post-title { margin: 0 0 14px; font: 400 clamp(2rem, 4.4vw, 3.6rem)/.96 var(--serif); letter-spacing: -.045em; text-wrap: balance; transition: color .2s ease; }
+    .post-title em { color: var(--blue-soft); }
+    .post-deck { margin: 0; max-width: 620px; color: var(--paper-dim); font-size: 1.02rem; line-height: 1.6; }
+    .post-thumb { justify-self: end; width: 150px; height: 130px; display: flex; align-items: center; justify-content: center; }
+    .post-thumb img { max-height: 130px; width: auto; transform: rotate(-4deg); filter: saturate(.74) contrast(.96); transition: transform .3s ease; }
+    .post-link:hover .post-title, .post-link:focus-visible .post-title { color: var(--blue-soft); }
+    .post-link:hover .post-thumb img { transform: rotate(0deg) scale(1.04); }
+    .post-link:focus-visible { outline: 1px solid var(--blue-soft); outline-offset: 6px; }
+    .empty-state { padding: 80px 0 140px; color: var(--paper-dim); font: .8rem/1.6 var(--mono); letter-spacing: .08em; }
 
-    /* ── LOADING SKELETON ── */
-    #loading-wrap { width: 100%; max-width: 720px; position: relative; z-index: 1; }
-    .skeleton-eyebrow {
-      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-      color: rgba(255,255,255,0.25); margin-bottom: 1.5rem; text-align: center;
-    }
-    .skeleton-card { padding: 1.75rem 0; border-bottom: 1px solid var(--border); }
-    .skeleton-card:first-child { padding-top: 0; }
-    .skeleton-line {
-      border-radius: 6px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.05) 63%);
-      background-size: 400% 100%;
-      animation: skeleton-shimmer 1.6s ease infinite;
-    }
-    @keyframes skeleton-shimmer {
-      0% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .skeleton-line.date { width: 110px; height: 10px; margin-bottom: 0.7rem; }
-    .skeleton-line.title { width: 65%; height: 22px; margin-bottom: 0.7rem; }
-    .skeleton-line.excerpt { width: 90%; height: 12px; margin-bottom: 0.5rem; }
-    .skeleton-line.excerpt.short { width: 55%; }
+    .skeleton { padding: 120px 0; }
+    .skeleton div { height: 14px; margin-bottom: 18px; border-radius: 4px; background: linear-gradient(90deg, rgba(240,237,229,.05) 25%, rgba(240,237,229,.1) 37%, rgba(240,237,229,.05) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease infinite; }
+    .skeleton div:nth-child(1) { width: 180px; }
+    .skeleton div:nth-child(2) { width: 70%; height: 70px; }
+    .skeleton div:nth-child(3) { width: 50%; }
+    @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-    .back-link {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      font-size: 0.8rem; color: rgba(255,255,255,0.3);
-      transition: color 0.2s;
+    /* ── footer ── */
+    .editorial-footer {
+      position: relative; min-height: 590px; width: min(1180px, calc(100% - 24px)); margin: 0 auto 12px;
+      overflow: hidden; border-radius: 30px; background: #020303; isolation: isolate;
     }
-    .back-link:hover { color: var(--cyan); }
+    .footer-wordmark { position: relative; z-index: 3; margin: 30px 0 0 34px; font: 400 clamp(4.6rem, 13vw, 10.8rem)/.8 var(--serif); letter-spacing: -.07em; pointer-events: none; }
+    .footer-side { position: absolute; z-index: 3; right: 34px; top: 38px; max-width: 190px; text-align: right; font: 600 .78rem/1.25 var(--sans); text-transform: uppercase; pointer-events: none; }
+    .footer-date { position: absolute; z-index: 3; top: 235px; left: 30px; color: rgba(240,237,229,.72); font: .7rem/1 var(--mono); writing-mode: vertical-rl; transform: rotate(180deg); pointer-events: none; }
+    .footer-flower-canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; touch-action: pan-y; cursor: crosshair; }
+    .flower-status { position: absolute; z-index: 2; right: 12%; top: 52%; color: var(--paper-dim); font: .75rem/1.4 var(--mono); }
+    .flower-status[hidden] { display: none; }
+    .footer-bottom {
+      position: absolute; z-index: 3; left: 34px; right: 34px; bottom: 26px;
+      display: flex; justify-content: space-between; align-items: end; gap: 16px;
+      border-top: 1px solid rgba(240,237,229,.2); padding-top: 18px;
+      font: .67rem/1.4 var(--mono); letter-spacing: .11em; text-transform: uppercase;
+    }
+    .footer-bottom a { color: var(--blue-soft); text-decoration: none; }
+    .footer-bottom a:hover, .footer-bottom a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 
-    /* ── PUBLISHED POSTS ── */
-    #posts-wrap { width: 100%; max-width: 720px; position: relative; z-index: 1; }
-    .posts-eyebrow { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 1.5rem; text-align: center; }
-    .post-card {
-      display: block; padding: 1.75rem 0; border-bottom: 1px solid var(--border);
-      cursor: pointer; transition: opacity 0.2s;
-    }
-    .post-card:hover { opacity: 0.75; }
-    .post-card:first-child { padding-top: 0; }
-    .post-card-title { font-size: 1.4rem; font-weight: 400; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
-    .post-card-date { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); margin-bottom: 0.6rem; }
-    .post-card-excerpt { font-size: 0.92rem; font-weight: 300; line-height: 1.6; color: rgba(255,255,255,0.45); margin-bottom: 0.75rem; }
-    .post-card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
-    #post-detail {
-      position: fixed; inset: 0; z-index: 300; background: #030303;
-      overflow-y: auto; display: none; padding: 6rem 2rem 5rem;
-    }
-    #post-detail.open { display: block; }
-    .post-detail-inner { max-width: 680px; margin: 0 auto; }
-    .post-detail-back {
-      display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;
-      color: rgba(255,255,255,0.4); margin-bottom: 2.5rem; cursor: pointer; transition: color 0.2s;
-    }
-    .post-detail-back:hover { color: var(--cyan); }
-    .post-detail-date { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); margin-bottom: 1rem; }
-    .post-detail-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 1.25rem; }
-    .post-detail-cover { width: 100%; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border); display: block; }
-    .post-detail-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
-    .post-detail-body { font-size: 1rem; font-weight: 300; line-height: 1.85; color: rgba(255,255,255,0.75); }
-    .post-detail-body p { margin-bottom: 1.3rem; }
-    .post-detail-body h1, .post-detail-body h2, .post-detail-body h3 { font-weight: 400; margin: 2rem 0 1rem; color: #fff; }
-    .post-detail-body a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; }
-    .post-detail-body img { max-width: 100%; border-radius: 10px; margin: 1.5rem 0; }
-    .post-detail-body blockquote { border-left: 2px solid var(--cyan); padding-left: 1.1rem; color: rgba(255,255,255,0.55); font-style: italic; margin: 1.3rem 0; }
-    .post-detail-body ul, .post-detail-body ol { margin: 0 0 1.3rem 1.4rem; }
-    .post-voice-note { font-size: 0.8rem; color: rgba(255,255,255,0.3); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 0.6rem 0.9rem; margin: 1rem 0; }
-    .post-detail-sources { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
-    .post-detail-sources-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 0.9rem; }
-    .post-detail-sources-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-    .post-detail-sources-list a { font-size: 0.85rem; color: var(--cyan); word-break: break-all; }
-    .post-detail-sources-list a:hover { text-decoration: underline; }
+    /* ── reader zone: comments, mailing list, more, elsewhere ── */
+    .reader-zone { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 0 0 72px; }
+    .zone-label { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; color: var(--blue-soft); font: 700 .7rem/1.2 var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+    .zone-label::before { content: ""; width: 38px; height: 1px; background: currentColor; }
 
-    /* subtle grid pattern in background */
-    .bg-grid {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 60px 60px;
+    .thoughts { width: min(690px, 100%); margin: 0 auto 96px; padding-top: 12px; }
+    .thoughts h2 { margin: 0 0 10px; font: 400 clamp(2rem, 4vw, 3rem)/1 var(--serif); letter-spacing: -.035em; }
+    .thoughts .sub { margin: 0 0 30px; color: var(--paper-dim); font-size: 1rem; line-height: 1.6; }
+    .comment { padding: 20px 0; border-top: 1px solid var(--line); }
+    .comment:first-child { border-top: 0; padding-top: 0; }
+    .comment-meta { margin-bottom: 8px; color: rgba(240,237,229,.5); font: .68rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .comment-meta b { color: var(--paper); font-weight: 600; }
+    .comment p { margin: 0; color: #d4d0c9; font-size: 1.02rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .comments-list { margin-bottom: 34px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: rgba(240,237,229,.55); font: .66rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .field input, .field textarea {
+      width: 100%; padding: 13px 14px; border: 1px solid rgba(240,237,229,.18); border-radius: 10px;
+      background: rgba(240,237,229,.03); color: var(--paper); font: 1rem/1.5 var(--sans); outline: none; transition: border-color .15s, background .15s;
+    }
+    .field textarea { min-height: 130px; resize: vertical; }
+    .field input:focus, .field textarea:focus { border-color: var(--blue-soft); background: rgba(240,237,229,.05); }
+    .form-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+    .form-note { color: rgba(240,237,229,.45); font: .7rem/1.5 var(--mono); letter-spacing: .04em; max-width: 380px; }
+    .btn-ink {
+      display: inline-flex; align-items: center; gap: 10px; padding: 13px 20px; border: 0; border-radius: 999px;
+      background: var(--paper); color: var(--ink); font: 700 .74rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; transition: transform .15s ease, background .15s;
+    }
+    .btn-ink:hover, .btn-ink:focus-visible { background: #fff; transform: translateY(-1px); }
+    .btn-ink:disabled { opacity: .5; cursor: default; transform: none; }
+    .form-status { margin-top: 12px; font: .78rem/1.5 var(--mono); }
+    .form-status.ok { color: #9fd3b0; }
+    .form-status.err { color: #e8a07a; }
+    .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }
+
+    .zone-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 36px); align-items: start; }
+    .newsletter {
+      position: relative; padding: 34px 34px 32px; color: var(--ink); background: var(--paper);
+      clip-path: polygon(0 2%, 99% 0, 100% 97%, 1% 100%); transform: rotate(-.35deg);
+    }
+    .newsletter .kicker { color: #3c6888; font: 700 .66rem/1 var(--mono); letter-spacing: .17em; text-transform: uppercase; }
+    .newsletter h2 { margin: 14px 0 10px; font: 400 clamp(2rem, 3.6vw, 3rem)/.98 var(--serif); letter-spacing: -.04em; }
+    .newsletter h2 em { color: #3c6888; }
+    .newsletter p { margin: 0 0 22px; max-width: 460px; color: #3b3a37; font-size: 1rem; line-height: 1.6; }
+    .newsletter form { display: flex; gap: 10px; flex-wrap: wrap; }
+    .newsletter input {
+      flex: 1 1 220px; min-width: 0; padding: 14px 16px; border: 1px solid rgba(10,11,12,.25); border-radius: 999px;
+      background: #faf8f3; color: var(--ink); font: 1rem var(--sans); outline: none;
+    }
+    .newsletter input:focus { border-color: #3c6888; box-shadow: 0 0 0 3px rgba(60,104,136,.18); }
+    .newsletter .btn-ink { background: var(--ink); color: var(--paper); }
+    .newsletter .btn-ink:hover, .newsletter .btn-ink:focus-visible { background: #1d2a33; }
+    .newsletter .form-status.ok { color: #2f6b44; }
+    .newsletter .form-status.err { color: #9a3f14; }
+    .newsletter .fine { margin: 14px 0 0; color: #6b6861; font: .68rem/1.5 var(--mono); }
+
+    .side-stack { display: flex; flex-direction: column; gap: 34px; }
+    .more-list { list-style: none; margin: 0; padding: 0; }
+    .more-list a { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--line); color: var(--paper); text-decoration: none; }
+    .more-list li:first-child a { border-top: 1px solid var(--line); }
+    .more-list .n { color: var(--orange); font: .7rem/1 var(--mono); }
+    .more-list .t { font-size: .98rem; line-height: 1.35; }
+    .more-list .t small { display: block; margin-top: 4px; color: rgba(240,237,229,.42); font: .67rem/1.3 var(--mono); }
+    .more-list .arrow { color: var(--blue-soft); transition: transform .2s ease; }
+    .more-list a:hover .arrow, .more-list a:focus-visible .arrow { transform: translate(4px, -4px); }
+    .more-list a:hover .t, .more-list a:focus-visible .t { color: var(--blue-soft); }
+    .socials { display: flex; gap: 10px; flex-wrap: wrap; }
+    .social {
+      display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px; border: 1px solid rgba(240,237,229,.2); border-radius: 999px;
+      color: var(--paper); font: .72rem/1 var(--mono); letter-spacing: .08em; text-decoration: none; transition: border-color .15s, background .15s, color .15s;
+    }
+    .social svg { width: 18px; height: 18px; fill: currentColor; }
+    .social:hover, .social:focus-visible { border-color: var(--blue-soft); background: rgba(168,198,215,.08); color: var(--blue-soft); }
+
+    @media (max-width: 900px) {
+      .zone-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .reader-zone { width: min(100% - 28px, 1180px); }
+      .form-grid { grid-template-columns: 1fr; }
+      .newsletter { padding: 28px 22px 26px; }
+    }
+    @media (max-width: 900px) {
+      .article-grid { grid-template-columns: 1fr; }
+      .article-body { grid-column: 1; width: min(690px, 100%); margin: 0 auto; }
+      .margin-note { display: none; }
+      .cutout-anchor { height: auto; }
+      .cutout { position: relative; inset: auto !important; margin: 12px auto 52px; }
+      .cutout-lead .cutout { width: min(420px, 86vw); transform: rotate(-4deg); }
+      .cutout-left .cutout { width: min(260px, 64vw); transform: rotate(-3deg); }
+      .cutout-right .cutout { width: min(300px, 72vw); transform: rotate(3deg); }
+      .pull-quote { margin-inline: 0; padding-inline: clamp(34px, 8vw, 68px); }
+      .post-link { grid-template-columns: 44px minmax(0, 1fr); }
+      .post-thumb { display: none; }
+    }
+    @media (max-width: 620px) {
+      .site-header, .article-shell { width: min(100% - 28px, 1180px); }
+      .header-note { display: none; }
+      .article-header, .index-header { padding-top: 62px; }
+      h1 { font-size: clamp(2.9rem, 13vw, 5.2rem); }
+      .article-grid { padding-top: 52px; }
+      .lead-note { margin-bottom: 56px; }
+      .section { margin-bottom: 66px; }
+      .pull-quote { margin-block: 70px; }
+      .source-card { grid-template-columns: 28px 1fr 18px; }
+      .post-link { grid-template-columns: 1fr; gap: 10px; padding: 32px 0; }
+      .post-no { padding-top: 0; }
+      .editorial-footer { min-height: 510px; border-radius: 22px; }
+      .footer-wordmark { margin: 26px 0 0 22px; font-size: clamp(4rem, 24vw, 7rem); }
+      .footer-side { top: 28px; right: 22px; max-width: 130px; font-size: .62rem; }
+      .footer-date { left: 20px; top: 190px; }
+      .flower-status { right: 8%; top: 58%; }
+      .footer-bottom { left: 22px; right: 22px; bottom: 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .source-arrow, .post-thumb img, .post-title { transition: none; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/assets/blog/editorial.js?v=20260923c"></script>
 </head>
 <body>
+  <div class="reading-progress" aria-hidden="true"></div>
 
-<div class="bg-grid"></div>
+  <header class="site-header">
+    <a class="brand" href="/blog" data-nav="index">TONI ESAN / BLOG</a>
+    <nav class="header-links" aria-label="Site navigation">
+      <span class="header-note">Voice notes, shaped into essays</span>
+      <a class="home-link" href="/">Home ↗</a>
+    </nav>
+  </header>
 
-<!-- leaf bottom-right -->
-<svg class="leaf-deco" style="bottom:-20px;right:-10px;width:200px;opacity:0.15;transform:rotate(10deg)"
-  viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M55 235 C52 195 48 155 55 115 C60 80 65 50 70 20" stroke="#1a4a30" stroke-width="1.8"/>
-    <path d="M55 155 C25 138 12 108 28 82 C48 108 55 138 55 155Z" fill="#0e2a1c"/>
-    <path d="M55 155 L28 82" stroke="#1a4a30" stroke-width="1.2"/>
-    <path d="M58 120 C88 100 98 70 82 48 C66 72 60 100 58 120Z" fill="#0e2a1c"/>
-    <path d="M58 120 L82 48" stroke="#1a4a30" stroke-width="1.2"/>
-    <path d="M62 85 C38 72 30 50 44 32 C60 52 63 72 62 85Z" fill="#0e2a1c" opacity="0.7"/>
-    <path d="M67 50 C82 38 86 22 76 12 C66 26 65 40 67 50Z" fill="#0e2a1c" opacity="0.5"/>
-  </g>
-</svg>
+  <main id="top" class="article-shell" aria-live="polite">
+    <div class="skeleton" aria-hidden="true"><div></div><div></div><div></div></div>
+  </main>
 
-<nav>
-  <div class="nav-group">
-    <div class="dot-tile" data-pattern="E" onclick="window.location.href='index.html'"></div>
-  </div>
-  <div class="nav-group" style="align-items:center">
-    <div class="dot-tile" data-pattern="i" onclick="window.location.href='index.html#about'"></div>
-  </div>
-  <div class="nav-group row">
-    <div class="dot-tile active" data-pattern="heart"></div>
-    <a href="context/Toni Esan CV_MLx.pdf" target="_blank">
-      <button class="nav-pill" style="font-size:0.82rem">Resumé</button>
-    </a>
-  </div>
-</nav>
-
-<main>
-  <div id="loading-wrap">
-    <p class="skeleton-eyebrow">Toni Esan / Blog</p>
-    <div class="skeleton-card">
-      <div class="skeleton-line date"></div>
-      <div class="skeleton-line title"></div>
-      <div class="skeleton-line excerpt"></div>
-      <div class="skeleton-line excerpt short"></div>
-    </div>
-    <div class="skeleton-card">
-      <div class="skeleton-line date"></div>
-      <div class="skeleton-line title"></div>
-      <div class="skeleton-line excerpt"></div>
-      <div class="skeleton-line excerpt short"></div>
-    </div>
-  </div>
-
-  <div id="posts-wrap" style="display:none">
-    <p class="posts-eyebrow">Toni Esan / Blog</p>
-    <div id="posts-list"></div>
-  </div>
-
-  <div class="coming-soon-wrap" id="coming-soon-wrap" style="display:none">
-    <p class="blog-eyebrow">Toni Esan / Blog</p>
-    <h1 class="blog-title">Coming<br><span>soon</span></h1>
-    <p class="blog-desc">
-      Pictures, cool news, half-formed thoughts, film takes, and tech rabbit holes.<br>
-      Building this out properly — check back.
-    </p>
-    <div class="blog-tags">
-      <span class="blog-tag">cool news</span>
-      <span class="blog-tag">pictures</span>
-      <span class="blog-tag">film takes</span>
-      <span class="blog-tag">tech</span>
-      <span class="blog-tag">running</span>
-      <span class="blog-tag">ideas</span>
-    </div>
-
-    <p class="photo-strip-label">a few from the camera roll, while this builds</p>
-    <div class="photo-strip">
-      <a href="assetsforsite/blog/photo-sunset.jpg" target="_blank"><img src="assetsforsite/blog/photo-sunset.jpg" alt="Toni at sunset by the water" loading="lazy"></a>
-      <a href="assetsforsite/blog/photo-suit-square.jpg" target="_blank"><img src="assetsforsite/blog/photo-suit-square.jpg" alt="Toni in a suit in a city square" loading="lazy"></a>
-      <a href="assetsforsite/blog/photo-closeup.jpg" target="_blank"><img src="assetsforsite/blog/photo-closeup.jpg" alt="Toni close up portrait" loading="lazy"></a>
-      <a href="assetsforsite/blog/photo-laptop-doorstep.jpg" target="_blank"><img src="assetsforsite/blog/photo-laptop-doorstep.jpg" alt="Toni working on a laptop on a doorstep" loading="lazy"></a>
-      <a href="assetsforsite/blog/photo-mirror-arsenal.jpg" target="_blank"><img src="assetsforsite/blog/photo-mirror-arsenal.jpg" alt="Toni mirror selfie in an Arsenal shirt" loading="lazy"></a>
-      <a href="assetsforsite/blog/photo-arsenal-side.jpg" target="_blank"><img src="assetsforsite/blog/photo-arsenal-side.jpg" alt="Toni side profile in an Arsenal shirt" loading="lazy"></a>
-    </div>
-
-    <a class="back-link" href="index.html">← back to portfolio</a>
-  </div>
-</main>
-
-<div id="post-detail">
-  <div class="post-detail-inner" id="post-detail-inner"></div>
-</div>
-
-<script>
-  const SUPABASE_URL = 'https://dmlwcrbjetpgqacblvqp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
-  const sbBlog = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  function escapeHtml(s) {
-    return (s || '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
-
-  function fmtPostDate(iso) {
-    if (!iso) return '';
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  }
-
-  // Voice-note embeds ([[voice:ID]]) get a placeholder to start with, then a
-  // real <audio> player is swapped in once public-voice-presign confirms the
-  // id is genuinely embedded in this published post and returns a signed URL.
-  function resolvePublicVoiceTokens(html) {
-    return html.replace(/(?:<p>)?\[\[voice:([a-zA-Z0-9-]+)\]\](?:<\/p>)?/g, (m, id) =>
-      `<div class="post-voice-note" id="voice-ph-${id}" data-voice-id="${id}">🎙️ loading voice note…</div>`);
-  }
-
-  async function hydratePublicVoiceNotes(postId, bodyMd) {
-    const ids = [...new Set([...bodyMd.matchAll(/\[\[voice:([a-zA-Z0-9-]+)\]\]/g)].map(m => m[1]))];
-    if (!ids.length) return;
-    try {
-      const { data, error } = await sbBlog.functions.invoke('public-voice-presign', { body: { post_id: postId, voice_ids: ids } });
-      if (error) throw error;
-      const urls = (data && data.urls) || {};
-      ids.forEach(id => {
-        const el = document.getElementById('voice-ph-' + id);
-        if (!el) return;
-        if (urls[id]) {
-          const audio = document.createElement('audio');
-          audio.controls = true;
-          audio.src = urls[id];
-          audio.style.width = '100%';
-          audio.style.maxWidth = '420px';
-          el.replaceWith(audio);
-        } else {
-          el.textContent = '🎙️ voice note unavailable';
-        }
-      });
-    } catch (err) {
-      console.error('Failed to load voice note audio:', err);
-      ids.forEach(id => {
-        const el = document.getElementById('voice-ph-' + id);
-        if (el) el.textContent = '🎙️ voice note unavailable';
-      });
-    }
-  }
-
-  function renderPostDetail(post) {
-    const bodyHtml = resolvePublicVoiceTokens(window.marked ? marked.parse(post.body_md || '') : escapeHtml(post.body_md || ''));
-    const dateStr = fmtPostDate(post.captured_on || post.published_at);
-    const sources = Array.isArray(post.source_urls) ? post.source_urls.filter(Boolean) : [];
-    document.getElementById('post-detail-inner').innerHTML = `
-      <div class="post-detail-back" onclick="closePostDetail()">← back</div>
-      ${post.cover_image_url ? `<img class="post-detail-cover" src="${escapeHtml(post.cover_image_url)}" alt="">` : ''}
-      <div class="post-detail-date">${dateStr}</div>
-      <h1 class="post-detail-title">${escapeHtml(post.title || '')}</h1>
-      ${(post.topic_tags || []).length ? `<div class="post-detail-tags">${post.topic_tags.map(t => `<span class="blog-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-      <div class="post-detail-body">${bodyHtml}</div>
-      ${sources.length ? `
-        <div class="post-detail-sources">
-          <div class="post-detail-sources-label">Sources</div>
-          <ul class="post-detail-sources-list">
-            ${sources.map(u => `<li><a href="${escapeHtml(u)}" target="_blank" rel="noopener">${escapeHtml(u)}</a></li>`).join('')}
-          </ul>
-        </div>` : ''}
-    `;
-    document.getElementById('post-detail').classList.add('open');
-    document.getElementById('post-detail').scrollTop = 0;
-    history.pushState({ post: post.slug }, '', '#' + post.slug);
-    hydratePublicVoiceNotes(post.id, post.body_md || '');
-  }
-
-  function closePostDetail() {
-    document.getElementById('post-detail').classList.remove('open');
-    history.pushState({}, '', 'blog.html');
-  }
-  window.closePostDetail = closePostDetail;
-
-  let __loadedPosts = [];
-
-  async function loadPublishedPosts() {
-    try {
-      const { data, error } = await sbBlog
-        .from('published_posts')
-        .select('id,title,slug,excerpt,body_md,cover_image_url,captured_on,topic_tags,published_at,source_urls')
-        .not('published_at', 'is', null)
-        .lte('published_at', new Date().toISOString())
-        .order('published_at', { ascending: false });
-      document.getElementById('loading-wrap').style.display = 'none';
-
-      if (error || !data || !data.length) {
-        document.getElementById('coming-soon-wrap').style.display = 'block';
-        return;
-      }
-
-      __loadedPosts = data;
-      document.getElementById('posts-wrap').style.display = 'block';
-      document.getElementById('posts-list').innerHTML = data.map((p, i) => `
-        <div class="post-card" onclick="openPostBySlug('${p.slug}')">
-          <div class="post-card-date">${fmtPostDate(p.captured_on || p.published_at)}</div>
-          <div class="post-card-title">${escapeHtml(p.title || '(untitled)')}</div>
-          ${p.excerpt ? `<div class="post-card-excerpt">${escapeHtml(p.excerpt)}</div>` : ''}
-          ${(p.topic_tags || []).length ? `<div class="post-card-tags">${p.topic_tags.map(t => `<span class="blog-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+  <section class="reader-zone" aria-label="Keep in touch">
+    <section class="thoughts" id="thoughts" hidden aria-labelledby="thoughts-title">
+      <div class="zone-label">Leave your thoughts</div>
+      <h2 id="thoughts-title">What do you make of it?</h2>
+      <p class="sub">I read every reply. Comments show up here once I've had a look.</p>
+      <div class="comments-list" id="comments-list"></div>
+      <form id="comment-form" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="c-name">Name (optional)</label><input id="c-name" name="name" maxlength="80" autocomplete="name"></div>
+          <div class="field"><label for="c-email">Email</label><input id="c-email" name="email" type="email" required maxlength="254" autocomplete="email"></div>
+          <div class="field full"><label for="c-body">Your thoughts</label><textarea id="c-body" name="body" required maxlength="4000"></textarea></div>
         </div>
-      `).join('');
+        <input class="hp" tabindex="-1" autocomplete="off" name="website" aria-hidden="true">
+        <div class="form-foot">
+          <span class="form-note">Your email stays private. It is never shown, only used if I want to reply.</span>
+          <button class="btn-ink" type="submit">Send it ↗</button>
+        </div>
+        <div class="form-status" role="status" aria-live="polite"></div>
+      </form>
+    </section>
 
-      // Deep-link support: /blog.html#some-slug opens that post directly.
-      const hashSlug = decodeURIComponent(location.hash.slice(1));
-      if (hashSlug) {
-        const match = data.find(p => p.slug === hashSlug);
-        if (match) renderPostDetail(match);
+    <div class="zone-grid">
+      <section class="newsletter" aria-labelledby="nl-title">
+        <div class="kicker">The mailing list</div>
+        <h2 id="nl-title">Get the next note <em>when it lands.</em></h2>
+        <p>An email when I publish something new. Nothing else, and you can leave whenever you like.</p>
+        <form id="newsletter-form" novalidate>
+          <label class="hp" for="nl-hp">Leave empty</label>
+          <input class="hp" id="nl-hp" tabindex="-1" autocomplete="off" name="company">
+          <input id="nl-email" type="email" name="email" placeholder="you@example.com" required maxlength="254" autocomplete="email" aria-label="Email address">
+          <button class="btn-ink" type="submit">Sign me up</button>
+        </form>
+        <div class="form-status" role="status" aria-live="polite"></div>
+      </section>
+
+      <div class="side-stack">
+        <section aria-labelledby="more-title">
+          <div class="zone-label" id="more-title">Also check this out</div>
+          <ul class="more-list" id="more-list"></ul>
+        </section>
+        <section aria-labelledby="elsewhere-title">
+          <div class="zone-label" id="elsewhere-title">Elsewhere</div>
+          <div class="socials">
+            <a class="social" href="https://x.com/tonzownz" target="_blank" rel="noreferrer me"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.3 22H3.2l7.3-8.4L2.8 2h6.4l4.4 5.9L18.9 2Zm-1.1 18h1.7L8.3 3.9H6.5L17.8 20Z"/></svg>X / Twitter</a>
+            <a class="social" href="https://www.linkedin.com/in/toni-esan" target="_blank" rel="noreferrer me"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/></svg>LinkedIn</a>
+            <a class="social" href="https://github.com/Toni9a" target="_blank" rel="noreferrer me"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <footer class="editorial-footer" aria-label="Interactive hydrangea footer">
+    <div class="footer-wordmark">TONI</div>
+    <div class="footer-side">Ideas moving between technology, culture and people.</div>
+    <div class="footer-date" id="footer-date"></div>
+    <canvas id="flower" class="footer-flower-canvas" aria-label="Interactive pixel hydrangea. Move your pointer or drag a finger over the flower to scatter its petals."></canvas>
+    <p id="status" class="flower-status" role="status">Loading flower...</p>
+    <div class="footer-bottom">
+      <span id="footer-filed">Field notes</span>
+      <a href="#top" data-top>Back to the top ↑</a>
+    </div>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = 'https://dmlwcrbjetpgqacblvqp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
+    const PUBLIC_COLS = 'id,slug,title,excerpt,body_md,topic_tags,source_urls,source_labels,captured_on,published_at';
+    const E = window.Editorial;
+    const main = document.getElementById('top');
+    const params = new URLSearchParams(location.search);
+    const PREVIEW = params.get('preview') === '1';
+    const sb = PREVIEW ? null : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* ── reading progress ── */
+    const root = document.documentElement;
+    const updateProgress = () => {
+      const scrollable = root.scrollHeight - innerHeight;
+      const pct = scrollable > 0 ? Math.min(100, Math.max(0, scrollY / scrollable * 100)) : 0;
+      root.style.setProperty('--read', `${pct}%`);
+    };
+    addEventListener('scroll', updateProgress, { passive: true });
+    addEventListener('resize', updateProgress);
+
+    function setFooter(post) {
+      const f = E.footerMeta(post);
+      document.getElementById('footer-date').textContent = f.date;
+      document.getElementById('footer-filed').textContent = f.filed;
+    }
+
+    /* ── routing: /blog/<slug>, #slug, ?p=slug ── */
+    function slugFromLocation() {
+      const m = location.pathname.match(/^\/blog\/([^/]+)\/?$/);
+      if (m && m[1] !== 'index.html') return decodeURIComponent(m[1]);
+      if (params.get('p')) return params.get('p');
+      if (location.hash.length > 1 && location.hash !== '#top') return decodeURIComponent(location.hash.slice(1));
+      return null;
+    }
+    const onPlainServer = !/toniesan\.com$|vercel\.app$/.test(location.hostname);
+    const postHref = (slug) => (onPlainServer ? `${location.pathname.replace(/\/blog\/[^/]+$/, '/blog.html')}#${encodeURIComponent(slug)}` : `/blog/${encodeURIComponent(slug)}`);
+    const indexHref = () => (onPlainServer ? location.pathname.replace(/\/blog\/[^/]+$/, '/blog.html') : '/blog');
+
+    let posts = null;
+    let fieldNoById = {};
+    const mediaCache = {};
+
+    async function loadPosts() {
+      if (posts) return posts;
+      const { data, error } = await sb.from('published_posts').select(PUBLIC_COLS)
+        .not('published_at', 'is', null).lte('published_at', new Date().toISOString())
+        .order('published_at', { ascending: false });
+      if (error) throw error;
+      posts = data || [];
+      // Field note numbers count up in publishing order.
+      [...posts].reverse().forEach((p, i) => { fieldNoById[p.id] = i + 1; });
+      return posts;
+    }
+
+    async function mediaFor(post) {
+      if (!E.mediaIds(post.body_md).length) return {};
+      if (mediaCache[post.id]) return mediaCache[post.id];
+      try {
+        const { data, error } = await sb.functions.invoke('public-post-media', { body: { post_id: post.id } });
+        if (error) throw error;
+        mediaCache[post.id] = (data && data.media) || {};
+      } catch (err) {
+        console.error('Could not load post images:', err);
+        mediaCache[post.id] = {};
       }
-    } catch (err) {
-      console.error('Failed to load published posts:', err);
-      document.getElementById('loading-wrap').style.display = 'none';
-      document.getElementById('coming-soon-wrap').style.display = 'block';
-    }
-  }
-
-  function openPostBySlug(slug) {
-    const post = __loadedPosts.find(p => p.slug === slug);
-    if (post) renderPostDetail(post);
-  }
-  window.openPostBySlug = openPostBySlug;
-
-  loadPublishedPosts();
-
-  const PATTERNS = {
-    E:     [1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,0, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1],
-    i:     [0,0,1,0,0, 0,0,0,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,0],
-    heart: [0,1,0,1,0, 1,1,1,1,1, 1,1,1,1,1, 0,1,1,1,0, 0,0,1,0,0, 0,0,0,0,0, 0,0,0,0,0],
-  };
-  document.querySelectorAll('.dot-tile').forEach(tile => {
-    const pattern = PATTERNS[tile.dataset.pattern];
-    if (!pattern) return;
-    const grid = document.createElement('div');
-    grid.className = 'dot-grid';
-    pattern.forEach(active => {
-      const d = document.createElement('span');
-      d.className = 'dot'; d.dataset.active = active;
-      grid.appendChild(d);
-    });
-    tile.appendChild(grid);
-
-    // auto-light the heart tile on this page
-    if (tile.dataset.pattern === 'heart') {
-      setTimeout(() => {
-        [...grid.querySelectorAll('.dot')]
-          .filter(d => d.dataset.active === '1')
-          .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
-      }, 400);
+      return mediaCache[post.id];
     }
 
-    tile.addEventListener('mouseenter', () => {
-      [...grid.querySelectorAll('.dot')].filter(d => d.dataset.active === '1')
-        .forEach((d, i) => setTimeout(() => d.classList.add('lit'), i * 16));
+    async function hydrateVoice(post) {
+      const ids = E.voiceIds(post.body_md);
+      if (!ids.length) return;
+      let urls = {};
+      try {
+        const { data, error } = await sb.functions.invoke('public-voice-presign', { body: { post_id: post.id, voice_ids: ids } });
+        if (error) throw error;
+        urls = (data && data.urls) || {};
+      } catch (err) { console.error('Voice notes unavailable:', err); }
+      document.querySelectorAll('.voice-note[data-voice-id]').forEach((el) => {
+        const url = urls[el.dataset.voiceId];
+        if (url) el.querySelector('audio').src = url;
+        else el.classList.add('unavailable');
+      });
+    }
+
+    function renderArticle(post, ctx) {
+      main.innerHTML = E.articleHtml(post, ctx);
+      document.title = `${E.plainTitle(post.title)} | Toni Esan`;
+      setFooter(post);
+      updateProgress();
+    }
+
+    async function showPost(slug, { push = false } = {}) {
+      const all = await loadPosts();
+      const post = all.find((p) => p.slug === slug);
+      if (!post) { showIndex({ note: 'That post could not be found.' }); return; }
+      if (push) history.pushState({ slug }, '', postHref(slug));
+      renderArticle(post, { fieldNo: fieldNoById[post.id], media: await mediaFor(post) });
+      renderMore(post); renderThoughts(post);
+      scrollTo({ top: 0 });
+      hydrateVoice(post);
+    }
+
+    async function showIndex({ push = false, note = '' } = {}) {
+      if (push) history.pushState({}, '', indexHref());
+      document.title = 'Blog | Toni Esan';
+      let all = [];
+      try { all = await loadPosts(); } catch (err) { console.error(err); note = 'The notes could not load right now. Try again in a moment.'; }
+      main.innerHTML = `
+        <header class="index-header">
+          <div class="issue-line">Toni Esan · Blog</div>
+          <h1>The <em>blog</em></h1>
+          <p class="deck">Voice notes on technology, culture and people, shaped into short essays.</p>
+        </header>
+        ${note ? `<p class="empty-state">${E.esc(note)}</p>` : ''}
+        ${all.length ? `<ol class="post-list">${all.map((p) => `
+          <li class="post-row">
+            <a class="post-link" href="${postHref(p.slug)}" data-slug="${E.esc(p.slug)}">
+              <span class="post-no">${String(fieldNoById[p.id]).padStart(2, '0')}</span>
+              <span>
+                <div class="post-meta">${E.esc(E.fmtLong(p.captured_on || p.published_at))} · ${Math.max(1, Math.round(E.wordCount(p.body_md) / 200))} min read</div>
+                <h2 class="post-title">${E.titleHtml(p.title)}</h2>
+                ${p.excerpt ? `<p class="post-deck">${E.esc(p.excerpt)}</p>` : ''}
+              </span>
+              <span class="post-thumb" data-thumb="${p.id}" aria-hidden="true"></span>
+            </a>
+          </li>`).join('')}</ol>` : (!note ? '<p class="empty-state">No notes published yet.</p>' : '')}`;
+      setFooter(all[0] || null);
+      renderMore(null); renderThoughts(null);
+      updateProgress();
+      // Lead cutout as a thumbnail, when a post has one.
+      all.forEach(async (p) => {
+        const media = await mediaFor(p);
+        const lead = Object.values(media).find((m) => m.kind === 'cutout' && m.placement === 'lead') || Object.values(media).find((m) => m.kind === 'cutout');
+        const slot = main.querySelector(`[data-thumb="${p.id}"]`);
+        if (lead && slot) slot.innerHTML = `<img src="${E.esc(lead.url)}" alt="">`;
+      });
+    }
+
+    function route() {
+      const slug = slugFromLocation();
+      return slug ? showPost(slug) : showIndex();
+    }
+
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (a && a.hasAttribute('data-top')) { e.preventDefault(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); return; }
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || PREVIEW) return;
+      if (a.dataset.slug) { e.preventDefault(); showPost(a.dataset.slug, { push: true }); }
+      else if (a.dataset.nav === 'index') { e.preventDefault(); showIndex({ push: true }); scrollTo({ top: 0 }); }
     });
-    tile.addEventListener('mouseleave', () => {
-      if (tile.dataset.pattern === 'heart') return; // keep heart lit
-      [...grid.querySelectorAll('.dot')].filter(d => d.dataset.active === '1')
-        .forEach((d, i) => setTimeout(() => d.classList.remove('lit'), i * 10));
+    addEventListener('popstate', route);
+    addEventListener('hashchange', () => { if (onPlainServer) route(); });
+
+
+    /* ── reader zone ── */
+    // Things worth a look beyond the blog. Add { title, note, url } entries here
+    // (a talk, a tool, someone else's writing); the site links always follow.
+    const ALSO_CHECK = [];
+    const SITE_LINKS = [
+      { title: 'The portfolio', note: 'Projects across engineering, AI, design and more', url: '/' },
+      { title: 'The blog', note: 'Every post, newest first', url: '__index__' },
+    ];
+    let currentPost = null;
+    const emailOk = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) && v.length <= 254;
+    function setStatus(el, kind, text) { el.className = 'form-status ' + kind; el.textContent = text; }
+
+    function renderMore(post) {
+      const others = (posts || []).filter((p) => !post || p.id !== post.id).slice(0, 2)
+        .map((p) => ({ title: E.plainTitle(p.title), note: E.fmtLong(p.captured_on || p.published_at), url: postHref(p.slug), slug: p.slug }));
+      const items = [...ALSO_CHECK, ...others, ...SITE_LINKS.filter((l) => !(l.url === '__index__' && !post))];
+      document.getElementById('more-list').innerHTML = items.map((it, i) => {
+        const href = it.url === '__index__' ? indexHref() : it.url;
+        const external = /^https?:/.test(href) && !href.includes(location.host);
+        return `<li><a href="${E.esc(href)}" ${it.slug ? `data-slug="${E.esc(it.slug)}"` : ''} ${it.url === '__index__' ? 'data-nav="index"' : ''} ${external ? 'target="_blank" rel="noreferrer"' : ''}>
+          <span class="n">${String(i + 1).padStart(2, '0')}</span>
+          <span class="t">${E.esc(it.title)}${it.note ? `<small>${E.esc(it.note)}</small>` : ''}</span>
+          <span class="arrow" aria-hidden="true">↗</span></a></li>`;
+      }).join('');
+    }
+
+    async function renderThoughts(post) {
+      currentPost = post;
+      const wrap = document.getElementById('thoughts');
+      wrap.hidden = !post;
+      if (!post) return;
+      const form = document.getElementById('comment-form');
+      form.reset(); setStatus(form.querySelector('.form-status'), '', '');
+      const list = document.getElementById('comments-list');
+      list.innerHTML = '';
+      try {
+        const { data, error } = await sb.from('blog_comments').select('id,name,body,created_at')
+          .eq('post_id', post.id).order('created_at', { ascending: true });
+        if (error) throw error;
+        list.innerHTML = (data || []).map((c) => `
+          <div class="comment"><div class="comment-meta"><b>${E.esc(c.name || 'A reader')}</b> · ${E.esc(E.fmtLong(c.created_at))}</div><p>${E.esc(c.body)}</p></div>`).join('');
+      } catch (err) { console.error('Comments unavailable:', err); }
+    }
+
+    document.getElementById('comment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget, status = form.querySelector('.form-status'), btn = form.querySelector('button');
+      const f = form.elements;
+      if (f.website.value) return;                       // bots fill hidden fields
+      const name = f.name.value.trim(), email = f.email.value.trim(), body = f.body.value.trim();
+      if (!emailOk(email)) { setStatus(status, 'err', 'Add an email so I can reply. It is never shown.'); f.email.focus(); return; }
+      if (body.length < 2) { setStatus(status, 'err', 'Write a few words first.'); f.body.focus(); return; }
+      if (!currentPost) return;
+      btn.disabled = true;
+      const { error } = await sb.from('blog_comments').insert({ post_id: currentPost.id, name: name || null, email, body });
+      btn.disabled = false;
+      if (error) { console.error(error); setStatus(status, 'err', 'That did not send. Try again in a moment.'); return; }
+      form.reset();
+      setStatus(status, 'ok', 'Thank you. It will appear here once I have read it.');
     });
-  });
-</script>
+
+    document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget, status = form.parentElement.querySelector('.form-status'), btn = form.querySelector('button');
+      const f = form.elements;
+      if (f.company.value) return;
+      const email = f.email.value.trim();
+      if (!emailOk(email)) { setStatus(status, 'err', 'That email does not look quite right.'); f.email.focus(); return; }
+      btn.disabled = true;
+      const { error } = await sb.from('blog_subscribers').insert({ email, source: currentPost ? currentPost.slug : 'index' });
+      btn.disabled = false;
+      if (error && error.code === '23505') { setStatus(status, 'ok', 'You are already on the list. Nothing more to do.'); form.reset(); return; }
+      if (error) { console.error(error); setStatus(status, 'err', 'That did not go through. Try again in a moment.'); return; }
+      form.reset();
+      setStatus(status, 'ok', 'You are on the list. The next note will find you.');
+    });
+
+    if (E.wireVoiceNotes) E.wireVoiceNotes(document);
+
+    /* ── admin preview: the editor posts the draft in ── */
+    if (PREVIEW) {
+      document.body.classList.add('preview-mode');
+      document.querySelector('.reader-zone').hidden = true;
+      addEventListener('message', (e) => {
+        if (e.origin !== location.origin || !e.data || e.data.type !== 'preview') return;
+        const y = scrollY;
+        renderArticle(e.data.post, { ...e.data.ctx, preview: true });
+        scrollTo({ top: y });
+      });
+      parent.postMessage({ type: 'preview-ready' }, location.origin);
+    } else {
+      route();
+    }
+
+    // The particle hydrangea footer (also in the admin preview).
+    const fl = document.createElement('script');
+    fl.src = '/assets/blog/flower.js?v=20260923c';
+    document.body.appendChild(fl);
+  </script>
 </body>
 </html>

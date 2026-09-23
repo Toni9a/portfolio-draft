@@ -59,6 +59,19 @@ def flatten(*parts) -> str:
     return " ".join(" ".join(out).split())[:MAX_BODY]
 
 
+def readable(body_md: str) -> str:
+    """The post as a reader sees it, for tagging and embedding.
+
+    The editorial blog (2026-09-23) adds a few markers to body_md:
+    [[cutout:id]] / [[image:id]] / [[voice:id]] tokens, "## [LABEL] Heading"
+    section labels and ">>" pull quotes. Strip the markup, keep the words.
+    """
+    text = re.sub(r"\[\[(?:cutout|image|voice):[^\]]+\]\]", " ", body_md or "")
+    text = re.sub(r"^\s*##\s*\[[^\]]*\]\s*", "## ", text, flags=re.M)
+    text = re.sub(r"^\s*>>\s?", "", text, flags=re.M)
+    return text.replace("*", "")
+
+
 def has_real_content(title: str, body_md: str) -> bool:
     t = (title or "").strip()
     has_title = bool(t) and t.lower() not in ("untitled post", "untitled")
@@ -89,8 +102,8 @@ def main() -> None:
         published = bool(p.get("published_at"))
         wanted[sid] = {
             "kind": "post" if published else "draft",
-            "title": title or "Untitled post",
-            "body": flatten(p.get("excerpt"), body_md),
+            "title": (title or "Untitled post").replace("*", ""),
+            "body": flatten(p.get("excerpt"), readable(body_md)),
             "url": f"{SITE_ORIGIN}/blog/{slug}" if published else None,
             "topic_tags": [t for t in (p.get("topic_tags") or []) if t],
         }

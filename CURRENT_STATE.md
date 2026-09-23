@@ -4,7 +4,10 @@
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
-Companion doc: `claude/system_atlas.md` — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
+Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
+
+
+> **2026-09-23: blog rebuild (uncommitted).** The Blog tab and `blog.html` were rebuilt: autosaving drafts (no more empty rows), a Gemini shape pass, Gemini cutouts, a graph and links panel, and the Codex editorial layout with the hydrangea footer. Four edge functions and three migrations are live. Details: `blog_editorial_rebuild_2026-09-23.md` (repo root). This supersedes the "14 empty drafts / no autosave" and "`related_project_ids` never populated" items below.
 
 ---
 
@@ -57,7 +60,7 @@ Before promoting it: it was built 2026-08-25, so check it against the current `i
 
 ## Layer 1 — the brain (summary)
 
-Full detail and verification queries in `claude/system_atlas.md`. Current shape ✅:
+Full detail and verification queries in `system_atlas.md` (repo root). Current shape ✅:
 
 | | |
 |---|---|
@@ -176,7 +179,7 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 ## A category of work that is in none of this
 
-`toni_esan_portfolio_unfin.json` only covers code projects. A large body of work — ChatGPT Work workflow suites, reusable skills, document packs, Apple Shortcuts, native apps, demo environments and training material — is in neither the JSON, the graph, nor the site. It is inventoried in `claude/portfolio_context_from_gpt.md`, which is currently its only structured record, along with an editorial brief for writing it up and an evidence map of source paths.
+`toni_esan_portfolio_unfin.json` only covers code projects. A large body of work — ChatGPT Work workflow suites, reusable skills, document packs, Apple Shortcuts, native apps, demo environments and training material — is in neither the JSON, the graph, nor the site. It is inventoried in `portfolio_context_from_gpt.md` (repo root), which is currently its only structured record, along with an editorial brief for writing it up and an evidence map of source paths.
 
 ---
 
@@ -207,8 +210,10 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 | Doc | For |
 |---|---|
-| `claude/system_atlas.md` | Layer 1 pipeline, verification queries, gotchas |
-| `claude/portfolio_context_from_gpt.md` | inventory of non-GitHub work + writing brief |
-| `claude/architecture.md` | build history and deeper background |
+| `system_atlas.md` (repo root) | Layer 1 pipeline, verification queries, gotchas |
+| `portfolio_context_from_gpt.md` (repo root) | inventory of non-GitHub work + writing brief |
+| `admin_drafts_rebuild_brief.md` (repo root) | 2026-09-22 handoff brief for reworking the admin Blog/drafts UI around the tagging pipeline |
 | `toni_esan_portfolio_platform_prd.md` | the Astro rebuild spec — still unbuilt |
 | `second_brain_architecture.md` (repo root) | earlier graph write-up |
+
+**Note on paths:** every doc reference in this file is now a real, verified path as of 2026-09-22. Earlier versions pointed at a `claude/` subfolder that never existed on disk (`claude/system_atlas.md`, `claude/architecture.md`, etc.) — everything actually lives at the repo root. If a future edit adds a doc reference, verify the path exists before writing it in.

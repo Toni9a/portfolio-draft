@@ -6,6 +6,8 @@
 <title>Toni — Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="assets/blog/editorial.js?v=20260923c"></script>
+<script src="assets/blog/chroma-key.js?v=20260923c"></script>
 <style>
   :root {
     --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
@@ -111,50 +113,114 @@
   .detail-close { float: right; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
   .detail-close:hover { color: var(--text); }
 
-  /* ── Blog tab ── */
-  .blog-post-card { display: flex; align-items: center; gap: 1rem; }
+  /* ── Blog tab (rebuilt 2026-09-23: autosave, graph status, editorial preview) ── */
+  .blog-post-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; cursor: pointer; transition: border-color .15s; }
+  .blog-post-card:hover, .blog-post-card:focus-visible { border-color: #3a3a3a; outline: none; }
   .blog-status { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px; flex-shrink: 0; }
-  .blog-status.draft { background: #f8717122; color: var(--red); }
+  .blog-status.draft { background: #fbbf2418; color: #fbbf24; }
   .blog-status.published { background: #4ade8022; color: var(--green); }
+  .blog-card-links { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+  .gchip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.18rem 0.5rem; border-radius: 999px; border: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); white-space: nowrap; }
+  .gchip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .8; }
+  .gchip.ok { color: var(--green); border-color: #4ade8033; }
+  .gchip.wait { color: #fbbf24; border-color: #fbbf2433; }
+  .gchip.off { color: var(--muted); }
+  .gchip.plain::before { display: none; }
 
-  .blog-editor-card { max-width: 1160px; }
-  .blog-editor-grid { display: flex; gap: 1.75rem; margin-top: 0.25rem; align-items: flex-start; }
-  .blog-editor-fields { flex: 1 1 380px; min-width: 300px; display: flex; flex-direction: column; }
-  .blog-editor-fields input, .blog-editor-fields textarea { margin-top: 0.3rem; }
-  .blog-editor-preview {
-    flex: 1 1 380px; min-width: 300px; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 1.5rem; max-height: 85vh; overflow-y: auto; position: sticky; top: 1rem;
-  }
-  @media (max-width: 860px) {
-    .blog-editor-grid { flex-direction: column; }
-    .blog-editor-preview { position: static; max-height: none; }
-  }
+  .blog-flagged-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .blog-flagged-panel .facet-label { margin: 0 0 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .blog-flagged-panel summary { cursor: pointer; list-style: none; }
+  .blog-flagged-panel summary::-webkit-details-marker { display: none; }
 
-  .blog-image-strip { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.75rem; }
-  .blog-image-thumb { position: relative; width: 84px; height: 84px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); background: #000; }
-  .blog-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .blog-image-thumb .bi-remove {
-    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(0,0,0,0.65); color: #fff; border: none; cursor: pointer; font-size: 0.7rem; line-height: 1;
-  }
-  .blog-image-thumb .bi-remove:hover { background: var(--red); }
-  .blog-image-thumb .bi-copy {
-    position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 0.55rem; text-align: center;
-    background: rgba(0,0,0,0.65); color: #fff; border: none; cursor: pointer; padding: 0.1rem 0; border-radius: 3px;
-  }
+  /* editor: full-screen workspace, controls on the left, the real page on the right */
+  #blog-editor { position: fixed; inset: 0; z-index: 55; display: none; background: var(--bg); flex-direction: column; }
+  #blog-editor.open { display: flex; }
+  .be-top { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .be-top .be-doc { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .be-save { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+  .be-save.saving { color: var(--accent); }
+  .be-save.saved { color: var(--green); }
+  .be-save.pending { color: #fbbf24; }
+  .be-save.error { color: var(--red); }
+  .be-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .be-seg button { background: none; border: none; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 0.35rem 0.6rem; cursor: pointer; }
+  .be-seg button.on { background: var(--accent-dim); color: var(--accent); }
+  .be-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(360px, 460px) minmax(0, 1fr); }
+  .be-panel { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); }
+  .be-tabs { display: flex; gap: 0.1rem; padding: 0 0.5rem; border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .be-tabs button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); padding: 0.75rem 0.7rem; font-family: var(--font-ui); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+  .be-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+  .be-tabs .dot { display: inline-block; width: 6px; height: 6px; margin-left: 0.3rem; border-radius: 50%; background: #fbbf24; vertical-align: middle; }
+  .be-pane { display: none; flex: 1; overflow-y: auto; padding: 1rem 1.1rem 3rem; }
+  .be-pane.on { display: block; }
+  .be-pane .facet-label { margin-top: 1rem; }
+  .be-pane .facet-label:first-child { margin-top: 0; }
+  .be-hint { color: var(--muted); font-size: 0.75rem; line-height: 1.5; margin-top: 0.35rem; }
+  .be-hint code, .be-cheats code { font-family: var(--font-mono); background: var(--surface); padding: 0 0.3rem; border-radius: 3px; color: var(--text); }
+  #be-body { min-height: 46vh; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; }
+  .be-toolbar { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+  .be-toolbar .btn { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.25rem 0.55rem; }
+  .be-rules { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.6rem; }
+  .be-cheats { margin-top: 0.8rem; font-size: 0.75rem; color: var(--muted); }
+  .be-cheats summary { cursor: pointer; }
+  .be-cheats table { margin-top: 0.4rem; border-collapse: collapse; width: 100%; }
+  .be-cheats td { padding: 0.25rem 0.3rem; border-top: 1px solid var(--border); vertical-align: top; }
+  .be-preview { position: relative; min-width: 0; background: #050607; display: flex; justify-content: center; overflow: hidden; }
+  .be-preview iframe { border: 0; width: 100%; height: 100%; background: #050607; transition: width .2s ease; }
+  .be-preview.mobile { padding: 1rem 0; background: #111; }
+  .be-preview.mobile iframe { width: 390px; border-radius: 22px; box-shadow: 0 0 0 1px #2a2a2a, 0 20px 60px #000; }
+  .be-empty-note { padding: 0.8rem; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
 
-  .blog-preview-render { font-family: Georgia, 'Times New Roman', serif; line-height: 1.75; color: rgba(255,255,255,0.85); }
-  .blog-preview-render .bp-cover { width: 100%; border-radius: 8px; margin-bottom: 1.25rem; display: block; }
-  .blog-preview-render .bp-title { font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; line-height: 1.25; }
-  .blog-preview-render .bp-excerpt { font-family: var(--font-ui); color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; font-style: italic; }
-  .blog-preview-render h1, .blog-preview-render h2, .blog-preview-render h3 { font-family: var(--font-ui); color: #fff; margin: 1.5rem 0 0.6rem; line-height: 1.3; }
-  .blog-preview-render p { margin-bottom: 1rem; }
-  .blog-preview-render a { color: var(--accent); }
-  .blog-preview-render img { max-width: 100%; border-radius: 6px; margin: 1rem 0; }
-  .blog-preview-render code { font-family: var(--font-mono); background: var(--surface); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
-  .blog-preview-render pre { background: var(--surface); padding: 0.9rem; border-radius: 6px; overflow-x: auto; }
-  .blog-preview-render blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; color: var(--muted); margin: 1rem 0; }
-  .blog-preview-render ul, .blog-preview-render ol { padding-left: 1.4rem; margin-bottom: 1rem; }
+  .be-card { border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem 0.9rem; margin-top: 0.7rem; background: var(--surface); }
+  .be-card h4 { font-size: 0.85rem; margin-bottom: 0.35rem; }
+  .be-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.6rem; }
+  .be-warn { color: #fbbf24; font-size: 0.78rem; line-height: 1.5; margin-top: 0.35rem; }
+  .be-err { color: var(--red); font-size: 0.78rem; line-height: 1.5; margin-top: 0.35rem; }
+  .be-ok { color: var(--green); font-size: 0.78rem; margin-top: 0.35rem; }
+  .be-diff-drop { border-left: 2px solid #fbbf24; padding-left: 0.6rem; margin-top: 0.45rem; color: rgba(255,255,255,0.75); font-size: 0.8rem; line-height: 1.5; }
+  .be-added { display: inline-block; margin: 0.15rem 0.2rem 0 0; padding: 0.05rem 0.4rem; border-radius: 4px; background: #fbbf2418; color: #fbbf24; font-family: var(--font-mono); font-size: 0.7rem; }
+  .be-shaped-preview { max-height: 260px; overflow-y: auto; margin-top: 0.6rem; padding: 0.6rem; background: var(--bg); border-radius: 6px; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.6; white-space: pre-wrap; color: #c8c8c8; }
+  select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.5rem; font-family: var(--font-ui); font-size: 0.8rem; }
+  input[type=date], input[type=url], input[type=search] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 0.9rem; padding: 0.6rem 0.75rem; outline: none; color-scheme: dark; }
+  input[type=date]:focus, input[type=url]:focus, input[type=search]:focus, select:focus { border-color: var(--accent); }
+
+  .cut-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 0.6rem; }
+  .cut-tile { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .cut-img { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; padding: 0.5rem; background: #050607; }
+  .cut-img.check { background: repeating-conic-gradient(#1c1c1c 0 25%, #121212 0 50%) 0 0 / 16px 16px; }
+  .cut-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .cut-meta { padding: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .cut-meta input { font-size: 0.75rem; padding: 0.35rem 0.5rem; }
+  .cut-meta .card-meta { margin-top: 0; font-size: 0.68rem; }
+  .gen-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.6rem; }
+  .gen-compare .cut-img { border-radius: 6px; }
+
+  .link-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.55rem; margin: 0.25rem 0.25rem 0 0; border-radius: 999px; background: var(--accent-dim); color: var(--accent); font-size: 0.75rem; max-width: 100%; }
+  .link-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-chip button { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; font-size: 0.9rem; line-height: 1; }
+  .link-chip button:hover { opacity: 1; color: var(--red); }
+  .sug-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0; border-top: 1px solid var(--border); font-size: 0.8rem; }
+  .sug-row:first-child { border-top: none; }
+  .sug-row .sim { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); width: 2.6rem; flex-shrink: 0; }
+  .sug-row .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .src-row { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem; margin-top: 0.45rem; }
+  .src-row input { font-size: 0.78rem; padding: 0.4rem 0.55rem; }
+  .src-row .src-label { grid-column: 1; }
+  .src-row .btn { grid-row: 1 / span 2; grid-column: 2; align-self: center; }
+  .facet-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+
+  #publish-check { position: fixed; inset: 0; z-index: 70; display: none; align-items: center; justify-content: center; background: #000000cc; padding: 1rem; }
+  #publish-check.open { display: flex; }
+  .pc-item { display: flex; gap: 0.6rem; padding: 0.45rem 0; border-top: 1px solid var(--border); font-size: 0.85rem; line-height: 1.45; }
+  .pc-item:first-child { border-top: none; }
+  .pc-item b { flex-shrink: 0; width: 1.2rem; text-align: center; }
+
+  @media (max-width: 900px) {
+    .be-main { grid-template-columns: 1fr; }
+    .be-preview { display: none; }
+    .be-main.show-preview .be-panel { display: none; }
+    .be-main.show-preview .be-preview { display: flex; }
+  }
 
   .linkcheck-block { margin-bottom: 0.9rem; }
   .linkcheck-block .facet-label { color: var(--muted); }
@@ -179,8 +245,6 @@
   .sm-item.used { opacity: 0.5; }
   .sm-item-audio { margin: 0.35rem 0; }
   .sm-item-audio audio { width: 100%; max-width: 360px; height: 32px; }
-  .blog-flagged-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
-  .blog-flagged-panel .facet-label { margin: 0 0 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
   .bf-item { display: flex; gap: 0.75rem; align-items: flex-start; border-top: 1px solid var(--border); padding: 0.75rem 0; }
   .bf-item:first-of-type { border-top: none; }
   .bf-item-body { flex: 1; min-width: 0; }
@@ -215,8 +279,6 @@
   #account-panel { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 60; align-items: center; justify-content: center; }
   #account-panel.open { display: flex; }
 
-  #blog-editor { position: fixed; inset: 0; background: #000000cc; display: none; z-index: 55; overflow-y: auto; padding: 3rem 1rem; }
-  #blog-editor.open { display: block; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600&family=DM+Mono&display=swap" rel="stylesheet" />
@@ -329,22 +391,34 @@
 
     <div id="tab-blog" class="tab">
       <h2>Blog</h2>
-      <p class="sub">Draft and preview blog posts before they're live — add images, and run a Gemini pass to catch promised links you forgot and suggest others worth adding.</p>
-
-      <div class="blog-flagged-panel">
-        <div class="facet-label">
-          <span>📰 Flagged for blog <span id="bf-count" class="card-meta"></span></span>
-          <button class="btn btn-ghost btn-sm" onclick="runVoiceBackfill()" id="bf-backfill-btn">🔊 Backfill voice audio</button>
-        </div>
-        <p class="card-meta" style="margin:0 0 0.5rem">Things you flagged with "📰 Flag for blog" in Pending or All Captures. Start a new draft straight from one, or open an existing draft and insert it there.</p>
-        <div id="blog-flagged-list"><div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div></div>
-      </div>
+      <p class="sub">Drafts save themselves once they have a title or a couple of sentences. Shape a voice note into an essay, make its cutouts, and see exactly how it will look on the blog before it goes live.</p>
 
       <div style="display:flex;gap:0.75rem;margin-bottom:1rem;align-items:center">
-        <button class="btn btn-primary btn-sm" onclick="createDraftPost()">+ New draft</button>
+        <button class="btn btn-primary btn-sm" onclick="openBlogEditor(null)">+ New draft</button>
         <span class="ex-count" id="blog-count"></span>
       </div>
       <div id="blog-list"><div class="loading"><div class="spinner"></div></div></div>
+
+      <details class="blog-flagged-panel" id="blog-flagged-wrap" open>
+        <summary class="facet-label">
+          <span>📰 Flagged for blog <span id="bf-count" class="card-meta"></span></span>
+          <button class="btn btn-ghost btn-sm" onclick="event.preventDefault();runVoiceBackfill()" id="bf-backfill-btn">🔊 Backfill voice audio</button>
+        </summary>
+        <p class="card-meta" style="margin:0 0 0.5rem">Captures you flagged with "📰 Flag for blog". Start a draft from one: its text becomes the transcript, its take is linked as where the post started, and its link becomes a source.</p>
+        <div id="blog-flagged-list"><div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div></div>
+      </details>
+
+      <details class="blog-flagged-panel" id="reader-panel">
+        <summary class="facet-label"><span>💬 Readers <span id="rp-count" class="card-meta"></span></span></summary>
+        <p class="card-meta" style="margin:0 0 0.75rem">Comments wait here until you approve them. Sign-ups are stored for when email sending is set up (Resend or similar); nothing is sent yet.</p>
+        <div class="facet-label" style="margin-top:0.5rem">Comments waiting</div>
+        <div id="rp-comments"></div>
+        <div class="facet-label" style="margin-top:1rem;display:flex;justify-content:space-between;align-items:center">
+          <span>Mailing list <span id="rp-sub-count" class="card-meta"></span></span>
+          <button class="btn btn-ghost btn-sm" onclick="copySubscribers()">Copy emails</button>
+        </div>
+        <div id="rp-subs"></div>
+      </details>
     </div>
   </main>
 </div>
@@ -357,69 +431,201 @@
   <div class="detail-card" id="pic-lightbox-inner"></div>
 </div>
 
-<div id="blog-editor" onclick="if(event.target===this) closeBlogEditor()">
-  <div class="detail-card blog-editor-card">
-    <button class="detail-close" onclick="closeBlogEditor()">×</button>
-    <div id="blog-editor-status" class="card-meta" style="margin-bottom:0.75rem"></div>
+<div id="blog-editor" role="dialog" aria-modal="true" aria-label="Blog post editor">
+  <div class="be-top">
+    <button class="btn btn-ghost btn-sm" onclick="closeBlogEditor()" title="Back to the list">← Posts</button>
+    <span class="blog-status draft" id="be-state">Draft</span>
+    <span class="be-doc" id="be-doc-title">New draft</span>
+    <span class="be-save" id="be-save" role="status" aria-live="polite"></span>
+    <div class="be-seg" role="group" aria-label="Preview width">
+      <button id="be-view-desktop" class="on" onclick="setPreviewWidth('desktop')">Desktop</button>
+      <button id="be-view-mobile" onclick="setPreviewWidth('mobile')">Mobile</button>
+      <button id="be-view-toggle" onclick="togglePreviewPane()" style="display:none">Preview</button>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="be-update-btn" style="display:none" onclick="updateLivePost()">Update live post</button>
+    <button class="btn btn-primary btn-sm" id="be-publish-btn" onclick="openPublishCheck()">Publish…</button>
+  </div>
 
-    <details id="be-sourcemat-wrap" class="blog-sourcemat">
-      <summary>📰 Your flagged blog captures <span class="card-meta" id="be-sourcemat-count"></span></summary>
-      <p class="card-meta" style="margin:0.5rem 0 0.75rem">Things you flagged with "📰 Flag for blog" in Pending, plus any take you wrote on them. Click Insert to drop one into the draft below.</p>
-      <div id="be-sourcemat"><div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div></div>
-    </details>
+  <div class="be-main" id="be-main">
+    <div class="be-panel">
+      <div class="be-tabs" role="tablist">
+        <button class="on" data-pane="write" onclick="showEditorPane('write')">Write</button>
+        <button data-pane="shape" onclick="showEditorPane('shape')">Shape</button>
+        <button data-pane="images" onclick="showEditorPane('images')">Images</button>
+        <button data-pane="links" onclick="showEditorPane('links')">Links &amp; graph</button>
+        <button data-pane="details" onclick="showEditorPane('details')">Details</button>
+      </div>
 
-    <div class="blog-editor-grid">
-      <div class="blog-editor-fields">
+      <!-- WRITE -->
+      <div class="be-pane on" id="pane-write">
         <div class="facet-label">Title</div>
-        <input type="text" id="be-title" placeholder="Post title" oninput="renderBlogPreview()">
+        <input type="text" id="be-title" placeholder="Post title" oninput="blogChanged()">
+        <p class="be-hint">Wrap words in <code>*asterisks*</code> to set them in italic blue on the page.</p>
 
-        <div class="facet-label" style="margin-top:0.9rem">Slug</div>
-        <input type="text" id="be-slug" placeholder="url-friendly-slug">
+        <div class="facet-label">Deck</div>
+        <textarea id="be-excerpt" placeholder="One sentence under the title. Also used on the blog index." style="min-height:64px" oninput="blogChanged()"></textarea>
 
-        <div class="facet-label" style="margin-top:0.9rem">Date (the day this actually happened/was taken — not when you wrote it up)</div>
-        <input type="date" id="be-captured-on" oninput="renderBlogPreview()">
-
-        <div class="facet-label" style="margin-top:0.9rem">Excerpt</div>
-        <textarea id="be-excerpt" placeholder="One or two sentences for the blog index card" style="min-height:60px"></textarea>
-
-        <div class="facet-label" style="margin-top:0.9rem">Cover image URL</div>
-        <input type="text" id="be-cover" placeholder="https://... (or upload below and copy a link)" oninput="renderBlogPreview()">
-
-        <div class="facet-label" style="margin-top:0.9rem">Body (Markdown)</div>
-        <textarea id="be-body" placeholder="Write the post here — Markdown supported." style="min-height:320px;font-family:var(--font-mono);font-size:0.85rem" oninput="renderBlogPreview()"></textarea>
-
-        <div class="facet-label" style="margin-top:0.9rem">Source URLs (one per line)</div>
-        <textarea id="be-sources" placeholder="https://..." style="min-height:70px;font-family:var(--font-mono);font-size:0.8rem"></textarea>
-
-        <div class="facet-label" style="margin-top:0.9rem">Related project ids (comma separated — matches repo slugs, e.g. montedera, gloteem)</div>
-        <input type="text" id="be-related" placeholder="montedera, gloteem">
-
-        <div class="facet-label" style="margin-top:0.9rem">Topic tags (comma separated)</div>
-        <input type="text" id="be-tags" placeholder="ai, product, consulting">
-
-        <div class="blog-images">
-          <div class="facet-label" style="margin-top:1.1rem">Images for this post</div>
-          <input type="file" id="be-image-input" accept="image/*" onchange="uploadBlogImage(event)">
-          <div id="be-image-strip" class="blog-image-strip"></div>
+        <div class="facet-label">Body</div>
+        <textarea id="be-body" placeholder="Paste or dictate the post here, or start from a flagged capture. Use the Shape tab to turn a raw voice note into sections." oninput="blogChanged()"></textarea>
+        <div class="be-toolbar">
+          <button class="btn btn-ghost" onclick="insertAtCursor('\n\n## [LABEL] Section heading\n\n')">+ Section</button>
+          <button class="btn btn-ghost" onclick="insertAtCursor('\n\n>> A line you actually said\n\n')">+ Pull quote</button>
+          <button class="btn btn-ghost" onclick="prependLeadNote()">+ Opening note</button>
+          <button class="btn btn-ghost" onclick="showEditorPane('images')">+ Cutout…</button>
+          <button class="btn btn-ghost" onclick="toggleSourceMaterial()">+ From captures…</button>
+          <button class="btn btn-ghost" onclick="toggleVoicePicker()">+ Voice note…</button>
+          <button class="btn btn-ghost" onclick="insertLink()">+ Link</button>
+          <button class="btn btn-ghost" onclick="toggleImageUrl()">+ Image from URL…</button>
         </div>
-
-        <div style="display:flex;gap:0.5rem;margin-top:1.25rem;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="saveBlogPost()">Save draft</button>
-          <button class="btn btn-ghost btn-sm" id="be-publish-btn" onclick="publishBlogPost()">Publish</button>
-          <button class="btn btn-ghost btn-sm" id="be-unpublish-btn" style="display:none" onclick="unpublishBlogPost()">Unpublish</button>
-          <button class="btn btn-ghost btn-sm" onclick="deleteBlogPost()" style="color:var(--red);margin-left:auto">Delete</button>
+        <div id="be-imgurl-box" style="display:none" class="be-card">
+          <h4>Image from a URL</h4>
+          <p class="be-hint" style="margin-top:0">A logo, screenshot or photo from the web. "Keep a copy" stores it with the post, so it will not break if the other site moves it.</p>
+          <input type="url" id="be-imgurl" placeholder="https://…/logo.png">
+          <input type="text" id="be-imgurl-alt" placeholder="Alt text: what the image shows" style="margin-top:0.45rem">
+          <div class="be-row">
+            <select id="be-imgurl-mode" aria-label="How to add it">
+              <option value="copy-image">Keep a copy · photo in the text</option>
+              <option value="copy-cutout">Keep a copy · cutout in the margin</option>
+              <option value="link">Link to it · in the text (no copy)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="addImageFromUrl()">Add at cursor</button>
+          </div>
         </div>
+        <div id="be-voice-box" style="display:none" class="be-card">
+          <h4>Your voice notes</h4>
+          <p class="be-hint" style="margin-top:0">Places a player for the original recording at the cursor, so readers can hear it in your voice. Only notes whose audio was archived can be played.</p>
+          <input type="search" id="be-voice-search" placeholder="Search what you said…" oninput="loadVoicePicker(this.value)">
+          <div id="be-voice-list"></div>
+        </div>
+        <div id="be-sourcemat-box" style="display:none" class="be-card">
+          <h4>Flagged captures</h4>
+          <p class="be-hint" style="margin-top:0">Insert drops the text at the cursor, adds its link as a source, and links its take.</p>
+          <div id="be-sourcemat"></div>
+        </div>
+        <div class="be-rules" id="be-rules"></div>
 
-        <div style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
-          <button class="btn btn-ghost btn-sm" onclick="runLinkCheck()">🔮 Check links (Gemini)</button>
-          <div id="be-linkcheck" style="display:none;margin-top:0.9rem"></div>
+        <div class="facet-label" style="margin-top:1.2rem">Sources &amp; sparks</div>
+        <p class="be-hint" style="margin-top:0">Links listed at the end of the post. The title is what readers see; leave it blank to show the site name.</p>
+        <div id="be-sources"></div>
+        <div class="be-row"><button class="btn btn-ghost btn-sm" onclick="addSourceRow()">+ Add a link</button></div>
+        <details class="be-cheats">
+          <summary>Formatting that shapes the page</summary>
+          <table>
+            <tr><td><code>&gt; text</code></td><td>First quote before any heading: the paper "quick take" note</td></tr>
+            <tr><td><code>## [LABEL] Heading</code></td><td>Numbered section. The label is optional</td></tr>
+            <tr><td><code>&gt;&gt; text</code></td><td>The pull quote. Use words you actually said</td></tr>
+            <tr><td><code>[[cutout:id]]</code></td><td>A cutout beside the next passage (added from Images)</td></tr>
+            <tr><td><code>[[image:id]]</code></td><td>An ordinary photo in the text column</td></tr>
+            <tr><td><code>[[voice:id]]</code></td><td>A player for the original recording (+ Voice note…)</td></tr>
+          </table>
+        </details>
+      </div>
+
+      <!-- SHAPE -->
+      <div class="be-pane" id="pane-shape">
+        <div class="facet-label">Original transcript</div>
+        <textarea id="be-transcript" placeholder="The raw voice note. Kept with the draft for comparison and never published." style="min-height:180px;font-size:0.82rem" oninput="blogChanged()"></textarea>
+        <div class="be-row">
+          <button class="btn btn-ghost btn-sm" onclick="copyBodyToTranscript()">Use current body as transcript</button>
+        </div>
+        <div class="be-card">
+          <h4>Shape into an essay</h4>
+          <p class="be-hint" style="margin-top:0">Gemini adds punctuation, paragraphs, section headings, a deck and one pull quote. It keeps your words, removes false starts and duplicated words, and never uses em dashes. You review the result before it touches the draft.</p>
+          <div class="be-row"><button class="btn btn-primary btn-sm" id="be-shape-btn" onclick="runShape()">✦ Shape with Gemini</button><span class="card-meta" id="be-shape-note"></span></div>
+          <div id="be-shape-result"></div>
+        </div>
+        <div class="be-card">
+          <h4>Compare with the transcript</h4>
+          <p class="be-hint" style="margin-top:0">Checks the current body sentence by sentence. Useful after your own edits too.</p>
+          <div class="be-row"><button class="btn btn-ghost btn-sm" onclick="renderCompare()">Compare now</button></div>
+          <div id="be-compare"></div>
         </div>
       </div>
 
-      <div class="blog-editor-preview">
-        <div class="facet-label">Live preview — approximates the published post</div>
-        <div id="be-preview" class="blog-preview-render"></div>
+      <!-- IMAGES -->
+      <div class="be-pane" id="pane-images">
+        <div id="be-images-locked" class="be-empty-note" style="display:none">Images attach to a saved draft. Add a title or a few sentences first, and it will save itself.</div>
+        <div id="be-images-open">
+          <div class="facet-label">Cutouts and images in this post</div>
+          <div id="be-media-grid" class="cut-grid"></div>
+          <div class="be-row">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer">Upload image<input type="file" accept="image/*" id="be-upload" style="display:none" onchange="uploadOwnImage(event)"></label>
+            <select id="be-upload-kind" aria-label="Upload as"><option value="cutout">as a cutout (transparent PNG)</option><option value="image">as an inline photo</option></select>
+          </div>
+
+          <div class="be-card">
+            <h4>Make cutouts with Gemini</h4>
+            <p class="be-hint" style="margin-top:0">Reads the whole post and suggests one leading visual from its actual argument, plus at most two smaller ones. Some posts need one or none. Images use the collage style of the three prototype cutouts. The green background is removed here, so the upload is a real transparent PNG.</p>
+            <div class="be-row"><button class="btn btn-primary btn-sm" id="be-ideas-btn" onclick="runCutoutIdeas()">✦ Suggest cutouts</button><button class="btn btn-ghost btn-sm" onclick="addBlankIdea()">+ My own idea</button></div>
+            <div id="be-ideas"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- LINKS & GRAPH -->
+      <div class="be-pane" id="pane-links">
+        <div class="facet-label">In the knowledge graph</div>
+        <div id="be-graph" class="be-card" style="margin-top:0.35rem"></div>
+
+        <div class="facet-label">Started from (your takes)</div>
+        <div id="be-takes"></div>
+        <input type="search" id="be-take-search" placeholder="Search your takes to link one…" oninput="searchTakes(this.value)" style="margin-top:0.4rem">
+        <div id="be-take-results"></div>
+
+        <div class="facet-label">Discusses (projects)</div>
+        <div id="be-projects"></div>
+        <input type="search" id="be-project-search" placeholder="Search projects and repos…" oninput="searchProjects(this.value)" style="margin-top:0.4rem">
+        <div id="be-project-results"></div>
+
+        <p class="be-hint" style="margin-top:1rem">Sources &amp; sparks are edited in the Write tab.</p>
+
+        <div class="be-card">
+          <h4>Find links and connections</h4>
+          <p class="be-hint" style="margin-top:0">One Gemini pass: promised links you forgot, links worth adding from your bookmarks, a title and tags, plus the projects and takes in your graph closest to this post.</p>
+          <div class="be-row"><button class="btn btn-primary btn-sm" id="be-lc-btn" onclick="runLinkCheck()">✦ Run check</button></div>
+          <div id="be-linkcheck"></div>
+        </div>
+      </div>
+
+      <!-- DETAILS -->
+      <div class="be-pane" id="pane-details">
+        <div class="facet-label">Slug</div>
+        <input type="text" id="be-slug" placeholder="made from the title" oninput="slugTouched = true; blogChanged()">
+        <p class="be-hint" id="be-slug-hint"></p>
+
+        <div class="facet-label">Date it happened</div>
+        <input type="date" id="be-captured-on" oninput="blogChanged()">
+        <p class="be-hint">The day of the thought or event, shown on the post. Not when you wrote it up.</p>
+
+        <div class="facet-label">Topic tags</div>
+        <input type="text" id="be-tags" placeholder="geo, influencer marketing, trust" oninput="blogChanged()">
+        <p class="be-hint">Comma separated. The first three also appear in the footer.</p>
+
+        <div class="be-card" style="margin-top:1.5rem">
+          <h4>Danger zone</h4>
+          <div class="be-row">
+            <button class="btn btn-ghost btn-sm" id="be-unpublish-btn" style="display:none" onclick="unpublishBlogPost()">Unpublish</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteBlogPost()">Delete draft…</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="be-preview" id="be-preview-wrap">
+      <iframe id="be-preview" title="Live preview of the post as it will be published" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
+<div id="publish-check" onclick="if(event.target===this) closePublishCheck()">
+  <div class="detail-card" style="max-width:520px;width:100%">
+    <button class="detail-close" onclick="closePublishCheck()">×</button>
+    <h2 style="margin-bottom:0.3rem">Before it goes live</h2>
+    <p class="sub" style="margin-bottom:1rem">House rules from the blog handoff.</p>
+    <div id="pc-list"></div>
+    <div class="be-row" style="margin-top:1.1rem;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closePublishCheck()">Keep editing</button>
+      <button class="btn btn-primary btn-sm" id="pc-go" onclick="publishBlogPost()">Publish</button>
     </div>
   </div>
 </div>
@@ -503,7 +709,7 @@ function switchTab(name, btn) {
   if (name === 'explore') loadExplore();
   if (name === 'pics') loadPics();
   if (name === 'tagging') startTagging(); else stopTagging();
-  if (name === 'blog') { loadBlogList(); loadBlogFlaggedPanel(); }
+  if (name === 'blog') { loadBlogList(); loadBlogFlaggedPanel(); loadReaderPanel(); }
 }
 
 async function loadRepos() {
@@ -1508,88 +1714,142 @@ function toast(msg) {
 
 
 /* ══════════════════════════════════════════════════════════════
-   BLOG — draft/preview blog posts before publish, with images
-   and a Gemini pass for missing/suggested links.
+   BLOG (rebuilt 2026-09-23)
+   - Drafts are never created empty. Nothing is written to
+     published_posts until the draft passes the same "real content"
+     rule as scripts/sync_posts.py (a non-placeholder title, or 20+
+     characters of body). After that it autosaves ~1s after typing.
+   - Published posts do NOT autosave: edits wait for "Update live post",
+     so half-typed sentences never go live.
+   - The preview is blog.html?preview=1 in an iframe, rendered by the
+     same /assets/blog/editorial.js as the public page.
+   - Gemini passes live in the blog-studio edge function (shape, cutout
+     ideas, cutout images) and blog-link-check (links, title, tags, and
+     related projects/takes from the graph).
    ══════════════════════════════════════════════════════════════ */
 
-let blogCurrentId = null;
-let blogImageRows = [];
+const BLOG_MIN_BODY_CHARS = 20;          // keep in step with sync_posts.py
+const BLOG_AUTOSAVE_MS = 1100;
+const PLACEHOLDER_TITLES = ['untitled post', 'untitled'];
+const STYLE_REF_FILES = ['transcript-eye', 'trust-scale', 'disclosure-mic'];
+
+let blog = null;            // the open draft: { id, row, links, dirty, saving, queued, timer, lastSaved }
+let blogMedia = [];         // post_media rows (+ presigned url) for the open draft
+let blogVoiceUrls = {};     // inbox id -> presigned audio url, for [[voice:]] tokens
+let blogIdeas = [];         // cutout ideas in the Images pane
+let slugTouched = false;
+let previewReady = false;
+let shapeUndo = null;
+let styleRefsCache = null;
+const labelCache = { takes: {}, projects: {} };
 
 function fmtDate(iso) {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+function fmtTime(d) { return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function isRealContent(title, body) {
+  const t = (title || '').replace(/\*/g, '').trim();
+  const hasTitle = !!t && !PLACEHOLDER_TITLES.includes(t.toLowerCase());
+  return hasTitle || (body || '').trim().length >= BLOG_MIN_BODY_CHARS;
+}
+function slugify(s) {
+  return (s || '').toLowerCase().replace(/\*/g, '').replace(/&/g, 'and').replace(/\+/g, 'plus')
+    .replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 70).replace(/-$/, '');
+}
+const isAutoSlug = (s) => !s || /^(untitled|draft)-[a-z0-9]+$/.test(s);
+async function uniqueSlug(base, exceptId) {
+  base = base || 'draft-' + Date.now().toString(36);
+  const { data } = await sb.from('published_posts').select('id,slug').like('slug', base + '%');
+  const taken = new Set((data || []).filter(r => r.id !== exceptId).map(r => r.slug));
+  if (!taken.has(base)) return base;
+  for (let n = 2; n < 100; n++) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+  return `${base}-${Date.now().toString(36)}`;
+}
 
+/* ── house rules ── */
+function stripDashes(s) {
+  let count = 0;
+  const text = (s || '').replace(/\s*[—–]\s*(?=\S)/g, (m) => { count++; return /\s/.test(m) ? ', ' : '-'; })
+    .replace(/[—–]/g, () => { count++; return ','; });
+  return { text, count };
+}
+const normWords = (s) => (s || '').toLowerCase().replace(/[‘’]/g, "'").replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const canonWord = (w) => w.replace(/is(e|es|ed|ing|ation|ations)$/, 'iz$1').replace(/ys(e|es|ed|ing)$/, 'yz$1');
+function proseOf(bodyMd) {
+  // What the reader reads as "Toni's words": everything except headings and tokens.
+  return (bodyMd || '').split('\n').filter(l => !/^\s*##/.test(l)).join('\n')
+    .replace(/\[\[[a-z]+:[^\]]+\]\]/g, ' ').replace(/^\s*>+\s?/gm, '');
+}
+function compareToTranscript(transcript, bodyMd) {
+  const src = new Set(normWords(transcript).split(' ').map(canonWord));
+  const prose = proseOf(bodyMd);
+  const bodyWords = new Set(normWords(prose).split(' ').map(canonWord));
+  const added = [...new Set(normWords(prose).split(' ').filter(w => w && !src.has(canonWord(w))))];
+  const sentences = (transcript || '').replace(/\s+/g, ' ').split(/(?<=[.?!])\s+/).map(s => s.trim()).filter(Boolean);
+  const dropped = sentences.filter(s => {
+    const ws = normWords(s).split(' ').filter(w => w.length > 2);
+    if (ws.length < 3) return false;
+    const hit = ws.filter(w => bodyWords.has(canonWord(w))).length;
+    return hit / ws.length < 0.6;
+  });
+  return { added, dropped, sentences: sentences.length };
+}
+
+/* ══ list ══ */
 async function loadBlogList() {
-  const { data, error } = await sb.from('published_posts')
-    .select('id,title,slug,excerpt,published_at,updated_at')
-    .order('updated_at', { ascending: false });
   const el = document.getElementById('blog-list');
+  const [{ data, error }, { data: nodes }] = await Promise.all([
+    sb.from('published_posts').select('id,title,slug,excerpt,body_md,published_at,updated_at,commentary_ids,related_project_ids,source_urls').order('updated_at', { ascending: false }),
+    sb.from('node').select('id,source_id,kind,tagged_at,embedded_at').eq('source_table', 'published_posts'),
+  ]);
   if (error) { el.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
+  const nodeBy = Object.fromEntries((nodes || []).map(n => [n.source_id, n]));
   document.getElementById('blog-count').textContent = `${data.length} post${data.length === 1 ? '' : 's'}`;
-  if (!data.length) { el.innerHTML = '<p class="empty">No drafts yet. Click "+ New draft" to start one.</p>'; return; }
-
+  if (!data.length) { el.innerHTML = '<p class="empty">No drafts yet. "+ New draft", or start one from a flagged capture below.</p>'; return; }
   el.innerHTML = '';
   data.forEach(p => {
     const isPublished = !!p.published_at;
+    const words = Editorial.wordCount(p.body_md);
+    const g = graphState(p, nodeBy[p.id]);
+    const links = [
+      (p.commentary_ids || []).length ? `${p.commentary_ids.length} take${p.commentary_ids.length > 1 ? 's' : ''}` : '',
+      (p.related_project_ids || []).length ? `${p.related_project_ids.length} project${p.related_project_ids.length > 1 ? 's' : ''}` : '',
+      (p.source_urls || []).length ? `${p.source_urls.length} source${p.source_urls.length > 1 ? 's' : ''}` : '',
+    ].filter(Boolean);
     const div = document.createElement('div');
     div.className = 'card blog-post-card';
-    div.style.cursor = 'pointer';
+    div.tabIndex = 0;
     div.onclick = () => openBlogEditor(p.id);
+    div.onkeydown = (e) => { if (e.key === 'Enter') openBlogEditor(p.id); };
     div.innerHTML = `
-      <span class="blog-status ${isPublished ? 'published' : 'draft'}">${isPublished ? 'Published' : 'Draft'}</span>
-      <div style="flex:1;min-width:0">
-        <div class="card-title">${escapeHtml(p.title || '(untitled)')}</div>
-        <div class="card-meta">${p.slug ? '/' + escapeHtml(p.slug) + ' · ' : ''}updated ${fmtDate(p.updated_at)}${isPublished ? ' · published ' + fmtDate(p.published_at) : ''}</div>
+      <span class="blog-status ${isPublished ? 'published' : 'draft'}">${isPublished ? 'Live' : 'Draft'}</span>
+      <div style="min-width:0">
+        <div class="card-title">${escapeHtml(Editorial.plainTitle(p.title) || '(untitled)')}</div>
+        <div class="card-meta">${words} words · updated ${fmtDate(p.updated_at)}${isPublished ? ' · /blog/' + escapeHtml(p.slug) : ''}</div>
+      </div>
+      <div class="blog-card-links">
+        <span class="gchip ${g.cls}" title="${escapeHtml(g.detail)}">${escapeHtml(g.label)}</span>
+        ${links.length ? `<span class="gchip plain">${links.join(' · ')}</span>` : ''}
       </div>`;
     el.appendChild(div);
   });
 }
 
-async function createDraftPost() {
-  const { data, error } = await sb.from('published_posts')
-    .insert({ title: 'Untitled post', slug: 'untitled-' + Date.now().toString(36), body_md: '' })
-    .select().single();
-  if (error) { toast('Failed to create draft: ' + error.message); return; }
-  await loadBlogList();
-  openBlogEditor(data.id);
+function graphState(post, node) {
+  if (!node) {
+    return isRealContent(post.title, post.body_md)
+      ? { cls: 'off', label: 'Not in graph yet', detail: 'sync_posts.py adds it on the next weekly run (Mondays 06:00 UTC), or run it by hand.' }
+      : { cls: 'off', label: 'Empty', detail: 'No real content yet, so the pipeline skips it.' };
+  }
+  if (!node.tagged_at) return { cls: 'wait', label: 'Synced · awaiting tags', detail: 'In the graph. tag_posts.py has not tagged it yet.' };
+  if (post.updated_at && new Date(post.updated_at) - new Date(node.tagged_at) > 60000) {
+    return { cls: 'wait', label: 'Edited since tagging', detail: 'The next sync clears the old tags and embedding, then retags it.' };
+  }
+  return { cls: 'ok', label: `Tagged ${fmtDate(node.tagged_at)}`, detail: `Graph node ${node.id} (${node.kind})` };
 }
 
-async function openBlogEditor(id) {
-  const { data: post, error } = await sb.from('published_posts').select('*').eq('id', id).maybeSingle();
-  if (error || !post) { toast('Failed to load post: ' + (error?.message || 'not found')); return; }
-  blogCurrentId = post.id;
-
-  document.getElementById('be-title').value = post.title || '';
-  document.getElementById('be-slug').value = post.slug || '';
-  document.getElementById('be-captured-on').value = post.captured_on || '';
-  document.getElementById('be-excerpt').value = post.excerpt || '';
-  document.getElementById('be-cover').value = post.cover_image_url || '';
-  document.getElementById('be-body').value = post.body_md || '';
-  document.getElementById('be-sources').value = (post.source_urls || []).join('\n');
-  document.getElementById('be-related').value = (post.related_project_ids || []).join(', ');
-  document.getElementById('be-tags').value = (post.topic_tags || []).join(', ');
-
-  const isPublished = !!post.published_at;
-  document.getElementById('be-publish-btn').style.display = isPublished ? 'none' : 'inline-block';
-  document.getElementById('be-unpublish-btn').style.display = isPublished ? 'inline-block' : 'none';
-  document.getElementById('blog-editor-status').textContent = isPublished
-    ? `Published ${fmtDate(post.published_at)}`
-    : 'Draft — not live on the site yet';
-
-  document.getElementById('be-linkcheck').style.display = 'none';
-  document.getElementById('be-linkcheck').innerHTML = '';
-
-  renderBlogPreview();
-  await loadBlogImages(post.id);
-  await loadBlogSourceMaterial();
-
-  const editorEl = document.getElementById('blog-editor');
-  editorEl.classList.add('open');
-  editorEl.scrollTop = 0;
-  document.querySelector('.blog-editor-card').scrollTop = 0;
-}
-
+/* ══ flagged captures ══ */
 window.__voiceUrlCache = window.__voiceUrlCache || {};
 window.__voicePathById = window.__voicePathById || {};
 
@@ -1600,401 +1860,1067 @@ async function presignVoicePaths(paths) {
     const { data, error } = await sb.functions.invoke('presign-media', { body: { keys: need } });
     if (error) throw error;
     Object.assign(window.__voiceUrlCache, (data && data.urls) || {});
-  } catch (err) {
-    console.error('presign-media failed:', err);
-  }
+  } catch (err) { console.error('presign-media failed:', err); }
 }
 
 async function runVoiceBackfill() {
   const btn = document.getElementById('bf-backfill-btn');
   const original = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Backfilling…';
+  btn.disabled = true; btn.textContent = 'Backfilling…';
   try {
     const { data, error } = await sb.functions.invoke('backfill-voice-audio', { body: {} });
     if (error) throw error;
-    const archived = data?.archived ?? 0;
     const failed = (data?.failed || []).length;
-    toast(`Backfill done — archived ${archived}${failed ? `, ${failed} failed` : ''}`);
+    toast(`Backfill done: archived ${data?.archived ?? 0}${failed ? `, ${failed} failed` : ''}`);
     await loadBlogFlaggedPanel();
-  } catch (err) {
-    toast('Backfill failed: ' + (err.message || err));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = original;
+  } catch (err) { toast('Backfill failed: ' + (err.message || err)); }
+  finally { btn.disabled = false; btn.textContent = original; }
+}
+
+async function fetchFlagged() {
+  const { data, error } = await sb.from('inbox')
+    .select('id,full_text,url,source,raw_message_type,voice_audio_path,topic_tags,created_at')
+    .eq('is_blog_candidate', true).order('created_at', { ascending: false });
+  if (error) throw error;
+  const ids = data.map(d => d.id);
+  const takes = {};
+  if (ids.length) {
+    const { data: comments } = await sb.from('commentary').select('id,inbox_ids,body,created_at').overlaps('inbox_ids', ids).order('created_at', { ascending: false });
+    (comments || []).forEach(c => (c.inbox_ids || []).forEach(id => { if (!takes[id]) takes[id] = c; }));
   }
+  data.forEach(item => { item.take = takes[item.id] || null; if (item.voice_audio_path) window.__voicePathById[item.id] = item.voice_audio_path; });
+  await presignVoicePaths(data.map(d => d.voice_audio_path).filter(Boolean));
+  window.__blogFlagged = Object.fromEntries(data.map(d => [d.id, d]));
+  return data;
+}
+
+function flaggedItemHtml(item, action) {
+  const preview = (item.full_text || '').slice(0, 220);
+  const audioUrl = item.voice_audio_path ? window.__voiceUrlCache[item.voice_audio_path] : null;
+  return `
+    <div class="bf-item">
+      <div class="bf-item-body">
+        ${preview ? `<div class="sm-item-text">${escapeHtml(preview)}${(item.full_text || '').length > 220 ? '…' : ''}</div>` : ''}
+        ${(item.topic_tags || []).length ? `<div class="sm-tags">${item.topic_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        ${item.take ? `<div class="sm-item-take" title="${escapeHtml(item.take.body)}">"${escapeHtml(item.take.body.length > 280 ? item.take.body.slice(0, 280) + '…' : item.take.body)}"</div>` : ''}
+        ${item.voice_audio_path ? (audioUrl ? `<div class="sm-item-audio"><audio controls preload="none" src="${audioUrl}"></audio></div>` : '<div class="card-meta">🎙️ voice note, audio not archived yet</div>') : ''}
+        <div class="card-meta">${fmtDate(item.created_at)}${item.url ? ` · <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:var(--accent)">source ↗</a>` : ''}</div>
+      </div>
+      ${action}
+    </div>`;
 }
 
 async function loadBlogFlaggedPanel() {
   const wrap = document.getElementById('blog-flagged-list');
-  const { data, error } = await sb.from('inbox')
-    .select('id,full_text,url,source,raw_message_type,voice_audio_path,topic_tags,created_at')
-    .eq('is_blog_candidate', true)
-    .order('created_at', { ascending: false });
-
-  if (error) { wrap.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
+  let data;
+  try { data = await fetchFlagged(); } catch (err) { wrap.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(err.message)}</p>`; return; }
   document.getElementById('bf-count').textContent = data.length ? `(${data.length})` : '';
-  if (!data.length) {
-    wrap.innerHTML = '<p class="card-meta">Nothing flagged yet — flag captures with "📰 Flag for blog" in Pending or All Captures.</p>';
-    return;
-  }
-
-  const ids = data.map(d => d.id);
-  const { data: comments } = await sb.from('commentary').select('inbox_ids,body').overlaps('inbox_ids', ids);
-  const takeByItem = {};
-  (comments || []).forEach(c => (c.inbox_ids || []).forEach(id => { if (!takeByItem[id]) takeByItem[id] = c.body; }));
-
-  data.forEach(item => { if (item.voice_audio_path) window.__voicePathById[item.id] = item.voice_audio_path; });
-  await presignVoicePaths(data.map(d => d.voice_audio_path).filter(Boolean));
-
-  wrap.innerHTML = data.map(item => {
-    const take = takeByItem[item.id];
-    const preview = (item.full_text || '').slice(0, 200);
-    const isVoice = !!item.voice_audio_path;
-    const audioUrl = isVoice ? window.__voiceUrlCache[item.voice_audio_path] : null;
-    return `
-    <div class="bf-item" id="bf-${item.id}">
-      <div class="bf-item-body">
-        ${preview ? `<div class="sm-item-text">${escapeHtml(preview)}${(item.full_text || '').length > 200 ? '…' : ''}</div>` : ''}
-        ${(item.topic_tags || []).length ? `<div class="sm-tags">${item.topic_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-        ${take ? `<div class="sm-item-take">"${escapeHtml(take)}"</div>` : ''}
-        ${isVoice ? (audioUrl
-          ? `<div class="sm-item-audio"><audio controls src="${audioUrl}"></audio></div>`
-          : `<div class="card-meta">🎙️ voice note — audio not archived yet${item.voice_audio_path ? '' : ' (click "Backfill voice audio" above)'}</div>`) : ''}
-        <div class="card-meta">${fmtDate(item.created_at)}${item.url ? ` · <a href="${item.url}" target="_blank" style="color:var(--accent)">source ↗</a>` : ''}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="newDraftFromCapture('${item.id}')">+ New draft</button>
-    </div>`;
-  }).join('');
-
-  window.__blogFlaggedMaterial = data.reduce((acc, item) => { acc[item.id] = { ...item, take: takeByItem[item.id] }; return acc; }, {});
+  wrap.innerHTML = data.length
+    ? data.map(item => flaggedItemHtml(item, `<button class="btn btn-ghost btn-sm" onclick="newDraftFromCapture('${item.id}')">+ New draft</button>`)).join('')
+    : '<p class="card-meta">Nothing flagged yet. Flag captures with "📰 Flag for blog" in Pending.</p>';
 }
 
-async function newDraftFromCapture(id) {
-  const { data, error } = await sb.from('published_posts')
-    .insert({ title: 'Untitled post', slug: 'untitled-' + Date.now().toString(36), body_md: '' })
-    .select().single();
-  if (error) { toast('Failed to create draft: ' + error.message); return; }
-  await loadBlogList();
-  await openBlogEditor(data.id);
-  insertSourceMaterial(id, window.__blogFlaggedMaterial ? window.__blogFlaggedMaterial[id] : null);
-}
-
-async function loadBlogSourceMaterial() {
-  const wrap = document.getElementById('be-sourcemat');
-  wrap.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
-
-  const { data, error } = await sb.from('inbox')
-    .select('id,full_text,url,source,raw_message_type,voice_audio_path,topic_tags,created_at')
-    .eq('is_blog_candidate', true)
-    .order('created_at', { ascending: false });
-
-  if (error) { wrap.innerHTML = `<p class="empty">Failed to load: ${escapeHtml(error.message)}</p>`; return; }
-  document.getElementById('be-sourcemat-count').textContent = data.length ? `(${data.length})` : '';
-  if (!data.length) {
-    wrap.innerHTML = '<p class="card-meta">Nothing flagged yet — flag captures with "📰 Flag for blog" in the Pending tab and they\'ll show up here.</p>';
-    return;
-  }
-
-  const ids = data.map(d => d.id);
-  const { data: comments } = await sb.from('commentary').select('inbox_ids,body,created_at').overlaps('inbox_ids', ids).order('created_at', { ascending: false });
-  const takeByItem = {};
-  (comments || []).forEach(c => (c.inbox_ids || []).forEach(id => { if (!takeByItem[id]) takeByItem[id] = c.body; }));
-
-  const sourcesInDraft = (document.getElementById('be-sources').value || '').split('\n').map(s => s.trim());
-
-  data.forEach(item => { if (item.voice_audio_path) window.__voicePathById[item.id] = item.voice_audio_path; });
-  await presignVoicePaths(data.map(d => d.voice_audio_path).filter(Boolean));
-
-  wrap.innerHTML = data.map(item => {
-    const take = takeByItem[item.id];
-    const already = item.url && sourcesInDraft.includes(item.url);
-    const preview = (item.full_text || '').slice(0, 220);
-    const isVoice = !!item.voice_audio_path;
-    const audioUrl = isVoice ? window.__voiceUrlCache[item.voice_audio_path] : null;
-    return `
-    <div class="sm-item ${already ? 'used' : ''}" id="sm-${item.id}">
-      <div class="sm-item-body">
-        ${preview ? `<div class="sm-item-text">${escapeHtml(preview)}${(item.full_text || '').length > 220 ? '…' : ''}</div>` : ''}
-        ${(item.topic_tags || []).length ? `<div class="sm-tags">${item.topic_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-        ${take ? `<div class="sm-item-take">"${escapeHtml(take)}"</div>` : ''}
-        ${isVoice ? (audioUrl
-          ? `<div class="sm-item-audio"><audio controls src="${audioUrl}"></audio></div>`
-          : `<div class="card-meta">🎙️ voice note — audio not archived yet</div>`) : ''}
-        <div class="card-meta">${fmtDate(item.created_at)}${item.url ? ` · <a href="${item.url}" target="_blank" style="color:var(--accent)">source ↗</a>` : ''}${already ? ' · already inserted' : ''}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="insertSourceMaterial('${item.id}')">${already ? 'Insert again' : '+ Insert'}</button>
-    </div>`;
-  }).join('');
-
-  window.__blogSourceMaterial = data.reduce((acc, item) => { acc[item.id] = { ...item, take: takeByItem[item.id] }; return acc; }, {});
-}
-
-function insertSourceMaterial(id, fallbackItem) {
-  const item = (window.__blogSourceMaterial || {})[id] || fallbackItem;
+function newDraftFromCapture(id) {
+  const item = (window.__blogFlagged || {})[id];
   if (!item) return;
-  const body = document.getElementById('be-body');
-  const chunk = (item.take ? item.take : (item.full_text || '')).trim();
-  const isVoice = !!item.voice_audio_path;
-  const insertion = `\n\n> ${chunk.replace(/\n/g, '\n> ')}\n` + (isVoice ? `\n[[voice:${id}]]\n` : '');
-  body.value = (body.value ? body.value + insertion : insertion.trimStart());
-
-  if (isVoice) window.__voicePathById[id] = item.voice_audio_path;
-
-  if (item.url) {
-    const sourcesEl = document.getElementById('be-sources');
-    const lines = sourcesEl.value.split('\n').map(s => s.trim()).filter(Boolean);
-    if (!lines.includes(item.url)) {
-      lines.push(item.url);
-      sourcesEl.value = lines.join('\n');
-    }
-  }
-
-  // Carry over the tags Gemini already found for this capture (via Telegram)
-  // instead of starting the post's topic tags from scratch.
-  if ((item.topic_tags || []).length) {
-    const tagsEl = document.getElementById('be-tags');
-    const existing = tagsEl.value.split(',').map(s => s.trim()).filter(Boolean);
-    item.topic_tags.forEach(t => { if (!existing.includes(t)) existing.push(t); });
-    tagsEl.value = existing.join(', ');
-  }
-
-  renderBlogPreview();
-  if (document.getElementById('blog-editor').classList.contains('open')) loadBlogSourceMaterial();
-  toast(isVoice ? 'Inserted into draft (with playable audio)' : 'Inserted into draft');
-}
-
-function closeBlogEditor() {
-  document.getElementById('blog-editor').classList.remove('open');
-  blogCurrentId = null;
-  blogImageRows = [];
-}
-
-window.__voicePresignInFlight = window.__voicePresignInFlight || new Set();
-
-function resolveVoiceTokens(html) {
-  const tokenRe = /(?:<p>)?\[\[voice:([a-zA-Z0-9-]+)\]\](?:<\/p>)?/g;
-  const pendingIds = [];
-  const resolved = html.replace(tokenRe, (match, id) => {
-    const path = window.__voicePathById[id];
-    const url = path ? window.__voiceUrlCache[path] : null;
-    if (url) {
-      return `<div class="bp-voice-audio"><audio controls src="${url}"></audio></div>`;
-    }
-    if (path) pendingIds.push(path);
-    return `<div class="bp-voice-pending">🎙️ loading audio…</div>`;
+  const words = (item.take ? item.take.body : item.full_text || '').trim();
+  const voice = item.voice_audio_path ? `\n\n[[voice:${id}]]` : '';
+  openBlogEditor(null, {
+    body_md: words + voice,
+    transcript_md: words,
+    source_urls: item.url ? [item.url] : [],
+    commentary_ids: item.take ? [item.take.id] : [],
+    topic_tags: item.topic_tags || [],
+    captured_on: (item.created_at || '').slice(0, 10) || null,
   });
-  return { resolved, pendingIds };
 }
 
-function renderBlogPreview() {
-  const title = document.getElementById('be-title').value;
-  const excerpt = document.getElementById('be-excerpt').value;
-  const cover = document.getElementById('be-cover').value;
-  const capturedOn = document.getElementById('be-captured-on').value;
-  const body = document.getElementById('be-body').value;
-  let html = (window.marked ? marked.parse(body || '') : escapeHtml(body || '').replace(/\n/g, '<br>'));
-  const { resolved, pendingIds } = resolveVoiceTokens(html);
-  html = resolved;
-  document.getElementById('be-preview').innerHTML = `
-    ${cover ? `<img class="bp-cover" src="${escapeHtml(cover)}" alt="">` : ''}
-    <div class="bp-title">${escapeHtml(title || '(untitled)')}</div>
-    ${capturedOn ? `<div class="card-meta" style="margin:-0.5rem 0 0.75rem">${fmtDate(capturedOn)}</div>` : ''}
-    ${excerpt ? `<div class="bp-excerpt">${escapeHtml(excerpt)}</div>` : ''}
-    ${html || '<p style="color:var(--muted);font-style:italic">Nothing written yet.</p>'}
-  `;
+/* ══ editor ══ */
+const $ = (id) => document.getElementById(id);
 
-  const toFetch = pendingIds.filter(p => !window.__voicePresignInFlight.has(p));
-  if (toFetch.length) {
-    toFetch.forEach(p => window.__voicePresignInFlight.add(p));
-    presignVoicePaths(toFetch).then(() => {
-      toFetch.forEach(p => window.__voicePresignInFlight.delete(p));
-      renderBlogPreview();
-    });
+async function openBlogEditor(id, seed) {
+  let row;
+  if (id) {
+    const { data, error } = await sb.from('published_posts').select('*').eq('id', id).maybeSingle();
+    if (error || !data) { toast('Failed to load post: ' + (error?.message || 'not found')); return; }
+    row = data;
+  } else {
+    row = { id: null, title: '', excerpt: '', body_md: '', transcript_md: '', slug: '', captured_on: null, topic_tags: [], source_urls: [], source_labels: {}, commentary_ids: [], related_project_ids: [], published_at: null, ...(seed || {}) };
   }
+  blog = {
+    id: row.id, row,
+    links: {
+      commentary_ids: [...(row.commentary_ids || [])],
+      related_project_ids: [...(row.related_project_ids || [])],
+      sources: (row.source_urls || []).map(u => ({ url: u, label: (row.source_labels || {})[u] || '' })),
+    },
+    dirty: false, saving: false, queued: false, timer: null, lastSaved: null,
+  };
+  blogMedia = []; blogVoiceUrls = {}; blogIdeas = []; shapeUndo = null;
+  slugTouched = !!row.id && !isAutoSlug(row.slug);
+
+  $('be-title').value = row.title || '';
+  $('be-excerpt').value = row.excerpt || '';
+  $('be-body').value = row.body_md || '';
+  $('be-transcript').value = row.transcript_md || '';
+  $('be-slug').value = row.slug || '';
+  $('be-captured-on').value = row.captured_on || '';
+  $('be-tags').value = (row.topic_tags || []).join(', ');
+  $('be-shape-result').innerHTML = ''; $('be-compare').innerHTML = ''; $('be-ideas').innerHTML = ''; $('be-linkcheck').innerHTML = '';
+  $('be-sourcemat-box').style.display = 'none';
+  $('be-voice-box').style.display = 'none';
+  $('be-imgurl-box').style.display = 'none';
+  $('be-take-search').value = ''; $('be-project-search').value = ''; $('be-take-results').innerHTML = ''; $('be-project-results').innerHTML = '';
+
+  showEditorPane('write');
+  refreshEditorChrome();
+  renderRules();
+  renderLinks();
+  renderGraph();
+  setSave(row.id ? 'saved' : 'pending', row.id ? `Saved · ${fmtDate(row.updated_at)}` : 'Not saved yet · add a title or a couple of sentences');
+
+  $('blog-editor').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const frame = $('be-preview');
+  if (!previewReady) frame.src = 'blog.html?preview=1&v=20260923d';
+  sendPreview();
+  if (row.id) loadBlogMedia();
+  resolveVoiceTokens();
+  if (seed) blogChanged();   // a seeded draft already has real content: save it
+  setTimeout(() => $('be-title').focus(), 50);
 }
+
+function refreshEditorChrome() {
+  const published = !!(blog.row && blog.row.published_at);
+  $('be-state').textContent = published ? 'Live' : 'Draft';
+  $('be-state').className = 'blog-status ' + (published ? 'published' : 'draft');
+  $('be-publish-btn').style.display = published ? 'none' : '';
+  $('be-unpublish-btn').style.display = published ? '' : 'none';
+  $('be-update-btn').style.display = published && blog.dirty ? '' : 'none';
+  $('be-doc-title').textContent = Editorial.plainTitle($('be-title').value) || (blog.id ? '(untitled)' : 'New draft');
+  $('be-images-locked').style.display = blog.id ? 'none' : '';
+  $('be-images-open').style.display = blog.id ? '' : 'none';
+  const slug = $('be-slug').value;
+  $('be-slug-hint').textContent = published
+    ? `Live at /blog/${slug}. Changing it breaks links people already have.`
+    : (isAutoSlug(slug) ? 'Made from the title when you publish.' : 'Used for the post URL: /blog/' + slug);
+}
+
+function showEditorPane(name) {
+  document.querySelectorAll('.be-tabs button').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
+  document.querySelectorAll('.be-pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + name));
+  if (name === 'links') renderGraph();
+}
+
+function setPreviewWidth(mode) {
+  $('be-preview-wrap').classList.toggle('mobile', mode === 'mobile');
+  $('be-view-desktop').classList.toggle('on', mode !== 'mobile');
+  $('be-view-mobile').classList.toggle('on', mode === 'mobile');
+}
+function togglePreviewPane() { $('be-main').classList.toggle('show-preview'); }
+const mqNarrow = matchMedia('(max-width: 900px)');
+function syncNarrow() { $('be-view-toggle').style.display = mqNarrow.matches ? '' : 'none'; }
+mqNarrow.addEventListener('change', syncNarrow); syncNarrow();
 
 function collectBlogFields() {
-  const sources = document.getElementById('be-sources').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const related = document.getElementById('be-related').value.split(',').map(s => s.trim()).filter(Boolean);
-  const tags = document.getElementById('be-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  const tags = $('be-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  const sources = blog.links.sources.map(s => ({ url: s.url.trim(), label: s.label.trim() })).filter(s => s.url);
+  const labels = {};
+  sources.forEach(s => { if (s.label) labels[s.url] = s.label; });
   return {
-    title: document.getElementById('be-title').value.trim() || 'Untitled post',
-    slug: document.getElementById('be-slug').value.trim(),
-    captured_on: document.getElementById('be-captured-on').value || null,
-    excerpt: document.getElementById('be-excerpt').value.trim() || null,
-    cover_image_url: document.getElementById('be-cover').value.trim() || null,
-    body_md: document.getElementById('be-body').value,
-    source_urls: sources,
-    related_project_ids: related,
+    title: $('be-title').value.trim(),
+    excerpt: $('be-excerpt').value.trim() || null,
+    body_md: $('be-body').value,
+    transcript_md: $('be-transcript').value.trim() || null,
+    slug: $('be-slug').value.trim(),
+    captured_on: $('be-captured-on').value || null,
     topic_tags: tags,
-    updated_at: new Date().toISOString(),
+    source_urls: sources.map(s => s.url),
+    source_labels: labels,
+    commentary_ids: blog.links.commentary_ids,
+    related_project_ids: blog.links.related_project_ids,
   };
 }
 
-async function saveBlogPost() {
-  if (!blogCurrentId) return;
-  const fields = collectBlogFields();
-  const { error } = await sb.from('published_posts').update(fields).eq('id', blogCurrentId);
-  if (error) { toast('Save failed: ' + error.message); return; }
-  toast('Draft saved');
+let gridTimer = null;
+function blogChanged() {
+  if (!blog) return;
+  if ($('pane-images').classList.contains('on')) { clearTimeout(gridTimer); gridTimer = setTimeout(renderMediaGrid, 400); }
+  blog.dirty = true;
+  const published = !!blog.row.published_at;
+  if (!published && !slugTouched && blog.id) {
+    // keep a draft's slug following its title until publish
+    const s = slugify($('be-title').value);
+    if (s) $('be-slug').value = s;
+  }
+  refreshEditorChrome();
+  renderRules();
+  schedulePreview();
+  if (published) {
+    setSave('pending', 'Edits not live yet');
+    return;
+  }
+  clearTimeout(blog.timer);
+  blog.timer = setTimeout(() => saveBlogNow(), BLOG_AUTOSAVE_MS);
+}
+
+function setSave(state, text) {
+  const el = $('be-save');
+  el.className = 'be-save ' + state;
+  el.textContent = text;
+}
+
+async function saveBlogNow({ force = false } = {}) {
+  if (!blog) return;
+  clearTimeout(blog.timer);
+  if (blog.row.published_at && !force) return;
+  if (blog.saving) { blog.queued = true; return; }
+  const f = collectBlogFields();
+
+  if (!blog.id && !isRealContent(f.title, f.body_md)) {
+    setSave('pending', 'Not saved yet · add a title or a couple of sentences');
+    return;
+  }
+  const snapshot = JSON.stringify(f);
+  if (blog.id && snapshot === blog.lastSaved) { blog.dirty = false; setSave('saved', `Saved · ${fmtTime(new Date())}`); refreshEditorChrome(); return; }
+
+  blog.saving = true;
+  setSave('saving', 'Saving…');
+  try {
+    const payload = { ...f, title: f.title || 'Untitled post', updated_at: new Date().toISOString() };
+    if (!blog.id) {
+      payload.slug = await uniqueSlug(slugTouched && f.slug ? f.slug : (slugify(f.title) || 'draft-' + Date.now().toString(36)));
+      const { data, error } = await sb.from('published_posts').insert(payload).select().single();
+      if (error) throw error;
+      blog.id = data.id; blog.row = data;
+      $('be-slug').value = data.slug;
+      loadBlogMedia();
+    } else {
+      if (!payload.slug) payload.slug = blog.row.slug;
+      let { data, error } = await sb.from('published_posts').update(payload).eq('id', blog.id).select().single();
+      if (error && error.code === '23505') {   // slug already used by another post
+        payload.slug = await uniqueSlug(payload.slug, blog.id);
+        ({ data, error } = await sb.from('published_posts').update(payload).eq('id', blog.id).select().single());
+      }
+      if (error) throw error;
+      blog.row = data;
+      if ($('be-slug').value !== data.slug) $('be-slug').value = data.slug;
+    }
+    blog.lastSaved = snapshot;
+    blog.dirty = false;
+    setSave('saved', `${force && blog.row.published_at ? 'Live post updated' : 'Saved'} · ${fmtTime(new Date())}`);
+  } catch (err) {
+    console.error('save failed', err);
+    setSave('error', 'Save failed · retrying');
+    clearTimeout(blog.timer);
+    blog.timer = setTimeout(() => saveBlogNow({ force }), 5000);
+  } finally {
+    blog.saving = false;
+    refreshEditorChrome();
+    if (blog.queued) { blog.queued = false; saveBlogNow({ force }); }
+  }
+}
+
+async function closeBlogEditor() {
+  if (!blog) return;
+  if (blog.row.published_at && blog.dirty && !confirm('Discard the edits you have not pushed to the live post?')) return;
+  if (!blog.row.published_at && blog.dirty) await saveBlogNow();
+  $('blog-editor').classList.remove('open');
+  document.body.style.overflow = '';
+  blog = null;
   loadBlogList();
 }
 
-async function publishBlogPost() {
-  if (!blogCurrentId) return;
-  await saveBlogPost();
-  const { error } = await sb.from('published_posts').update({ published_at: new Date().toISOString() }).eq('id', blogCurrentId);
-  if (error) { toast('Publish failed: ' + error.message); return; }
-  toast('Published');
-  openBlogEditor(blogCurrentId);
-  loadBlogList();
+window.addEventListener('beforeunload', (e) => {
+  if (blog && blog.dirty && (blog.row.published_at || isRealContent($('be-title').value, $('be-body').value))) { e.preventDefault(); e.returnValue = ''; }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && blog && !$('publish-check').classList.contains('open') && !/^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement?.tagName || '')) closeBlogEditor();
+  if ((e.metaKey || e.ctrlKey) && e.key === 's' && blog) { e.preventDefault(); saveBlogNow({ force: !!blog.row.published_at }); }
+});
+
+/* ── preview ── */
+let previewTimer = null;
+function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(sendPreview, 180); }
+function mediaMap() {
+  return Object.fromEntries(blogMedia.map(m => [m.id, { url: m.url, alt: m.alt || m.caption || '', placement: m.placement, kind: m.kind, caption: m.kind === 'image' ? m.caption : '' }]));
+}
+function sendPreview() {
+  if (!blog || !previewReady) return;
+  const f = collectBlogFields();
+  const post = { ...f, title: f.title || 'Untitled draft', published_at: blog.row.published_at, updated_at: blog.row.updated_at || new Date().toISOString(), created_at: blog.row.created_at };
+  $('be-preview').contentWindow.postMessage({ type: 'preview', post, ctx: { media: mediaMap(), voice: blogVoiceUrls, fromVoice: !!f.transcript_md } }, location.origin);
+}
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || !e.data) return;
+  if (e.data.type === 'preview-ready') { previewReady = true; sendPreview(); }
+});
+
+async function resolveVoiceTokens() {
+  const ids = Editorial.voiceIds($('be-body').value).filter(id => !blogVoiceUrls[id]);
+  if (!ids.length) return;
+  const { data } = await sb.from('inbox').select('id,voice_audio_path').in('id', ids);
+  const paths = (data || []).filter(r => r.voice_audio_path);
+  await presignVoicePaths(paths.map(r => r.voice_audio_path));
+  paths.forEach(r => { const u = window.__voiceUrlCache[r.voice_audio_path]; if (u) blogVoiceUrls[r.id] = u; });
+  sendPreview();
 }
 
-async function unpublishBlogPost() {
-  if (!blogCurrentId) return;
-  if (!confirm('Unpublish this post? It will go back to being a private draft.')) return;
-  const { error } = await sb.from('published_posts').update({ published_at: null }).eq('id', blogCurrentId);
-  if (error) { toast('Failed: ' + error.message); return; }
-  toast('Unpublished — back to draft');
-  openBlogEditor(blogCurrentId);
-  loadBlogList();
+/* ── voice notes ── */
+function toggleVoicePicker() {
+  const box = $('be-voice-box');
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = '';
+  loadVoicePicker('');
+}
+let voiceSearchTimer = null;
+function loadVoicePicker(q) {
+  clearTimeout(voiceSearchTimer);
+  voiceSearchTimer = setTimeout(async () => {
+    const list = $('be-voice-list');
+    list.innerHTML = '<div class="spinner" style="margin:0.5rem auto;width:18px;height:18px"></div>';
+    let query = sb.from('inbox').select('id,full_text,voice_audio_path,created_at').not('voice_audio_path', 'is', null).order('created_at', { ascending: false }).limit(20);
+    if (q && q.trim().length > 1) query = query.ilike('full_text', `%${q.trim()}%`);
+    const { data, error } = await query;
+    if (error) { list.innerHTML = `<p class="be-err">${escapeHtml(error.message)}</p>`; return; }
+    await presignVoicePaths((data || []).map(r => r.voice_audio_path));
+    const body = $('be-body').value;
+    list.innerHTML = (data || []).map(r => {
+      const url = window.__voiceUrlCache[r.voice_audio_path];
+      const inPost = body.includes(`[[voice:${r.id}]]`);
+      return `<div class="bf-item"><div class="bf-item-body">
+          <div class="sm-item-text">${escapeHtml((r.full_text || '(no transcript)').slice(0, 160))}${(r.full_text || '').length > 160 ? '…' : ''}</div>
+          ${url ? `<div class="sm-item-audio"><audio controls preload="none" src="${url}"></audio></div>` : ''}
+          <div class="card-meta">${fmtDate(r.created_at)}${inPost ? ' · in this post' : ''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="insertVoiceNote('${r.id}')">${inPost ? 'Add again' : 'Insert'}</button></div>`;
+    }).join('') || '<p class="card-meta">No archived voice notes match.</p>';
+  }, 250);
+}
+async function insertVoiceNote(id) {
+  insertAtCursor(`\n\n[[voice:${id}]]\n\n`);
+  if (!$('be-transcript').value.trim()) {
+    const { data } = await sb.from('inbox').select('full_text').eq('id', id).maybeSingle();
+    if (data?.full_text) { $('be-transcript').value = data.full_text; blogChanged(); }
+  }
+  resolveVoiceTokens();
+  loadVoicePicker($('be-voice-search').value);
+  toast('Voice note placed');
 }
 
-async function deleteBlogPost() {
-  if (!blogCurrentId) return;
-  if (!confirm('Delete this post permanently? This also removes its uploaded images. This cannot be undone.')) return;
-  const { error } = await sb.from('published_posts').delete().eq('id', blogCurrentId);
-  if (error) { toast('Delete failed: ' + error.message); return; }
-  toast('Deleted');
-  closeBlogEditor();
-  loadBlogList();
+/* ── write helpers ── */
+function insertAtCursor(text) {
+  const ta = $('be-body');
+  const s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? s;
+  ta.value = ta.value.slice(0, s) + text + ta.value.slice(e);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = s + text.length;
+  blogChanged();
+}
+function prependLeadNote() {
+  const ta = $('be-body');
+  if (/^\s*>(?!>)/.test(ta.value)) { toast('This post already opens with a note'); return; }
+  ta.value = '> Your opening line, in your words.\n\n' + ta.value.replace(/^\s+/, '');
+  blogChanged();
+  ta.focus(); ta.setSelectionRange(2, 35);
 }
 
-async function loadBlogImages(postId) {
-  const strip = document.getElementById('be-image-strip');
-  strip.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
-  const { data, error } = await sb.functions.invoke('admin-post-media', { body: { action: 'list', post_id: postId } });
-  if (error) { strip.innerHTML = ''; toast('Failed to load images: ' + error.message); return; }
-  blogImageRows = data?.rows || [];
-  renderBlogImageStrip();
+async function toggleSourceMaterial() {
+  const box = $('be-sourcemat-box');
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const wrap = $('be-sourcemat');
+  wrap.innerHTML = '<div class="loading"><div class="spinner" style="margin:0.5rem auto"></div></div>';
+  let data;
+  try { data = await fetchFlagged(); } catch (err) { wrap.innerHTML = `<p class="be-err">${escapeHtml(err.message)}</p>`; return; }
+  wrap.innerHTML = data.length
+    ? data.map(item => flaggedItemHtml(item, `<button class="btn btn-ghost btn-sm" onclick="insertSourceMaterial('${item.id}')">Insert</button>`)).join('')
+    : '<p class="card-meta">Nothing flagged yet.</p>';
 }
 
-function renderBlogImageStrip() {
-  const strip = document.getElementById('be-image-strip');
-  if (!blogImageRows.length) { strip.innerHTML = '<p class="card-meta">No images added yet.</p>'; return; }
-  strip.innerHTML = '';
-  blogImageRows.forEach(row => {
-    const div = document.createElement('div');
-    div.className = 'blog-image-thumb';
-    div.innerHTML = `
-      <img src="${row.url}" alt="${escapeHtml(row.caption || '')}" loading="lazy">
-      <button class="bi-remove" title="Remove" onclick="deleteBlogImage('${row.id}')">×</button>
-      <button class="bi-copy" title="Copy markdown image link" onclick="copyImageMarkdown('${row.url.replace(/'/g, "\\'")}')">copy md</button>
-    `;
-    strip.appendChild(div);
+function insertSourceMaterial(id) {
+  const item = (window.__blogFlagged || {})[id];
+  if (!item) return;
+  const text = (item.take ? item.take.body : item.full_text || '').trim();
+  insertAtCursor(`\n\n${text}\n` + (item.voice_audio_path ? `\n[[voice:${id}]]\n` : ''));
+  if (item.url && !blog.links.sources.some(s => s.url === item.url)) blog.links.sources.push({ url: item.url, label: '' });
+  if (item.take && !blog.links.commentary_ids.includes(item.take.id)) blog.links.commentary_ids.push(item.take.id);
+  const tagsEl = $('be-tags');
+  const tags = tagsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+  (item.topic_tags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); });
+  tagsEl.value = tags.join(', ');
+  renderLinks();
+  resolveVoiceTokens();
+  blogChanged();
+  toast('Inserted, with its link and take attached');
+}
+
+function renderRules() {
+  if (!blog) return;
+  const title = $('be-title').value, deck = $('be-excerpt').value, body = $('be-body').value;
+  const dashes = [title, deck, body].reduce((n, s) => n + ((s.match(/[—–]/g) || []).length), 0);
+  const doc = Editorial.parse(body);
+  const sections = doc.sections.filter(s => s.heading).length;
+  const pulls = doc.sections.reduce((n, s) => n + s.blocks.filter(b => b.type === 'pull').length, 0);
+  const words = Editorial.wordCount(body);
+  const chips = [
+    `<span class="gchip plain">${words} words · ~${Math.max(1, Math.round(words / 200))} min</span>`,
+    dashes ? `<span class="gchip wait">${dashes} em/en dash${dashes > 1 ? 'es' : ''}</span><button class="btn btn-ghost btn-sm" onclick="fixDashes()">Fix</button>` : '<span class="gchip ok">No em dashes</span>',
+    `<span class="gchip ${sections ? 'ok' : 'off'}">${sections} section${sections === 1 ? '' : 's'}</span>`,
+    pulls > 1 ? `<span class="gchip wait">${pulls} pull quotes (use one)</span>` : '',
+  ];
+  $('be-rules').innerHTML = chips.join('');
+  document.querySelector('.be-tabs [data-pane="write"]').innerHTML = 'Write' + (dashes ? '<span class="dot" title="Em dashes to fix"></span>' : '');
+}
+function fixDashes() {
+  let n = 0;
+  ['be-title', 'be-excerpt', 'be-body'].forEach(id => { const r = stripDashes($(id).value); n += r.count; $(id).value = r.text; });
+  blogChanged();
+  toast(`Replaced ${n} dash${n === 1 ? '' : 'es'}`);
+}
+
+/* ── shape ── */
+function copyBodyToTranscript() {
+  $('be-transcript').value = $('be-body').value.replace(/^\s*>\s?/gm, '').trim();
+  blogChanged();
+}
+
+async function runShape() {
+  let transcript = $('be-transcript').value.trim();
+  if (!transcript) {
+    transcript = $('be-body').value.replace(/\[\[[a-z]+:[^\]]+\]\]/g, '').replace(/^\s*>\s?/gm, '').trim();
+    if (transcript.length < 20) { toast('Paste the transcript or write a few sentences first'); return; }
+    $('be-transcript').value = transcript;   // keep the original before anything is rewritten
+    blogChanged();
+  }
+  const btn = $('be-shape-btn');
+  btn.disabled = true; btn.textContent = 'Shaping…';
+  $('be-shape-note').textContent = 'about 10 seconds';
+  try {
+    const { data, error } = await sb.functions.invoke('blog-studio', { body: { action: 'shape', transcript, title: $('be-title').value } });
+    if (error) throw error;
+    if (data.error) throw new Error(data.error);
+    window.__shaped = data;
+    const cmp = compareToTranscript(transcript, data.body_md);
+    $('be-shape-result').innerHTML = `
+      <div class="be-card" style="background:var(--bg)">
+        <div class="card-meta" style="margin:0">Title</div>
+        <div style="font-family:Georgia,serif;font-size:1.15rem;margin:0.2rem 0 0.5rem">${Editorial.titleHtml(data.title_md)}</div>
+        <div class="card-meta" style="margin:0">Deck</div>
+        <div style="font-size:0.85rem;margin:0.2rem 0 0.4rem;color:#c8c8c8">${escapeHtml(data.deck || '')}</div>
+        ${(data.warnings || []).map(w => `<div class="be-warn">⚠ ${escapeHtml(w)}</div>`).join('')}
+        ${cmp.dropped.length ? `<div class="be-warn">⚠ ${cmp.dropped.length} transcript sentence${cmp.dropped.length > 1 ? 's' : ''} did not make it in (see Compare).</div>` : `<div class="be-ok">✓ Every sentence of the transcript is in the essay.</div>`}
+        <div class="be-shaped-preview">${escapeHtml(data.body_md)}</div>
+        <div class="be-row">
+          <button class="btn btn-primary btn-sm" onclick="applyShape()">Apply to draft</button>
+          <button class="btn btn-ghost btn-sm" onclick="previewShape()">Preview first</button>
+          <button class="btn btn-ghost btn-sm" onclick="$('be-shape-result').innerHTML='';sendPreview()">Discard</button>
+        </div>
+      </div>`;
+  } catch (err) {
+    $('be-shape-result').innerHTML = `<p class="be-err">Shaping failed: ${escapeHtml(err.message || String(err))}</p>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '✦ Shape with Gemini'; $('be-shape-note').textContent = '';
+  }
+}
+function previewShape() {
+  const d = window.__shaped; if (!d || !previewReady) return;
+  const f = collectBlogFields();
+  const post = { ...f, title: d.title_md, excerpt: d.deck, body_md: keepTokens(d.body_md), published_at: null, updated_at: new Date().toISOString() };
+  $('be-preview').contentWindow.postMessage({ type: 'preview', post, ctx: { media: mediaMap(), voice: blogVoiceUrls, fromVoice: true } }, location.origin);
+  toast('Previewing the shaped version. Apply to keep it.');
+}
+// Cutout/voice tokens already in the body survive a reshape. Each one goes
+// back beside the same numbered section it sat beside before (or to the top
+// if it came before any section), rather than piling up at the end.
+function keepTokens(newBody) {
+  const oldLines = $('be-body').value.split('\n');
+  const moves = [];
+  let sectionIdx = -1;
+  oldLines.forEach(l => {
+    if (isSectionHeading(l)) sectionIdx++;
+    const t = l.trim();
+    if (/^\[\[(?:cutout|image|voice):[^\]]+\]\]$/.test(t) && !newBody.includes(t)) moves.push({ token: t, section: sectionIdx });
   });
+  let body = newBody;
+  moves.forEach(m => { body = placeTokenInBody(body, m.token, m.section); });
+  return body;
+}
+function applyShape() {
+  const d = window.__shaped; if (!d) return;
+  shapeUndo = { title: $('be-title').value, excerpt: $('be-excerpt').value, body: $('be-body').value };
+  $('be-title').value = d.title_md || $('be-title').value;
+  $('be-excerpt').value = d.deck || $('be-excerpt').value;
+  $('be-body').value = keepTokens(d.body_md);
+  if (!$('be-tags').value.trim() && (d.filed_under || []).length) $('be-tags').value = d.filed_under.join(', ');
+  blogChanged();
+  $('be-shape-result').innerHTML = `<p class="be-ok">✓ Applied. <button class="btn btn-ghost btn-sm" onclick="undoShape()">Undo</button></p>`;
+  showEditorPane('write');
+  renderCompare();
+}
+function undoShape() {
+  if (!shapeUndo) return;
+  $('be-title').value = shapeUndo.title; $('be-excerpt').value = shapeUndo.excerpt; $('be-body').value = shapeUndo.body;
+  shapeUndo = null;
+  blogChanged();
+  $('be-shape-result').innerHTML = '<p class="card-meta">Reverted.</p>';
+}
+function renderCompare() {
+  const transcript = $('be-transcript').value.trim();
+  const box = $('be-compare');
+  if (!transcript) { box.innerHTML = '<p class="card-meta">No transcript saved with this draft.</p>'; return; }
+  const c = compareToTranscript(transcript, $('be-body').value);
+  box.innerHTML = `
+    ${c.dropped.length ? `<div class="be-warn">${c.dropped.length} of ${c.sentences} transcript sentences are missing or heavily changed:</div>${c.dropped.map(s => `<div class="be-diff-drop">${escapeHtml(s)}</div>`).join('')}` : `<div class="be-ok">✓ All ${c.sentences} transcript sentences are in the body.</div>`}
+    ${c.added.length ? `<div class="be-warn" style="margin-top:0.7rem">Words in the body you did not say (headings excluded):</div><div>${c.added.slice(0, 60).map(w => `<span class="be-added">${escapeHtml(w)}</span>`).join('')}</div>` : '<div class="be-ok">✓ No new words outside the headings.</div>'}`;
 }
 
-async function uploadBlogImage(event) {
-  const file = event.target.files[0];
-  event.target.value = '';
-  if (!file || !blogCurrentId) return;
-  toast('Uploading…');
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(',')[1];
-    const { data, error } = await sb.functions.invoke('admin-post-media', {
-      body: { action: 'upload', post_id: blogCurrentId, filename: file.name, contentType: file.type, contentBase64: base64 },
-    });
-    if (error) { toast('Upload failed: ' + error.message); return; }
-    toast('Image added');
-    await loadBlogImages(blogCurrentId);
-  };
-  reader.onerror = () => toast('Failed to read file');
-  reader.readAsDataURL(file);
+/* ── images ── */
+async function loadBlogMedia() {
+  if (!blog || !blog.id) return;
+  const { data, error } = await sb.functions.invoke('admin-post-media', { body: { action: 'list', post_id: blog.id } });
+  if (error) { toast('Could not load images: ' + error.message); return; }
+  blogMedia = data?.rows || [];
+  renderMediaGrid();
+  sendPreview();
 }
-
-async function deleteBlogImage(id) {
-  if (!confirm('Remove this image?')) return;
+function renderMediaGrid() {
+  const grid = $('be-media-grid');
+  if (!blogMedia.length) { grid.innerHTML = '<p class="card-meta" style="grid-column:1/-1">None yet.</p>'; return; }
+  const body = $('be-body').value;
+  const sections = Editorial.parse(body).sections.filter(sec => sec.heading);
+  grid.innerHTML = blogMedia.map(m => {
+    const token = `[[${m.kind === 'cutout' ? 'cutout' : 'image'}:${m.id}]]`;
+    const inPost = body.includes(token);
+    const where = tokenSection(body, token);
+    const sectionOpts = [`<option value="-1" ${where === -1 ? 'selected' : ''}>Top of the post</option>`]
+      .concat(sections.map((sec, k) => `<option value="${k}" ${where === k ? 'selected' : ''}>Beside ${String(k + 1).padStart(2, '0')} ${escapeHtml(sec.heading.slice(0, 22))}</option>`));
+    return `
+    <div class="cut-tile">
+      <div class="cut-img check"><img src="${escapeHtml(m.url)}" alt=""></div>
+      <div class="cut-meta">
+        <div class="card-meta">${m.kind === 'cutout' ? 'Cutout' : 'Photo'} · ${inPost ? 'in post' : 'not placed'}</div>
+        <select onchange="moveMedia('${token}', +this.value)" aria-label="Position in the post">
+          ${inPost ? '' : '<option value="" selected disabled>Place beside…</option>'}${sectionOpts.join('')}
+        </select>
+        <input type="text" value="${escapeHtml(m.alt || m.caption || '')}" placeholder="Alt text (required)" onchange="updateMedia('${m.id}', { alt: this.value })">
+        ${m.kind === 'cutout' ? `<select onchange="updateMedia('${m.id}', { placement: this.value })" aria-label="Placement">
+          ${['lead', 'right', 'left'].map(p => `<option value="${p}" ${m.placement === p ? 'selected' : ''}>${p === 'lead' ? 'Side: large, left' : p === 'right' ? 'Side: right margin' : 'Side: left margin'}</option>`).join('')}
+        </select>` : ''}
+        <div style="display:flex;gap:0.3rem">
+          ${inPost ? `<button class="btn btn-ghost btn-sm" onclick="removeToken('${token}')">Unplace</button>` : `<button class="btn btn-ghost btn-sm" onclick="insertAtCursor('\\n\\n${token}\\n\\n');renderMediaGrid()">Place at cursor</button>`}
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteMedia('${m.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function updateMedia(id, patch) {
+  const { data, error } = await sb.functions.invoke('admin-post-media', { body: { action: 'update', id, ...patch } });
+  if (error || data?.error) { toast('Update failed: ' + (error?.message || data.error)); return; }
+  const m = blogMedia.find(x => x.id === id); Object.assign(m, patch);
+  sendPreview();
+}
+function removeToken(token) {
+  const ta = $('be-body');
+  ta.value = ta.value.split('\n').filter(l => l.trim() !== token).join('\n').replace(/\n{3,}/g, '\n\n');
+  blogChanged(); renderMediaGrid();
+}
+async function deleteMedia(id) {
+  if (!confirm('Delete this image from storage? It will also be removed from the post.')) return;
   const { error } = await sb.functions.invoke('admin-post-media', { body: { action: 'delete', id } });
-  if (error) { toast('Failed: ' + error.message); return; }
-  await loadBlogImages(blogCurrentId);
+  if (error) { toast('Delete failed: ' + error.message); return; }
+  const m = blogMedia.find(x => x.id === id);
+  if (m) removeToken(`[[${m.kind === 'cutout' ? 'cutout' : 'image'}:${id}]]`);
+  blogMedia = blogMedia.filter(x => x.id !== id);
+  renderMediaGrid(); sendPreview();
+}
+function blobToBase64(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+}
+async function uploadMedia({ blob, filename, kind, alt, placement, inspired_by, prompt }) {
+  const { data, error } = await sb.functions.invoke('admin-post-media', {
+    body: { action: 'upload', post_id: blog.id, filename, contentType: blob.type || 'image/png', contentBase64: await blobToBase64(blob), kind, alt, placement, inspired_by, prompt },
+  });
+  if (error || data?.error) throw new Error(error?.message || data.error);
+  blogMedia.push({ ...data.row, url: data.url });
+  return data.row;
+}
+async function uploadOwnImage(ev) {
+  const file = ev.target.files[0]; ev.target.value = '';
+  if (!file || !blog?.id) return;
+  const kind = $('be-upload-kind').value;
+  toast('Uploading…');
+  try {
+    const row = await uploadMedia({ blob: file, filename: file.name, kind, alt: '', placement: kind === 'cutout' ? (blogMedia.some(m => m.placement === 'lead') ? 'right' : 'lead') : null });
+    insertAtCursor(`\n\n[[${kind}:${row.id}]]\n\n`);
+    renderMediaGrid();
+    toast('Added. Write its alt text.');
+  } catch (err) { toast('Upload failed: ' + err.message); }
 }
 
-function copyImageMarkdown(url) {
-  const md = `![](${url})`;
-  navigator.clipboard?.writeText(md);
-  toast('Markdown image link copied — note: this is a signed URL that expires in ~1hr, meant for previewing while drafting.');
+const isSectionHeading = (l) => /^\s*##\s/.test(l) && !/^\s*###/.test(l);
+
+// Put a token beside section n (0-based): straight after that section's
+// heading, so the cutout hangs next to the start of its text. n = -1 means
+// the top of the post (after the opening note). Removes any existing copy
+// of the token first, so this also works as "move".
+function placeTokenInBody(body, token, n) {
+  let lines = body.split('\n').filter(l => l.trim() !== token);
+  const heads = lines.map((l, i) => (isSectionHeading(l) ? i : -1)).filter(i => i >= 0);
+  let at;
+  if (!heads.length || n < 0) {
+    // after the opening note if there is one, otherwise at the very top
+    at = 0;
+    while (at < lines.length && (/^\s*>(?!>)/.test(lines[at]) || (at > 0 && !lines[at].trim() && /^\s*>/.test(lines[at - 1])))) at++;
+    lines.splice(at, 0, '', token, '');
+  } else {
+    at = heads[Math.min(n, heads.length - 1)];
+    lines.splice(at + 1, 0, '', token, '');
+  }
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '');
+}
+function insertTokenAtSection(token, n) {
+  const ta = $('be-body');
+  const hasHeads = ta.value.split('\n').some(isSectionHeading);
+  if (!hasHeads || !Number.isInteger(n)) { insertAtCursor(`\n\n${token}\n\n`); return; }
+  ta.value = placeTokenInBody(ta.value, token, n);
+  blogChanged();
+}
+// Which section a token currently sits beside: -1 = top, null = not in the post.
+function tokenSection(body, token) {
+  let idx = -1, found = null;
+  body.split('\n').forEach(l => { if (isSectionHeading(l)) idx++; if (l.trim() === token) found = idx; });
+  return found;
+}
+function moveMedia(token, n) {
+  const ta = $('be-body');
+  ta.value = placeTokenInBody(ta.value, token, n);
+  blogChanged();
+  renderMediaGrid();
+  toast(n < 0 ? 'Moved to the top of the post' : `Moved beside section ${String(n + 1).padStart(2, '0')}`);
+  // scroll the preview to it once it has re-rendered
+  setTimeout(() => {
+    const id = token.slice(token.indexOf(':') + 1, -2);
+    const img = $('be-preview').contentDocument?.querySelector(`img[src*="${blogMedia.find(m => m.id === id)?.storage_path?.split('/').pop() || '__none__'}"]`);
+    img?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 400);
+}
+
+async function runCutoutIdeas() {
+  const btn = $('be-ideas-btn');
+  btn.disabled = true; btn.textContent = 'Reading the post…';
+  try {
+    const { data, error } = await sb.functions.invoke('blog-studio', { body: { action: 'cutout_ideas', title: $('be-title').value, body_md: $('be-body').value } });
+    if (error) throw error;
+    if (data.error) throw new Error(data.error);
+    blogIdeas = (data.ideas || []).map(i => ({ ...i, result: null }));
+    if (!blogIdeas.length) $('be-ideas').innerHTML = `<p class="card-meta">${escapeHtml(data.note || 'Gemini suggests no illustration for this one. That is allowed.')}</p>`;
+    else renderIdeas();
+  } catch (err) { $('be-ideas').innerHTML = `<p class="be-err">${escapeHtml(err.message || String(err))}</p>`; }
+  finally { btn.disabled = false; btn.textContent = '✦ Suggest cutouts'; }
+}
+function addBlankIdea() {
+  blogIdeas.push({ idea: '', passage: '', placement: blogIdeas.length ? 'right' : 'lead', after_section: 0, alt: '', result: null });
+  renderIdeas();
+}
+function renderIdeas() {
+  const sections = Editorial.parse($('be-body').value).sections.filter(s => s.heading);
+  $('be-ideas').innerHTML = blogIdeas.map((i, n) => `
+    <div class="be-card" style="background:var(--bg)">
+      <div class="card-meta" style="margin:0 0 0.3rem">Idea ${n + 1}</div>
+      <textarea style="min-height:70px;font-size:0.8rem" placeholder="One concrete object or scene from this post" oninput="blogIdeas[${n}].idea=this.value">${escapeHtml(i.idea)}</textarea>
+      ${i.passage ? `<div class="be-hint">Illustrates: "${escapeHtml(i.passage)}"</div>` : ''}
+      <div class="be-row">
+        <select onchange="blogIdeas[${n}].placement=this.value" aria-label="Placement">
+          ${['lead', 'right', 'left'].map(p => `<option value="${p}" ${i.placement === p ? 'selected' : ''}>${p === 'lead' ? 'Lead' : p === 'right' ? 'Right margin' : 'Left margin'}</option>`).join('')}
+        </select>
+        <select onchange="blogIdeas[${n}].after_section=+this.value" aria-label="Beside section">
+          ${sections.length ? sections.map((s, k) => `<option value="${k}" ${i.after_section === k ? 'selected' : ''}>Beside ${String(k + 1).padStart(2, '0')} ${escapeHtml(s.heading.slice(0, 26))}</option>`).join('') : '<option value="0">At cursor</option>'}
+        </select>
+      </div>
+      <input type="text" style="margin-top:0.5rem;font-size:0.8rem" placeholder="Alt text" value="${escapeHtml(i.alt)}" oninput="blogIdeas[${n}].alt=this.value">
+      <div class="be-row"><button class="btn btn-primary btn-sm" id="gen-btn-${n}" onclick="generateCutout(${n})">${i.result ? 'Try again' : '✦ Generate'}</button><span class="card-meta" id="gen-note-${n}"></span></div>
+      <div id="gen-out-${n}">${i.result ? genResultHtml(n) : ''}</div>
+    </div>`).join('');
+}
+function genResultHtml(n) {
+  const r = blogIdeas[n].result;
+  const cov = r.keyed.coverage;
+  return `
+    <div class="gen-compare">
+      <div class="cut-img" title="As generated"><img src="${r.raw}" alt=""></div>
+      <div class="cut-img check" title="Background removed"><img src="${r.keyed.dataUrl}" alt=""></div>
+    </div>
+    ${cov > 0.85 ? '<div class="be-warn">⚠ The background did not come away cleanly. Try again.</div>' : ''}
+    ${cov < 0.02 ? '<div class="be-warn">⚠ Almost nothing is left after removing the background. Try again.</div>' : ''}
+    <div class="card-meta">${escapeHtml(r.model)} · ${r.keyed.width}×${r.keyed.height}</div>
+    <div class="be-row"><button class="btn btn-primary btn-sm" onclick="useCutout(${n})">Use this cutout</button></div>`;
+}
+async function styleRefs() {
+  if (styleRefsCache) return styleRefsCache;
+  const out = [];
+  for (const name of STYLE_REF_FILES) {
+    try {
+      const res = await fetch(`assets/blog/style-refs/${name}.png`);
+      if (res.ok) out.push({ mime: 'image/png', data: await blobToBase64(await res.blob()) });
+    } catch (err) { console.warn('style ref missing', name, err); }
+  }
+  styleRefsCache = out;
+  return out;
+}
+async function generateCutout(n) {
+  const i = blogIdeas[n];
+  if (!i.idea.trim()) { toast('Describe the image first'); return; }
+  const btn = $('gen-btn-' + n), note = $('gen-note-' + n);
+  btn.disabled = true; btn.textContent = 'Generating…'; note.textContent = 'about 10–20 seconds';
+  try {
+    const { data, error } = await sb.functions.invoke('blog-studio', {
+      body: { action: 'generate_cutout', title: Editorial.plainTitle($('be-title').value), passage: i.passage || i.idea, idea: i.idea, placement: i.placement, style_refs: await styleRefs() },
+    });
+    if (error) throw error;
+    if (data.error) throw new Error(data.error + (data.details ? ': ' + data.details.join(' | ') : ''));
+    const raw = `data:${data.mime};base64,${data.image_base64}`;
+    const keyed = await chromaKey(raw);
+    i.result = { raw, keyed, model: data.model, prompt: data.prompt };
+    $('gen-out-' + n).innerHTML = genResultHtml(n);
+    btn.textContent = 'Try again';
+  } catch (err) {
+    $('gen-out-' + n).innerHTML = `<p class="be-err">${escapeHtml(err.message || String(err))}</p>`;
+    btn.textContent = '✦ Generate';
+  } finally { btn.disabled = false; note.textContent = ''; }
+}
+async function useCutout(n) {
+  const i = blogIdeas[n];
+  if (!i.result) return;
+  if (!i.alt.trim()) { toast('Add alt text first. It is read aloud to people who cannot see the image.'); return; }
+  toast('Uploading cutout…');
+  try {
+    const row = await uploadMedia({ blob: i.result.keyed.blob, filename: 'cutout.png', kind: 'cutout', alt: i.alt.trim(), placement: i.placement, inspired_by: i.passage || null, prompt: i.result.prompt });
+    insertTokenAtSection(`[[cutout:${row.id}]]`, i.after_section);
+    blogIdeas.splice(n, 1);
+    renderIdeas(); renderMediaGrid(); sendPreview();
+    toast('Cutout placed');
+  } catch (err) { toast('Upload failed: ' + err.message); }
+}
+
+/* ── links & graph ── */
+function renderLinks() {
+  if (!blog) return;
+  const takes = blog.links.commentary_ids, projects = blog.links.related_project_ids;
+  $('be-takes').innerHTML = takes.length
+    ? takes.map(id => `<span class="link-chip"><span>${escapeHtml(labelCache.takes[id] || id.slice(0, 8) + '…')}</span><button onclick="unlink('commentary_ids','${id}')" aria-label="Unlink">×</button></span>`).join('')
+    : '<p class="card-meta" style="margin:0.2rem 0 0">No take linked.</p>';
+  $('be-projects').innerHTML = projects.length
+    ? projects.map(id => `<span class="link-chip"><span>${escapeHtml(labelCache.projects[id] || id)}</span><button onclick="unlink('related_project_ids','${escapeHtml(id)}')" aria-label="Unlink">×</button></span>`).join('')
+    : '<p class="card-meta" style="margin:0.2rem 0 0">No project linked.</p>';
+  $('be-sources').innerHTML = blog.links.sources.length
+    ? blog.links.sources.map((s, k) => `
+      <div class="src-row">
+        <input type="url" value="${escapeHtml(s.url)}" placeholder="https://…" oninput="blog.links.sources[${k}].url=this.value;blogChanged()">
+        <input type="text" class="src-label" value="${escapeHtml(s.label)}" placeholder="Title shown on the post, e.g. The clip that sparked it" oninput="blog.links.sources[${k}].label=this.value;blogChanged()">
+        <button class="btn btn-ghost btn-sm" onclick="blog.links.sources.splice(${k},1);renderLinks();blogChanged()" aria-label="Remove source">×</button>
+      </div>`).join('')
+    : '<p class="card-meta" style="margin:0.2rem 0 0">No sources.</p>';
+  fillLinkLabels();
+}
+async function fillLinkLabels() {
+  const needTakes = blog.links.commentary_ids.filter(id => !labelCache.takes[id]);
+  const needProj = blog.links.related_project_ids.filter(id => !labelCache.projects[id]);
+  if (!needTakes.length && !needProj.length) return;
+  if (needTakes.length) {
+    const { data } = await sb.from('commentary').select('id,body').in('id', needTakes);
+    (data || []).forEach(r => { labelCache.takes[r.id] = (r.body || '').slice(0, 60); });
+  }
+  if (needProj.length) {
+    const { data } = await sb.from('node').select('source_id,title').in('source_id', needProj).in('kind', ['project', 'venture', 'repo']);
+    (data || []).forEach(r => { labelCache.projects[r.source_id] = r.title; });
+  }
+  if (blog) renderLinks();
+}
+function linkTo(field, id, label) {
+  if (!blog.links[field].includes(id)) blog.links[field].push(id);
+  if (label) labelCache[field === 'commentary_ids' ? 'takes' : 'projects'][id] = label;
+  renderLinks(); blogChanged();
+}
+function unlink(field, id) { blog.links[field] = blog.links[field].filter(x => x !== id); renderLinks(); blogChanged(); }
+function addSourceRow(url = '', label = '') {
+  if (url && blog.links.sources.some(s => s.url === url)) { toast('Already a source'); return; }
+  blog.links.sources.push({ url, label }); renderLinks(); if (url) blogChanged();
+}
+let searchTimer = null;
+function searchTakes(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const box = $('be-take-results');
+    if (q.trim().length < 2) { box.innerHTML = ''; return; }
+    const { data } = await sb.from('commentary').select('id,body,created_at').ilike('body', `%${q.trim()}%`).order('created_at', { ascending: false }).limit(6);
+    box.innerHTML = (data || []).map(r => `<div class="sug-row"><span class="txt" title="${escapeHtml(r.body)}">${escapeHtml(r.body)}</span><button class="btn btn-ghost btn-sm" onclick='linkTo("commentary_ids", "${r.id}", ${JSON.stringify((r.body || '').slice(0, 60)).replace(/'/g, '&#39;')})'>Link</button></div>`).join('') || '<p class="card-meta">No takes match.</p>';
+  }, 250);
+}
+function searchProjects(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const box = $('be-project-results');
+    if (q.trim().length < 2) { box.innerHTML = ''; return; }
+    const { data } = await sb.from('node').select('source_id,title,kind').in('kind', ['project', 'venture', 'repo']).ilike('title', `%${q.trim()}%`).limit(8);
+    box.innerHTML = (data || []).map(r => `<div class="sug-row"><span class="sim">${escapeHtml(r.kind)}</span><span class="txt">${escapeHtml(r.title)}</span><button class="btn btn-ghost btn-sm" onclick='linkTo("related_project_ids", ${JSON.stringify(r.source_id)}, ${JSON.stringify(r.title).replace(/'/g, '&#39;')})'>Link</button></div>`).join('') || '<p class="card-meta">No projects match.</p>';
+  }, 250);
+}
+
+async function renderGraph() {
+  const box = $('be-graph');
+  if (!blog) return;
+  if (!blog.id) { box.innerHTML = '<p class="card-meta" style="margin:0">Not saved yet, so nothing to graph.</p>'; return; }
+  box.innerHTML = '<div class="spinner" style="margin:0.5rem auto;width:18px;height:18px"></div>';
+  const { data: node } = await sb.from('node').select('id,kind,tagged_at,tagged_model,embedded_at').eq('source_table', 'published_posts').eq('source_id', blog.id).maybeSingle();
+  if (!node) {
+    box.innerHTML = `<div class="gchip off">Not in the graph yet</div><p class="be-hint">sync_posts.py adds drafts with real content on the next weekly run (Mondays 06:00 UTC), then tag_posts.py assigns doors, domains and concepts. Nothing to do here.</p>`;
+    return;
+  }
+  const { data: emb } = await sb.from('node').select('id').eq('id', node.id).not('embedding', 'is', null).maybeSingle();
+  const g = graphState(blog.row, node);
+  const [doors, domains, concepts, tags] = await Promise.all([
+    facetLabels('node_door', 'door_id', 'door', node.id),
+    facetLabels('node_domain', 'domain_id', 'domain', node.id),
+    facetLabels('node_concept', 'concept_id', 'concept', node.id),
+    facetLabels('node_tag', 'tag_id', 'tag', node.id),
+  ]);
+  const chips = (arr) => arr.length ? `<div class="facet-chips">${arr.map(l => `<span class="sm-tag">${escapeHtml(l)}</span>`).join('')}</div>` : '<span class="card-meta">none</span>';
+  box.innerHTML = `
+    <div class="be-row" style="margin-top:0"><span class="gchip ${g.cls}">${escapeHtml(g.label)}</span><span class="gchip ${emb ? 'ok' : 'wait'}">${emb ? 'Embedded' : 'Not embedded'}</span><span class="card-meta" style="margin:0">node ${node.id} · ${escapeHtml(node.kind)}</span></div>
+    <p class="be-hint">${escapeHtml(g.detail)}</p>
+    <div class="facet-label" style="margin-top:0.7rem">Doors</div>${chips(doors)}
+    <div class="facet-label" style="margin-top:0.6rem">Domains</div>${chips(domains)}
+    <div class="facet-label" style="margin-top:0.6rem">Concepts</div>${chips(concepts)}
+    <div class="facet-label" style="margin-top:0.6rem">Tags</div>${chips(tags)}`;
+}
+async function facetLabels(joinTable, fk, table, nodeId) {
+  const { data: links } = await sb.from(joinTable).select(fk).eq('node_id', nodeId);
+  const ids = (links || []).map(r => r[fk]);
+  if (!ids.length) return [];
+  const { data } = await sb.from(table).select('id,label').in('id', ids);
+  return (data || []).map(r => r.label).sort();
 }
 
 async function runLinkCheck() {
-  if (!blogCurrentId) return;
-  await saveBlogPost();
-  const box = document.getElementById('be-linkcheck');
-  box.style.display = 'block';
-  box.innerHTML = '<div class="loading" style="margin:0.5rem 0"><div class="spinner" style="margin:0.5rem auto"></div></div>';
-  const { data, error } = await sb.functions.invoke('blog-link-check', { body: { post_id: blogCurrentId } });
-  if (error) { box.innerHTML = `<p class="empty">Check failed: ${escapeHtml(error.message)}</p>`; return; }
-  renderLinkCheckResults(data);
+  if (!blog) return;
+  if (!blog.id) { toast('Write a little more first. It checks the saved draft.'); return; }
+  if (!blog.row.published_at) await saveBlogNow();
+  const btn = $('be-lc-btn'), box = $('be-linkcheck');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  box.innerHTML = '';
+  try {
+    const { data, error } = await sb.functions.invoke('blog-link-check', { body: { post_id: blog.id } });
+    if (error) throw error;
+    if (data.error) throw new Error(data.error);
+    renderLinkCheckResults(data);
+  } catch (err) { box.innerHTML = `<p class="be-err">${escapeHtml(err.message || String(err))}</p>`; }
+  finally { btn.disabled = false; btn.textContent = '✦ Run check'; }
 }
-
-window.__lcSuggestedTitle = null;
-window.__lcSuggestedTags = [];
-
-function useSuggestedTitle() {
-  if (!window.__lcSuggestedTitle) return;
-  document.getElementById('be-title').value = window.__lcSuggestedTitle;
-  renderBlogPreview();
-  toast('Title updated');
-}
-
-function useSuggestedTags() {
-  if (!window.__lcSuggestedTags.length) return;
-  const tagsEl = document.getElementById('be-tags');
-  const existing = tagsEl.value.split(',').map(s => s.trim()).filter(Boolean);
-  window.__lcSuggestedTags.forEach(t => { if (!existing.includes(t)) existing.push(t); });
-  tagsEl.value = existing.join(', ');
-  toast('Tags added');
-}
-
 function renderLinkCheckResults(data) {
-  const box = document.getElementById('be-linkcheck');
+  const box = $('be-linkcheck');
   if (data.note) { box.innerHTML = `<p class="card-meta">${escapeHtml(data.note)}</p>`; return; }
-
-  const missing = data.missing_links || [];
-  const suggestions = data.suggestions || [];
-  window.__lcSuggestedTitle = data.suggested_title || null;
-  window.__lcSuggestedTags = Array.isArray(data.suggested_tags) ? data.suggested_tags : [];
+  window.__lc = data;
+  const pct = (s) => Math.round((s || 0) * 100) + '%';
   let html = '';
-
-  if (window.__lcSuggestedTitle) {
-    html += `<div class="linkcheck-block"><div class="facet-label">Suggested title</div>
-      <div class="lc-item"><div class="lc-quote">${escapeHtml(window.__lcSuggestedTitle)}</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:0.4rem" onclick="useSuggestedTitle()">Use this title</button></div></div>`;
-  }
-
-  if (window.__lcSuggestedTags.length) {
-    html += `<div class="linkcheck-block"><div class="facet-label">Suggested topic tags</div>
-      <div class="sm-tags">${window.__lcSuggestedTags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:0.5rem" onclick="useSuggestedTags()">Add these tags</button></div>`;
-  }
-
-  html += '<div class="linkcheck-block"><div class="facet-label">Promised links not found</div>';
-  html += missing.length
-    ? missing.map(m => `<div class="lc-item"><div class="lc-quote">"${escapeHtml(m.quote)}"</div><div class="lc-reason">${escapeHtml(m.reason)}</div></div>`).join('')
-    : '<p class="card-meta">None found — every promised link seems to be there.</p>';
-  html += '</div>';
-
-  html += '<div class="linkcheck-block"><div class="facet-label">Suggested links / related things</div>';
-  html += suggestions.length
-    ? suggestions.map(s => `<div class="lc-item"><div class="lc-quote">${escapeHtml(s.label)}</div>${s.url ? `<div class="lc-url">${escapeHtml(s.url)}</div>` : ''}<div class="lc-reason">${escapeHtml(s.reason)}</div></div>`).join('')
-    : '<p class="card-meta">Nothing to add right now.</p>';
-  html += '</div>';
-
+  if (blog.row.published_at && blog.dirty) html += '<p class="be-warn">Checked the live version. Your unpushed edits were not included.</p>';
+  if (data.suggested_title) html += `<div class="facet-label" style="margin-top:0.8rem">Suggested title</div><div class="sug-row"><span class="txt">${escapeHtml(data.suggested_title)}</span><button class="btn btn-ghost btn-sm" onclick="$('be-title').value=__lc.suggested_title;blogChanged()">Use</button></div>`;
+  if ((data.suggested_tags || []).length) html += `<div class="facet-label" style="margin-top:0.8rem">Suggested tags</div><div class="facet-chips">${data.suggested_tags.map(t => `<span class="sm-tag">${escapeHtml(t)}</span>`).join('')}</div><div class="be-row"><button class="btn btn-ghost btn-sm" onclick="addSuggestedTags()">Add these tags</button></div>`;
+  html += `<div class="facet-label" style="margin-top:0.8rem">Related projects in your graph</div>` + ((data.related_projects || []).length
+    ? data.related_projects.map(p => `<div class="sug-row"><span class="sim">${pct(p.similarity)}</span><span class="txt">${escapeHtml(p.title)}</span>${blog.links.related_project_ids.includes(p.id) ? '<span class="card-meta">linked</span>' : `<button class="btn btn-ghost btn-sm" onclick='linkTo("related_project_ids", ${JSON.stringify(p.id)}, ${JSON.stringify(p.title).replace(/'/g, '&#39;')});renderLinkCheckResults(__lc)'>Link</button>`}</div>`).join('')
+    : `<p class="card-meta">${data.related_error ? 'Graph lookup failed: ' + escapeHtml(data.related_error) : 'Nothing close.'}</p>`);
+  html += `<div class="facet-label" style="margin-top:0.8rem">Related takes</div>` + ((data.related_takes || []).length
+    ? data.related_takes.map(t => `<div class="sug-row"><span class="sim">${pct(t.similarity)}</span><span class="txt">${escapeHtml(t.title)}</span>${blog.links.commentary_ids.includes(t.id) ? '<span class="card-meta">linked</span>' : `<button class="btn btn-ghost btn-sm" onclick='linkTo("commentary_ids", ${JSON.stringify(t.id)}, ${JSON.stringify(t.title).replace(/'/g, '&#39;')});renderLinkCheckResults(__lc)'>Link</button>`}</div>`).join('')
+    : '<p class="card-meta">Nothing close.</p>');
+  html += `<div class="facet-label" style="margin-top:0.8rem">Promised links not found</div>` + ((data.missing_links || []).length
+    ? data.missing_links.map(m => `<div class="lc-item"><div class="lc-quote">"${escapeHtml(m.quote)}"</div><div class="lc-reason">${escapeHtml(m.reason)}</div></div>`).join('')
+    : '<p class="card-meta">None. Every promised link seems to be there.</p>');
+  html += `<div class="facet-label" style="margin-top:0.8rem">Links worth adding</div>` + ((data.suggestions || []).length
+    ? data.suggestions.map((s, k) => `<div class="lc-item"><div class="lc-quote">${escapeHtml(s.label)}</div>${s.url ? `<div class="lc-url">${escapeHtml(s.url)}</div>` : ''}<div class="lc-reason">${escapeHtml(s.reason)}</div>${s.url ? `<button class="btn btn-ghost btn-sm" style="margin-top:0.4rem" onclick="addSourceRow(__lc.suggestions[${k}].url, __lc.suggestions[${k}].label)">Add as source</button>` : ''}</div>`).join('')
+    : '<p class="card-meta">Nothing to add.</p>');
   box.innerHTML = html;
 }
+function addSuggestedTags() {
+  const tags = $('be-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  (window.__lc?.suggested_tags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); });
+  $('be-tags').value = tags.join(', ');
+  blogChanged(); toast('Tags added');
+}
 
+/* ── publish ── */
+function publishChecks() {
+  const f = collectBlogFields();
+  const out = [];
+  const add = (level, text, fix) => out.push({ level, text, fix });
+  const realTitle = isRealContent(f.title, '');
+  add(realTitle ? 'ok' : 'err', realTitle ? 'Has a real title' : 'Needs a title');
+  const dashes = [f.title, f.excerpt || '', f.body_md].reduce((n, s) => n + ((s.match(/[—–]/g) || []).length), 0);
+  add(dashes ? 'err' : 'ok', dashes ? `${dashes} em/en dash${dashes > 1 ? 'es' : ''} in the copy` : 'No em dashes', dashes ? 'fixDashes();openPublishCheck()' : null);
+  add(f.excerpt ? 'ok' : 'warn', f.excerpt ? 'Has a deck' : 'No deck under the title');
+  const doc = Editorial.parse(f.body_md);
+  const sections = doc.sections.filter(s => s.heading).length;
+  add(sections ? 'ok' : 'warn', sections ? `${sections} numbered section${sections > 1 ? 's' : ''}` : 'No sections. It will read as one block');
+  const pulls = doc.sections.reduce((n, s) => n + s.blocks.filter(b => b.type === 'pull').length, 0);
+  if (pulls > 1) add('warn', `${pulls} pull quotes. The layout expects one`);
+  const ids = Editorial.mediaIds(f.body_md);
+  const missing = ids.filter(id => !blogMedia.find(m => m.id === id));
+  const noAlt = blogMedia.filter(m => ids.includes(m.id) && !(m.alt || m.caption || '').trim());
+  if (missing.length) add('err', `${missing.length} image token${missing.length > 1 ? 's' : ''} point at images that no longer exist`);
+  if (noAlt.length) add('err', `${noAlt.length} image${noAlt.length > 1 ? 's' : ''} without alt text (Images tab)`);
+  if (ids.length && !missing.length && !noAlt.length) add('ok', `${ids.length} image${ids.length > 1 ? 's' : ''}, all with alt text`);
+  if (f.transcript_md) {
+    const c = compareToTranscript(f.transcript_md, f.body_md);
+    add(c.dropped.length || c.added.length ? 'warn' : 'ok',
+      c.dropped.length || c.added.length
+        ? `Against the transcript: ${c.dropped.length} sentence${c.dropped.length === 1 ? '' : 's'} missing, ${c.added.length} new word${c.added.length === 1 ? '' : 's'}. Check the Shape tab`
+        : 'Matches the transcript, sentence by sentence');
+  } else add('warn', 'No transcript saved, so the verbatim check is skipped');
+  const unlabelled = f.source_urls.filter(u => !f.source_labels[u]).length;
+  if (unlabelled) add('warn', `${unlabelled} source${unlabelled > 1 ? 's' : ''} without a title. The page shows the domain instead`);
+  return out;
+}
+function openPublishCheck() {
+  if (!blog) return;
+  const checks = publishChecks();
+  const icon = { ok: '<b style="color:var(--green)">✓</b>', warn: '<b style="color:#fbbf24">!</b>', err: '<b style="color:var(--red)">✕</b>' };
+  $('pc-list').innerHTML = checks.map(c => `<div class="pc-item">${icon[c.level]}<span style="flex:1">${escapeHtml(c.text)}</span>${c.fix ? `<button class="btn btn-ghost btn-sm" onclick="${c.fix}">Fix</button>` : ''}</div>`).join('');
+  const blocked = checks.some(c => c.level === 'err');
+  $('pc-go').disabled = blocked;
+  $('pc-go').style.opacity = blocked ? 0.4 : 1;
+  const verb = blog.row.published_at ? 'Update live post' : 'Publish';
+  $('pc-go').textContent = blocked ? 'Fix the ✕ items first' : (checks.some(c => c.level === 'warn') ? verb + ' anyway' : verb);
+  $('publish-check').classList.add('open');
+}
+function closePublishCheck() { $('publish-check').classList.remove('open'); }
+
+// Edits to a live post go through the same house-rule check before they go out.
+function updateLivePost() {
+  if (!blog) return;
+  if (publishChecks().some(c => c.level === 'err')) { openPublishCheck(); return; }
+  saveBlogNow({ force: true });
+}
+
+async function publishBlogPost() {
+  if (!blog) return;
+  if (publishChecks().some(c => c.level === 'err')) return;
+  if (blog.row.published_at) { await saveBlogNow({ force: true }); closePublishCheck(); return; }
+  await saveBlogNow();
+  if (!blog.id) { toast('Nothing saved to publish yet'); return; }
+  let slug = $('be-slug').value.trim();
+  if (isAutoSlug(slug)) slug = await uniqueSlug(slugify($('be-title').value), blog.id);
+  const { data, error } = await sb.from('published_posts').update({ slug, published_at: new Date().toISOString() }).eq('id', blog.id).select().single();
+  if (error) { toast('Publish failed: ' + error.message); return; }
+  blog.row = data; blog.dirty = false;
+  $('be-slug').value = data.slug;
+  closePublishCheck();
+  refreshEditorChrome();
+  setSave('saved', 'Published · ' + fmtTime(new Date()));
+  toast(`Live at /blog/${data.slug}`);
+}
+async function unpublishBlogPost() {
+  if (!blog?.id || !confirm('Take this post off the blog? It goes back to being a private draft.')) return;
+  const { data, error } = await sb.from('published_posts').update({ published_at: null }).eq('id', blog.id).select().single();
+  if (error) { toast('Failed: ' + error.message); return; }
+  blog.row = data;
+  refreshEditorChrome();
+  toast('Unpublished. It is a draft again');
+}
+async function deleteBlogPost() {
+  if (!blog) return;
+  if (!blog.id) { blog.dirty = false; closeBlogEditor(); return; }
+  const name = Editorial.plainTitle($('be-title').value) || '(untitled)';
+  if (!confirm(`Delete "${name}" permanently, with its ${blogMedia.length} image${blogMedia.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+  for (const m of blogMedia) await sb.functions.invoke('admin-post-media', { body: { action: 'delete', id: m.id } });
+  const { error } = await sb.from('published_posts').delete().eq('id', blog.id);
+  if (error) { toast('Delete failed: ' + error.message); return; }
+  toast('Deleted');
+  blog.dirty = false;
+  closeBlogEditor();
+}
+
+
+/* ── readers: comment moderation + mailing list ── */
+let rpSubs = [];
+async function loadReaderPanel() {
+  const [{ data: comments, error: cErr }, { data: subs, error: sErr }, { data: posts }] = await Promise.all([
+    sb.from('blog_comments').select('id,post_id,name,email,body,status,created_at').order('created_at', { ascending: false }).limit(100),
+    sb.from('blog_subscribers').select('email,source,created_at,unsubscribed_at').order('created_at', { ascending: false }),
+    sb.from('published_posts').select('id,title'),
+  ]);
+  const titleOf = Object.fromEntries((posts || []).map(p => [p.id, Editorial.plainTitle(p.title)]));
+  const pending = (comments || []).filter(c => c.status === 'pending');
+  const approved = (comments || []).filter(c => c.status === 'approved');
+  $('rp-count').textContent = `(${pending.length} waiting · ${(subs || []).filter(x => !x.unsubscribed_at).length} subscribed)`;
+  const row = (c) => `
+    <div class="bf-item">
+      <div class="bf-item-body">
+        <div class="card-meta" style="margin:0 0 0.3rem">${escapeHtml(c.name || 'A reader')} · ${escapeHtml(c.email)} · ${fmtDate(c.created_at)} · on "${escapeHtml(titleOf[c.post_id] || 'deleted post')}"</div>
+        <div class="sm-item-text" style="white-space:pre-wrap">${escapeHtml(c.body)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.3rem">
+        ${c.status !== 'approved' ? `<button class="btn btn-primary btn-sm" onclick="setCommentStatus('${c.id}','approved')">Approve</button>` : `<button class="btn btn-ghost btn-sm" onclick="setCommentStatus('${c.id}','hidden')">Hide</button>`}
+        ${c.status === 'pending' ? `<button class="btn btn-ghost btn-sm" onclick="setCommentStatus('${c.id}','hidden')">Hide</button>` : ''}
+        <a class="btn btn-ghost btn-sm" style="text-align:center;text-decoration:none" href="mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Re: ' + (titleOf[c.post_id] || 'your comment'))}">Reply</a>
+      </div>
+    </div>`;
+  $('rp-comments').innerHTML = cErr ? `<p class="be-err">${escapeHtml(cErr.message)}</p>`
+    : (pending.length ? pending.map(row).join('') : '<p class="card-meta">Nothing waiting.</p>')
+      + (approved.length ? `<details style="margin-top:0.6rem"><summary class="card-meta" style="cursor:pointer">${approved.length} approved</summary>${approved.map(row).join('')}</details>` : '');
+  rpSubs = (subs || []).filter(x => !x.unsubscribed_at);
+  $('rp-sub-count').textContent = `(${rpSubs.length})`;
+  $('rp-subs').innerHTML = sErr ? `<p class="be-err">${escapeHtml(sErr.message)}</p>`
+    : (rpSubs.length ? rpSubs.slice(0, 50).map(x => `<div class="sug-row"><span class="txt">${escapeHtml(x.email)}</span><span class="card-meta" style="margin:0">${fmtDate(x.created_at)}${x.source ? ' · ' + escapeHtml(x.source) : ''}</span></div>`).join('') : '<p class="card-meta">No sign-ups yet.</p>');
+}
+async function setCommentStatus(id, status) {
+  const { error } = await sb.from('blog_comments').update({ status }).eq('id', id);
+  if (error) { toast('Failed: ' + error.message); return; }
+  toast(status === 'approved' ? 'Approved. It is live on the post.' : 'Hidden');
+  loadReaderPanel();
+}
+function copySubscribers() {
+  if (!rpSubs.length) { toast('No sign-ups yet'); return; }
+  navigator.clipboard?.writeText(rpSubs.map(x => x.email).join(', '));
+  toast(`Copied ${rpSubs.length} email${rpSubs.length === 1 ? '' : 's'}`);
+}
+
+/* ── links and images by URL ── */
+function insertLink() {
+  const ta = $('be-body');
+  const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd) || 'link text';
+  const url = prompt('Link to (https://…)');
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url.trim())) { toast('Links need to start with https://'); return; }
+  insertAtCursor(`[${sel}](${url.trim()})`);
+}
+function toggleImageUrl() {
+  const box = $('be-imgurl-box');
+  box.style.display = box.style.display === 'none' ? '' : 'none';
+  if (box.style.display === '') $('be-imgurl').focus();
+}
+async function addImageFromUrl() {
+  const url = $('be-imgurl').value.trim(), alt = $('be-imgurl-alt').value.trim(), mode = $('be-imgurl-mode').value;
+  if (!/^https?:\/\/\S+$/i.test(url)) { toast('Paste a full image URL, starting https://'); return; }
+  if (!alt) { toast('Add alt text: a few words on what the image shows'); $('be-imgurl-alt').focus(); return; }
+  if (mode === 'link') {
+    insertAtCursor(`\n\n![${alt.replace(/[\[\]]/g, '')}](${url})\n\n`);
+  } else {
+    if (!blog?.id) { toast('Write a little first so the draft saves, then add images'); return; }
+    toast('Fetching the image…');
+    const kind = mode === 'copy-cutout' ? 'cutout' : 'image';
+    const { data, error } = await sb.functions.invoke('admin-post-media', {
+      body: { action: 'import_url', post_id: blog.id, url, kind, alt, placement: kind === 'cutout' ? 'right' : null },
+    });
+    if (error || data?.error) { toast('Could not fetch it: ' + (data?.error || error.message) + '. Try "Link to it" instead.'); return; }
+    blogMedia.push({ ...data.row, url: data.url });
+    insertAtCursor(`\n\n[[${kind}:${data.row.id}]]\n\n`);
+    renderMediaGrid();
+  }
+  $('be-imgurl').value = ''; $('be-imgurl-alt').value = '';
+  $('be-imgurl-box').style.display = 'none';
+  sendPreview();
+  toast('Image added');
+}
 
 init();
 </script>
