@@ -11,7 +11,7 @@ import { AwsClient } from "npm:aws4fetch@1.0.20";
 //
 // POST { action: "upload", post_id, filename, contentBase64, contentType,
 //        caption?, kind?, alt?, placement?, inspired_by?, prompt? } -> { row, url }
-// POST { action: "update", id, alt?, placement?, caption?, inspired_by? } -> { row }
+// POST { action: "update", id, alt?, placement?, caption?, inspired_by?, kind? } -> { row }
 // POST { action: "import_url", post_id, url, kind?, alt?, placement? } -> { row, url }
 //   fetches an image from the web (logo, screenshot) and stores a copy
 // POST { action: "delete", id } -> { ok: true }
@@ -102,6 +102,7 @@ Deno.serve(async (req: Request) => {
       const patch: Record<string, unknown> = {};
       for (const k of ["alt", "caption", "inspired_by"]) if (k in body) patch[k] = body[k] ?? null;
       if ("placement" in body) patch.placement = cleanPlacement(body.placement);
+      if ("kind" in body) patch.kind = body.kind === "cutout" ? "cutout" : "image";
       const { data: row, error } = await supabase.from("post_media").update(patch).eq("id", body.id).select().single();
       if (error) throw error;
       return json({ row });

@@ -25,6 +25,14 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 //   not return real alpha, so admin.html keys the green out on a canvas and
 //   uploads a genuine transparent PNG (no CSS blend-mode tricks).
 //
+// POST { action: "edit_image", mode: "remove_bg"|"edit", instruction?,
+//        image_url? | image_base64? + mime?, keep_transparent? }
+//   -> { image_base64, mime, prompt, model }
+//   Edits an image already in the post. remove_bg (and any edit of a cutout)
+//   returns the subject on flat chroma green for admin.html to key out.
+//   image_url must be a presigned R2 URL (fetched here, not in the browser,
+//   because the bucket has no CORS for the admin origin).
+//
 // POST { action: "models" } -> { models: [...] }   (diagnostics)
 // ---------------------------------------------------------------------------
 
@@ -249,13 +257,13 @@ async function listModels(): Promise<any[]> {
   return (j.models || []).map((m: any) => ({ name: (m.name || "").replace(/^models\//, ""), methods: m.supportedGenerationMethods }));
 }
 
-async function tryImage(model: string, prompt: string, refs: any[]) {
+async function tryImage(model: string, prompt: string, refs: any[], square = true) {
   const res = await fetch(`${API}/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [...refs.map((r) => ({ inlineData: { mimeType: r.mime, data: r.data } })), { text: prompt }] }],
-      generationConfig: { responseModalities: ["TEXT", "IMAGE"], imageConfig: { aspectRatio: "1:1" } },
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"], ...(square ? { imageConfig: { aspectRatio: "1:1" } } : {}) },
     }),
   });
   const j = await res.json();
@@ -290,6 +298,41 @@ async function generateCutout(body: any) {
   return json({ error: "Image generation failed", details: errors }, 502);
 }
 
+const GREEN = "Place it on a perfectly flat, uniform, fully saturated bright chroma green background (#00FF00, like a film green screen) with no shadow, gradient, texture or floor, and generous clear padding, so the background can be keyed out cleanly. Do not use green anywhere in the subject.";
+
+async function editImage(body: any) {
+  let data = typeof body.image_base64 === "string" ? body.image_base64 : "";
+  let mime = body.mime || "image/png";
+  if (!data && typeof body.image_url === "string") {
+    const u = new URL(body.image_url);
+    if (u.protocol !== "https:" || !/\.r2\.cloudflarestorage\.com$/.test(u.hostname)) return json({ error: "image_url must be a presigned R2 URL" }, 400);
+    const r = await fetch(u);
+    if (!r.ok) return json({ error: `Could not fetch image (${r.status})` }, 400);
+    mime = (r.headers.get("content-type") || mime).split(";")[0];
+    const buf = new Uint8Array(await r.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    data = btoa(bin);
+  }
+  if (!data) return json({ error: "image required" }, 400);
+  if (mime === "image/gif") return json({ error: "GIFs can't be edited with Gemini (it would lose the animation)" }, 400);
+  const instr = String(body.instruction || "").slice(0, 800).trim();
+  let prompt: string;
+  if (body.mode === "remove_bg") {
+    prompt = `Cut out the main subject of this image exactly as it is: same shapes, colours, text, proportions and details. Do not redraw, restyle, add or remove anything. Remove everything else. ${GREEN}`;
+  } else {
+    if (!instr) return json({ error: "instruction required" }, 400);
+    prompt = `Edit this image. ${instr}\nChange only what the instruction asks; keep everything else as it is. Never add em dashes, watermarks or extra text.` + (body.keep_transparent ? ` ${GREEN}` : "");
+  }
+  const errors: string[] = [];
+  for (const m of IMAGE_MODELS) {
+    const r: any = await tryImage(m, prompt, [{ mime, data }], false);
+    if (r.image_base64) return json({ ...r, prompt });
+    errors.push(r.error);
+  }
+  return json({ error: "Image edit failed", details: errors }, 502);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -305,6 +348,7 @@ Deno.serve(async (req: Request) => {
       case "shape": return await shape(body);
       case "cutout_ideas": return await cutoutIdeas(body);
       case "generate_cutout": return await generateCutout(body);
+      case "edit_image": return await editImage(body);
       case "models": return json({ models: await listModels() });
       default: return json({ error: "Unknown action" }, 400);
     }

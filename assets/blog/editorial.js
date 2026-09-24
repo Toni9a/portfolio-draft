@@ -137,7 +137,13 @@
     let sectionNo = 0;
 
     // Admin preview only: "+" points between blocks for placing images.
-    const tp = (line) => (ctx.touchpoints && line >= 0 ? `<button type="button" class="tp" data-line="${line + 1}" aria-label="Add an image here"><span>+</span></button>` : '');
+    // A zero-height row (so it never pushes text away from a floated image),
+    // with a + in the text column and one in each margin.
+    const tp = (line) => (ctx.touchpoints && line >= 0 ? `<div class="tp-row" data-line="${line + 1}">
+      <button type="button" class="tp tp-mid" data-side="mid" aria-label="Add an image here, in the text"><span>+</span></button>
+      <button type="button" class="tp tp-left" data-side="left" aria-label="Add an image here, in the left margin"><span>+</span></button>
+      <button type="button" class="tp tp-right" data-side="right" aria-label="Add an image here, in the right margin"><span>+</span></button>
+    </div>` : '');
 
     const blockHtml = (b) => blockInner(b) + tp(b.end);
     const blockInner = (b) => {
@@ -157,12 +163,12 @@
       if (b.type === 'image') {
         // placement: none = full column width; left/right = smaller, text wraps round it
         const fit = m.placement === 'left' || m.placement === 'right' ? ` float-${m.placement}` : '';
-        return `<figure class="inline-figure${fit}"><img src="${esc(m.url)}" alt="${esc(m.alt || '')}" loading="lazy">${m.caption ? `<figcaption>${esc(m.caption)}</figcaption>` : ''}</figure>`;
+        return `<figure class="inline-figure${fit}" data-media-id="${esc(b.id)}"><img src="${esc(m.url)}" alt="${esc(m.alt || '')}" loading="lazy">${m.caption ? `<figcaption>${esc(m.caption)}</figcaption>` : ''}</figure>`;
       }
       // cutout
       let side = m.placement;
       if (!side || side === 'lead') side = side === 'lead' ? 'lead' : (cutoutSide++ % 2 ? 'left' : 'right');
-      return `<div class="cutout-anchor cutout-${side}"><img class="cutout" src="${esc(m.url)}" alt="${esc(m.alt || '')}" decoding="async"></div>`;
+      return `<div class="cutout-anchor cutout-${side}" data-media-id="${esc(b.id)}"><img class="cutout" src="${esc(m.url)}" alt="${esc(m.alt || '')}" decoding="async"></div>`;
     };
 
     const voiceBlocks = [];
