@@ -6,7 +6,7 @@
 <title>Toni — Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="assets/blog/editorial.js?v=20260923c"></script>
+<script src="assets/blog/editorial.js?v=20260924a"></script>
 <script src="assets/blog/chroma-key.js?v=20260923c"></script>
 <style>
   :root {
@@ -209,6 +209,13 @@
   .src-row .btn { grid-row: 1 / span 2; grid-column: 2; align-self: center; }
   .facet-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
 
+  #img-modal { position: fixed; inset: 0; z-index: 70; display: none; align-items: center; justify-content: center; background: #000000cc; padding: 1rem; }
+  #img-modal.open { display: flex; }
+  .im-drop { border: 1px dashed #3a3a3a; border-radius: 10px; padding: 1.1rem; text-align: center; color: var(--muted); font-size: 0.85rem; line-height: 1.5; outline: none; transition: border-color .15s, background .15s; }
+  .im-drop:focus, .im-drop.over { border-color: var(--accent); background: var(--accent-dim); }
+  .im-drop b { color: var(--text); }
+  .im-drop img { max-width: 100%; max-height: 220px; border-radius: 6px; margin: 0 auto; display: block; }
+  .im-link { color: var(--accent); text-decoration: underline; cursor: pointer; }
   #publish-check { position: fixed; inset: 0; z-index: 70; display: none; align-items: center; justify-content: center; background: #000000cc; padding: 1rem; }
   #publish-check.open { display: flex; }
   .pc-item { display: flex; gap: 0.6rem; padding: 0.45rem 0; border-top: 1px solid var(--border); font-size: 0.85rem; line-height: 1.45; }
@@ -475,21 +482,7 @@
           <button class="btn btn-ghost" onclick="toggleSourceMaterial()">+ From captures…</button>
           <button class="btn btn-ghost" onclick="toggleVoicePicker()">+ Voice note…</button>
           <button class="btn btn-ghost" onclick="insertLink()">+ Link</button>
-          <button class="btn btn-ghost" onclick="toggleImageUrl()">+ Image from URL…</button>
-        </div>
-        <div id="be-imgurl-box" style="display:none" class="be-card">
-          <h4>Image from a URL</h4>
-          <p class="be-hint" style="margin-top:0">A logo, screenshot or photo from the web. "Keep a copy" stores it with the post, so it will not break if the other site moves it.</p>
-          <input type="url" id="be-imgurl" placeholder="https://…/logo.png">
-          <input type="text" id="be-imgurl-alt" placeholder="Alt text: what the image shows" style="margin-top:0.45rem">
-          <div class="be-row">
-            <select id="be-imgurl-mode" aria-label="How to add it">
-              <option value="copy-image">Keep a copy · photo in the text</option>
-              <option value="copy-cutout">Keep a copy · cutout in the margin</option>
-              <option value="link">Link to it · in the text (no copy)</option>
-            </select>
-            <button class="btn btn-primary btn-sm" onclick="addImageFromUrl()">Add at cursor</button>
-          </div>
+          <button class="btn btn-ghost" onclick="openImageModal(null)">+ Image / GIF…</button>
         </div>
         <div id="be-voice-box" style="display:none" class="be-card">
           <h4>Your voice notes</h4>
@@ -617,6 +610,37 @@
   </div>
 </div>
 
+
+<div id="img-modal" onclick="if(event.target===this) closeImageModal()">
+  <div class="detail-card" style="max-width:520px;width:100%">
+    <button class="detail-close" onclick="closeImageModal()">×</button>
+    <h2 style="margin-bottom:0.3rem">Add an image here</h2>
+    <p class="sub" id="im-where" style="margin-bottom:0.9rem"></p>
+    <div id="im-drop" class="im-drop" tabindex="0">
+      <div id="im-drop-empty"><b>Paste a screenshot</b> (⌘V), drop a file here, or <label class="im-link">choose one<input type="file" accept="image/*" id="im-file" hidden onchange="imSetBlob(this.files[0])"></label>. GIFs work too.</div>
+      <img id="im-thumb" alt="" hidden>
+    </div>
+    <div class="facet-label" style="margin-top:0.9rem">…or an image address</div>
+    <input type="url" id="im-url" placeholder="https://…/apple-watch.png" oninput="imSetUrl(this.value)">
+    <div class="facet-label" style="margin-top:0.9rem">How it sits</div>
+    <select id="im-layout" style="width:100%">
+      <option value="image:">Photo, full column width</option>
+      <option value="image:left">Photo, small on the left, text wraps</option>
+      <option value="image:right">Photo, small on the right, text wraps</option>
+      <option value="cutout:right">Cutout in the right margin (transparent PNG)</option>
+      <option value="cutout:left">Cutout in the left margin (transparent PNG)</option>
+    </select>
+    <div class="facet-label" style="margin-top:0.9rem">Alt text</div>
+    <input type="text" id="im-alt" placeholder="What the image shows, for screen readers">
+    <div class="facet-label" style="margin-top:0.9rem">Caption / annotation (photos, optional)</div>
+    <input type="text" id="im-caption" placeholder="e.g. Series 11, the one I actually wear">
+    <p class="be-err" id="im-err" style="display:none"></p>
+    <div class="be-row" style="justify-content:flex-end;margin-top:1rem">
+      <button class="btn btn-ghost btn-sm" onclick="closeImageModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="im-go" onclick="addImageFromModal()">Add image</button>
+    </div>
+  </div>
+</div>
 <div id="publish-check" onclick="if(event.target===this) closePublishCheck()">
   <div class="detail-card" style="max-width:520px;width:100%">
     <button class="detail-close" onclick="closePublishCheck()">×</button>
@@ -1969,7 +1993,6 @@ async function openBlogEditor(id, seed) {
   $('be-shape-result').innerHTML = ''; $('be-compare').innerHTML = ''; $('be-ideas').innerHTML = ''; $('be-linkcheck').innerHTML = '';
   $('be-sourcemat-box').style.display = 'none';
   $('be-voice-box').style.display = 'none';
-  $('be-imgurl-box').style.display = 'none';
   $('be-take-search').value = ''; $('be-project-search').value = ''; $('be-take-results').innerHTML = ''; $('be-project-results').innerHTML = '';
 
   showEditorPane('write');
@@ -1982,7 +2005,7 @@ async function openBlogEditor(id, seed) {
   $('blog-editor').classList.add('open');
   document.body.style.overflow = 'hidden';
   const frame = $('be-preview');
-  if (!previewReady) frame.src = 'blog.html?preview=1&v=20260923d';
+  if (!previewReady) frame.src = 'blog.html?preview=1&v=20260924a';
   sendPreview();
   if (row.id) loadBlogMedia();
   resolveVoiceTokens();
@@ -2154,6 +2177,7 @@ function sendPreview() {
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin || !e.data) return;
   if (e.data.type === 'preview-ready') { previewReady = true; sendPreview(); }
+  if (e.data.type === 'touchpoint' && blog) openImageModal(e.data.line);
 });
 
 async function resolveVoiceTokens() {
@@ -2403,7 +2427,11 @@ function renderMediaGrid() {
         <select onchange="moveMedia('${token}', +this.value)" aria-label="Position in the post">
           ${inPost ? '' : '<option value="" selected disabled>Place beside…</option>'}${sectionOpts.join('')}
         </select>
-        <input type="text" value="${escapeHtml(m.alt || m.caption || '')}" placeholder="Alt text (required)" onchange="updateMedia('${m.id}', { alt: this.value })">
+        <input type="text" value="${escapeHtml(m.alt || '')}" placeholder="Alt text (required)" onchange="updateMedia('${m.id}', { alt: this.value })">
+        ${m.kind !== 'cutout' ? `<input type="text" value="${escapeHtml(m.caption || '')}" placeholder="Caption / annotation (optional)" onchange="updateMedia('${m.id}', { caption: this.value })">
+        <select onchange="updateMedia('${m.id}', { placement: this.value })" aria-label="Size">
+          ${[['', 'Full column width'], ['left', 'Small, left, text wraps'], ['right', 'Small, right, text wraps']].map(([v, l]) => `<option value="${v}" ${(m.placement || '') === v ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>` : ''}
         ${m.kind === 'cutout' ? `<select onchange="updateMedia('${m.id}', { placement: this.value })" aria-label="Placement">
           ${['lead', 'right', 'left'].map(p => `<option value="${p}" ${m.placement === p ? 'selected' : ''}>${p === 'lead' ? 'Side: large, left' : p === 'right' ? 'Side: right margin' : 'Side: left margin'}</option>`).join('')}
         </select>` : ''}
@@ -2893,33 +2921,98 @@ function insertLink() {
   if (!/^https?:\/\//i.test(url.trim())) { toast('Links need to start with https://'); return; }
   insertAtCursor(`[${sel}](${url.trim()})`);
 }
-function toggleImageUrl() {
-  const box = $('be-imgurl-box');
-  box.style.display = box.style.display === 'none' ? '' : 'none';
-  if (box.style.display === '') $('be-imgurl').focus();
+
+/* ── images anywhere: preview touch points, paste, drop, URL ── */
+let imState = { line: null, blob: null, url: '' };
+function openImageModal(line) {
+  if (!blog) return;
+  if (!blog.id) { toast('Write a little first so the draft saves, then add images'); return; }
+  imState = { line, blob: null, url: '' };
+  $('im-where').textContent = line == null ? 'Goes in at the cursor in the body text.' : `Goes in after: "${lineContext(line)}"`;
+  ['im-url', 'im-alt', 'im-caption'].forEach(id => { $(id).value = ''; });
+  $('im-thumb').hidden = true; $('im-drop-empty').hidden = false; $('im-err').style.display = 'none';
+  $('img-modal').classList.add('open');
+  setTimeout(() => $('im-drop').focus(), 30);
 }
-async function addImageFromUrl() {
-  const url = $('be-imgurl').value.trim(), alt = $('be-imgurl-alt').value.trim(), mode = $('be-imgurl-mode').value;
-  if (!/^https?:\/\/\S+$/i.test(url)) { toast('Paste a full image URL, starting https://'); return; }
-  if (!alt) { toast('Add alt text: a few words on what the image shows'); $('be-imgurl-alt').focus(); return; }
-  if (mode === 'link') {
-    insertAtCursor(`\n\n![${alt.replace(/[\[\]]/g, '')}](${url})\n\n`);
-  } else {
-    if (!blog?.id) { toast('Write a little first so the draft saves, then add images'); return; }
-    toast('Fetching the image…');
-    const kind = mode === 'copy-cutout' ? 'cutout' : 'image';
-    const { data, error } = await sb.functions.invoke('admin-post-media', {
-      body: { action: 'import_url', post_id: blog.id, url, kind, alt, placement: kind === 'cutout' ? 'right' : null },
-    });
-    if (error || data?.error) { toast('Could not fetch it: ' + (data?.error || error.message) + '. Try "Link to it" instead.'); return; }
-    blogMedia.push({ ...data.row, url: data.url });
-    insertAtCursor(`\n\n[[${kind}:${data.row.id}]]\n\n`);
-    renderMediaGrid();
+function closeImageModal() {
+  $('img-modal').classList.remove('open');
+  $('be-preview').contentDocument?.querySelectorAll('.tp.active').forEach(x => x.classList.remove('active'));
+}
+function lineContext(line) {
+  const lines = $('be-body').value.split('\n');
+  for (let i = Math.min(line, lines.length) - 1; i >= 0; i--) {
+    const t = lines[i].trim();
+    if (t) return t.replace(/^[#>\s]+|\[\[[^\]]+\]\]/g, '').slice(-70) || 'an image';
   }
-  $('be-imgurl').value = ''; $('be-imgurl-alt').value = '';
-  $('be-imgurl-box').style.display = 'none';
-  sendPreview();
-  toast('Image added');
+  return 'the start of the post';
+}
+function imSetBlob(file) {
+  if (!file || !/^image\//.test(file.type)) { toast('That is not an image'); return; }
+  imState.blob = file; imState.url = ''; $('im-url').value = '';
+  const r = new FileReader();
+  r.onload = () => { $('im-thumb').src = r.result; $('im-thumb').hidden = false; $('im-drop-empty').hidden = true; };
+  r.readAsDataURL(file);
+  if (file.type === 'image/png' && $('im-layout').value.startsWith('image')) { /* keep choice */ }
+}
+function imSetUrl(v) {
+  imState.url = v.trim(); imState.blob = null;
+  if (/^https?:\/\/\S+$/i.test(imState.url)) { $('im-thumb').src = imState.url; $('im-thumb').hidden = false; $('im-drop-empty').hidden = true; }
+}
+// paste / drop into the modal
+document.addEventListener('paste', (e) => {
+  const file = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'))?.getAsFile();
+  if (!file) return;
+  if ($('img-modal').classList.contains('open')) { e.preventDefault(); imSetBlob(file); return; }
+  // pasting a screenshot straight into the body opens the dialog at the cursor
+  if (blog && document.activeElement === $('be-body')) { e.preventDefault(); openImageModal(null); imSetBlob(file); }
+});
+['dragover', 'dragleave', 'drop'].forEach(ev => document.addEventListener(ev, (e) => {
+  const zone = $('im-drop');
+  if (!zone || !$('img-modal').classList.contains('open')) return;
+  e.preventDefault();
+  zone.classList.toggle('over', ev === 'dragover');
+  if (ev === 'drop' && e.dataTransfer?.files?.[0]) imSetBlob(e.dataTransfer.files[0]);
+}));
+function insertTokenAtLine(token, line) {
+  const ta = $('be-body');
+  const lines = ta.value.split('\n');
+  const at = Math.max(0, Math.min(line, lines.length));
+  lines.splice(at, 0, '', token, '');
+  ta.value = lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '');
+  blogChanged();
+}
+async function addImageFromModal() {
+  const err = (m) => { $('im-err').textContent = m; $('im-err').style.display = ''; };
+  const alt = $('im-alt').value.trim(), caption = $('im-caption').value.trim();
+  const [kind, placement] = $('im-layout').value.split(':');
+  if (!imState.blob && !/^https?:\/\/\S+$/i.test(imState.url)) return err('Paste, drop or choose an image, or give an image address.');
+  if (!alt) return err('Add alt text: a few words on what the image shows.');
+  const btn = $('im-go'); btn.disabled = true; btn.textContent = 'Adding…';
+  try {
+    let row, url;
+    if (imState.blob) {
+      let blob = imState.blob;
+      if (kind === 'cutout' && blob.type !== 'image/png' && blob.type !== 'image/gif' && blob.type !== 'image/webp') {
+        // no transparency in the file: try removing a flat background
+        const keyed = await chromaKey(await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); }));
+        blob = keyed.blob;
+      }
+      row = await uploadMedia({ blob, filename: imState.blob.name || 'pasted.png', kind, alt, placement: placement || null });
+      if (caption) await updateMedia(row.id, { caption });
+    } else {
+      const { data, error } = await sb.functions.invoke('admin-post-media', { body: { action: 'import_url', post_id: blog.id, url: imState.url, kind, alt, placement: placement || null } });
+      if (error || data?.error) throw new Error((data?.error || error.message) + '. Some sites block copying: save the image and paste it instead.');
+      row = data.row; url = data.url;
+      blogMedia.push({ ...row, url });
+      if (caption) await updateMedia(row.id, { caption });
+    }
+    const token = `[[${kind}:${row.id}]]`;
+    if (imState.line == null) insertAtCursor(`\n\n${token}\n\n`); else insertTokenAtLine(token, imState.line);
+    renderMediaGrid(); sendPreview();
+    closeImageModal();
+    toast('Image added');
+  } catch (e) { err(e.message || String(e)); }
+  finally { btn.disabled = false; btn.textContent = 'Add image'; }
 }
 
 init();

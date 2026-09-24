@@ -52,12 +52,15 @@
   function wordCount(s) { return stripTokens(s).replace(/[#>*_\[\]()`]/g, ' ').split(/\s+/).filter(Boolean).length; }
 
   /* Parse body_md into { lead, sections: [{label, heading, blocks: [...]}] }.
-     A block is {type:'md', text} | {type:'pull', text} | {type:'cutout'|'image'|'voice', id}. */
+     A block is {type:'md', text} | {type:'pull', text} | {type:'cutout'|'image'|'voice', id}.
+     Every block carries `end`: the index of its last line in body_md, so the
+     admin preview can offer "add an image here" points between blocks. */
   function parse(bodyMd) {
     const lines = String(bodyMd || '').replace(/\r\n/g, '\n').split('\n');
-    const out = { lead: '', sections: [] };
+    const out = { lead: '', leadEnd: -1, sections: [] };
     let cur = null;
     let buf = [];
+    let bufEnd = -1;
     let seenHeading = false;
     let leadDone = false;
 
@@ -65,8 +68,10 @@
     const flush = () => {
       const text = buf.join('\n').trim();
       buf = [];
-      if (text) ensure().blocks.push({ type: 'md', text });
+      if (text) ensure().blocks.push({ type: 'md', text, end: bufEnd });
     };
+    // Fenced code and lists keep their blank lines; plain paragraphs split.
+    let inFence = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -78,6 +83,7 @@
         while (i < lines.length && /^>(?!>)/.test(lines[i].trim())) { q.push(lines[i].trim().replace(/^>\s?/, '')); i++; }
         i--;
         out.lead = q.join(' ').trim();
+        out.leadEnd = i;
         leadDone = true;
         continue;
       }
@@ -87,7 +93,7 @@
       if (h && !/^###/.test(trimmed)) {
         flush();
         seenHeading = true;
-        cur = { label: (h[1] || '').trim(), heading: (h[2] || '').trim(), blocks: [] };
+        cur = { label: (h[1] || '').trim(), heading: (h[2] || '').trim(), blocks: [], headEnd: i };
         out.sections.push(cur);
         continue;
       }
@@ -96,16 +102,21 @@
         flush();
         const q = [pq[1]];
         while (i + 1 < lines.length && /^>>/.test(lines[i + 1].trim())) { i++; q.push(lines[i].trim().replace(/^>>\s?/, '')); }
-        ensure().blocks.push({ type: 'pull', text: q.join(' ').trim() });
+        ensure().blocks.push({ type: 'pull', text: q.join(' ').trim(), end: i });
         continue;
       }
       const tok = trimmed.match(/^\[\[(cutout|image|voice):([A-Za-z0-9-]+)\]\]$/);
-      if (tok) {
+      if (tok && !inFence) {
         flush();
-        ensure().blocks.push({ type: tok[1], id: tok[2] });
+        ensure().blocks.push({ type: tok[1], id: tok[2], end: i });
         continue;
       }
+      if (/^(```|~~~)/.test(trimmed)) inFence = !inFence;
+      const nextIsList = i + 1 < lines.length && /^\s*([-*+]|\d+\.)\s/.test(lines[i + 1]);
+      const inList = buf.length && /^\s*([-*+]|\d+\.)\s/.test(buf[buf.length - 1] || buf.find((l) => l.trim()) || '');
+      if (!trimmed && !inFence && !(inList && nextIsList)) { flush(); continue; }
       buf.push(line);
+      if (trimmed) bufEnd = i;
     }
     flush();
     return out;
@@ -125,7 +136,11 @@
     let firstPara = true;
     let sectionNo = 0;
 
-    const blockHtml = (b) => {
+    // Admin preview only: "+" points between blocks for placing images.
+    const tp = (line) => (ctx.touchpoints && line >= 0 ? `<button type="button" class="tp" data-line="${line + 1}" aria-label="Add an image here"><span>+</span></button>` : '');
+
+    const blockHtml = (b) => blockInner(b) + tp(b.end);
+    const blockInner = (b) => {
       if (b.type === 'md') {
         let html = md(b.text);
         if (firstPara) {
@@ -140,7 +155,9 @@
       const m = media[b.id];
       if (!m) return ctx.preview ? `<div class="media-missing">${esc(b.type)} ${esc(b.id.slice(0, 8))} not found</div>` : '';
       if (b.type === 'image') {
-        return `<figure class="inline-figure"><img src="${esc(m.url)}" alt="${esc(m.alt || '')}" loading="lazy">${m.caption ? `<figcaption>${esc(m.caption)}</figcaption>` : ''}</figure>`;
+        // placement: none = full column width; left/right = smaller, text wraps round it
+        const fit = m.placement === 'left' || m.placement === 'right' ? ` float-${m.placement}` : '';
+        return `<figure class="inline-figure${fit}"><img src="${esc(m.url)}" alt="${esc(m.alt || '')}" loading="lazy">${m.caption ? `<figcaption>${esc(m.caption)}</figcaption>` : ''}</figure>`;
       }
       // cutout
       let side = m.placement;
@@ -150,14 +167,14 @@
 
     const voiceBlocks = [];
     doc.sections.forEach((s) => { s.blocks = s.blocks.filter((b) => (b.type === 'voice' ? (voiceBlocks.push(b), false) : true)); });
-    const voiceTop = voiceBlocks.map(blockHtml).join('\n');
+    const voiceTop = voiceBlocks.map(blockInner).join('\n');
 
     const sectionsHtml = doc.sections.filter((s) => s.heading || s.blocks.length).map((s) => {
       const numbered = !!s.heading;
       if (numbered) sectionNo++;
       const label = numbered ? `${pad2(sectionNo)}${s.label ? ' / ' + esc(s.label.toUpperCase()) : ''}` : '';
       return `<section class="section">
-        ${numbered ? `<span class="section-number">${label}</span><h2>${esc(s.heading)}</h2>` : ''}
+        ${numbered ? `<span class="section-number">${label}</span><h2>${esc(s.heading)}</h2>${tp(s.headEnd)}` : ''}
         ${s.blocks.map(blockHtml).join('\n')}
       </section>`;
     }).join('\n');
@@ -191,6 +208,7 @@
         <article class="article-body">
           ${doc.lead ? `<p class="lead-note">${esc(doc.lead)}</p>` : ''}
           ${voiceTop}
+          ${doc.lead ? tp(doc.leadEnd) : ''}
           ${sectionsHtml}
           ${sourcesHtml}
         </article>
