@@ -14,6 +14,9 @@ import { AwsClient } from "npm:aws4fetch@1.0.20";
 // POST { action: "update", id, alt?, placement?, caption?, inspired_by?, kind? } -> { row }
 // POST { action: "import_url", post_id, url, kind?, alt?, placement? } -> { row, url }
 //   fetches an image from the web (logo, screenshot) and stores a copy
+// POST { action: "resolve_image", url } -> { image_url, title }
+//   url may be an image or a web page; for a page, returns its og:image
+//   (import_url accepts page links the same way)
 // POST { action: "delete", id } -> { ok: true }
 // POST { action: "list", post_id } -> { rows: [{...with url}] }
 //
@@ -72,6 +75,25 @@ function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36";
+// For a web page, find its share image (og:image / twitter:image).
+async function resolveImage(url: string): Promise<{ image_url: string; title: string | null }> {
+  const res = await fetch(url, { redirect: "follow", headers: { "User-Agent": UA, "Accept": "text/html,image/*;q=0.9,*/*;q=0.8" } });
+  const type = (res.headers.get("content-type") || "").toLowerCase();
+  if (type.startsWith("image/")) { await res.body?.cancel(); return { image_url: res.url || url, title: null }; }
+  if (!res.ok) throw new Error(`the site answered ${res.status}`);
+  const html = (await res.text()).slice(0, 400000);
+  const meta = (name: string) => {
+    const re1 = new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']+)["']`, "i");
+    const re2 = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']${name}["']`, "i");
+    return (html.match(re1) || html.match(re2))?.[1] || null;
+  };
+  const raw = meta("og:image:secure_url") || meta("og:image") || meta("twitter:image") || meta("twitter:image:src");
+  if (!raw) throw new Error("no share image found on that page");
+  const decode = (s: string) => s.replace(/&amp;/g, "&").replace(/&#x2F;/gi, "/").replace(/&quot;/g, '"');
+  return { image_url: new URL(decode(raw), res.url || url).toString(), title: meta("og:title") ? decode(meta("og:title")!) : null };
+}
+
 const PLACEMENTS = new Set(["lead", "left", "right"]);
 const cleanPlacement = (p: unknown) => (typeof p === "string" && PLACEMENTS.has(p) ? p : null);
 
@@ -122,10 +144,17 @@ Deno.serve(async (req: Request) => {
       return json({ ok: true });
     }
 
+    if (body.action === "resolve_image") {
+      if (typeof body.url !== "string" || !/^https?:\/\//i.test(body.url)) return json({ error: "an http(s) url required" }, 400);
+      try { return json(await resolveImage(body.url)); } catch (e) { return json({ error: String((e as Error).message || e) }, 400); }
+    }
+
     if (body.action === "import_url") {
-      const { post_id, url } = body;
+      const { post_id } = body;
+      let url = body.url;
       if (!post_id || typeof url !== "string" || !/^https?:\/\//i.test(url)) return json({ error: "post_id and an http(s) url required" }, 400);
-      const res = await fetch(url, { redirect: "follow", headers: { "User-Agent": "toniesan.com blog image import" } });
+      try { url = (await resolveImage(url)).image_url; } catch (e) { return json({ error: String((e as Error).message || e) }, 400); }
+      const res = await fetch(url, { redirect: "follow", headers: { "User-Agent": UA } });
       if (!res.ok) return json({ error: `the site answered ${res.status}` }, 400);
       const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
       if (!type.startsWith("image/")) return json({ error: `that link is not an image (${type || "unknown type"})` }, 400);
@@ -148,7 +177,7 @@ Deno.serve(async (req: Request) => {
         kind: body.kind === "cutout" ? "cutout" : "image",
         alt: body.alt || null,
         placement: cleanPlacement(body.placement),
-        inspired_by: `imported from ${url}`.slice(0, 500),
+        inspired_by: `imported from ${body.url}`.slice(0, 500),
         prompt: null,
       }).select().single();
       if (insertErr) throw insertErr;
