@@ -1,6 +1,6 @@
 # Portfolio — Current State
 
-**Date:** 2026-09-28 (2026-09-23 sections below still hold) · **Branch:** `main` · **Supersedes** the 2026-09-22 version
+**Last updated:** 2026-09-28 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
@@ -235,23 +235,7 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 ## Still to do
 
-**Decisions**
-- Promote `connected/index.html` to the live site, or fold its data layer into `index.html`? The read path is already deployed.
-
-**Fixes**
-- Write the older applied migrations back into `supabase/migrations/` (`telegram_query_bot_support` and the RLS fix).
-- `bookmark-ingest` still accepts the anon key by design (the Chrome extension calls it). Consider a key like the Shortcut's.
-- Mailing list: sign-ups are stored in `blog_subscribers`, but nothing sends yet. It needs Resend (or similar), an unsubscribe link and a double opt-in.
-- MSc copy on the live site.
-
-**Known gaps**
-- `sync_portfolio.py` is stale and unscheduled.
-- 78 unanswered Q&A questions.
-- `match_nodes()` (HNSW, ef_search 40) only ever returns about 40 nodes, so semantic search elsewhere misses anything ranked lower. The blog now uses the exact-scan `match_nodes_by_kind` instead.
-- ~~Captures stopped entering the graph on 2026-08-13.~~ Fixed 2026-09-28: `sync_captures.py` backfilled 100 nodes and now runs weekly. Those 100 are tagged and embedded.
-- Skill clusters and the full experience timeline are unrendered.
-- No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
-- YouTube enrichment has never executed; there are no YouTube captures at all.
+Moved to `TODO.md` (repo root) on 2026-09-28, so there is one to-do list for both layers. This file only records what exists and how it works.
 
 ---
 
@@ -259,6 +243,7 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 | Doc | For |
 |---|---|
+| `TODO.md` (repo root) | Everything still to do, both layers |
 | `system_atlas.md` (repo root) | Layer 1 pipeline, verification queries, gotchas |
 | `portfolio_context_from_gpt.md` (repo root) | inventory of non-GitHub work + writing brief |
 | `admin_drafts_rebuild_brief.md` (repo root) | 2026-09-22 handoff brief for reworking the admin Blog/drafts UI around the tagging pipeline (now done) |
