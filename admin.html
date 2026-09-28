@@ -2799,6 +2799,13 @@ async function facetLabels(joinTable, fk, table, nodeId) {
   return (data || []).map(r => r.label).sort();
 }
 
+// Edge function errors arrive as "non-2xx status code"; read the real reason.
+async function fnErrorText(err) {
+  let m = err?.message || String(err);
+  try { const j = await err.context.json(); if (j?.error) m = j.error; } catch {}
+  if (/spending cap|RESOURCE_EXHAUSTED/i.test(m)) return 'Gemini is out of budget: your Google AI Studio project hit its monthly spend cap. Raise it at ai.studio/spend, then try again. You can still link takes and projects with the search boxes above.';
+  return m;
+}
 async function runLinkCheck() {
   if (!blog) return;
   if (!blog.id) { toast('Write a little more first. It checks the saved draft.'); return; }
@@ -2811,7 +2818,7 @@ async function runLinkCheck() {
     if (error) throw error;
     if (data.error) throw new Error(data.error);
     renderLinkCheckResults(data);
-  } catch (err) { box.innerHTML = `<p class="be-err">${escapeHtml(err.message || String(err))}</p>`; }
+  } catch (err) { box.innerHTML = `<p class="be-err">${escapeHtml(await fnErrorText(err))}</p>`; }
   finally { btn.disabled = false; btn.textContent = '✦ Run check'; }
 }
 function renderLinkCheckResults(data) {
