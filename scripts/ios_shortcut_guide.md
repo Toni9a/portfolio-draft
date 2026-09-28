@@ -1,5 +1,8 @@
 # iOS Shortcut — Answer Project Questions by Voice
 
+> **Since 2026-09-28** the function also needs an `x-shortcut-key` header: paste the value of `SHORTCUT_KEY` from `.env` into both requests below. Without it the Shortcut gets 401.
+
+
 Build this in the Shortcuts app on iPhone/iPad. It lets you pick a project,
 hear a question, dictate your answer, and send it to Supabase — no laptop needed.
 
@@ -11,6 +14,7 @@ hear a question, dictate your answer, and send it to Supabase — no laptop need
    Method: GET
    Headers:
      Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk
+     x-shortcut-key: (SHORTCUT_KEY from .env)
      Content-Type: application/json
 
 2. **Parse response**
@@ -49,6 +53,7 @@ hear a question, dictate your answer, and send it to Supabase — no laptop need
    Method: POST
    Headers:
      Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk
+     x-shortcut-key: (SHORTCUT_KEY from .env)
      Content-Type: application/json
    Body (JSON):
      {

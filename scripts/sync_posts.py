@@ -19,6 +19,10 @@ before the edit sitting alongside new content. topic_tags links are always
 fully reconciled (added and removed) to match the post's current topic_tags
 column, since blog-link-check may add or drop tags between runs.
 
+Also reconciles post -> take / project / voice-note edges from the links you
+set in the admin (commentary_ids, related_project_ids, [[voice:]] tokens) via
+the sync_post_edges() SQL function.
+
 Run whenever you start, edit, or publish a post:
   python scripts/sync_posts.py
   python scripts/sync_posts.py --dry-run
@@ -207,6 +211,12 @@ def main() -> None:
         for s in orphans:
             print(f"  {DIM}? {s}{RESET}")
         print(f"{DIM}  left alone on purpose — content being cleared doesn't delete its node.{RESET}")
+
+    # Post links (takes, projects, source voice note) as real graph edges.
+    # See supabase/migrations/20260928000001_sync_post_edges.sql.
+    if not args.dry_run:
+        res = sb.rpc("sync_post_edges").execute().data or [{}]
+        print(f"post link edges added/removed: {res[0].get('added', 0)}/{res[0].get('removed', 0)}")
 
     if args.dry_run:
         print(f"\n{YELLOW}Dry run — nothing was written.{RESET}")

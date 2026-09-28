@@ -1,11 +1,21 @@
 # Portfolio — Current State
 
-**Date:** 2026-09-23 · **Branch:** `main` (`7a692b0`) · **Supersedes** the 2026-09-22 version
+**Date:** 2026-09-28 (2026-09-23 sections below still hold) · **Branch:** `main` · **Supersedes** the 2026-09-22 version
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
+
+## 2026-09-28: blog posts published, linked into the graph, functions locked down ✅
+
+- **Six new posts published** from blog-candidate voice notes (agents, Apple event, Stripe/OpenRouter, personal superintelligence, Dyson CameraJet, shortification), plus Foldables. All 8 published posts are in the graph (`kind='post'`, real `/blog/<slug>` URL), embedded and tagged.
+- **Post links are now real graph edges.** New SQL function `sync_post_edges()` (migration `20260928000001`) turns each post's links into `edge` rows with `origin='post_links'`: `started_from` (post → take, from `commentary_ids`), `discusses` (post → project, from `related_project_ids`), `from_voice_note` (post → capture, from `[[voice:]]` tokens). Idempotent; `sync_posts.py` calls it at the end of every run, so links set or removed in the admin follow on the next sync. Before this, those links only lived as arrays on `published_posts`.
+- **Takes linked** by hand after reading them (similarity alone ranks the same few takes top for every post): GEO and Stripe → the Reddit/GEO take; Foldables and Apple → the Meta Muse take; Agents → the custom-MCPs take; Superintelligence → the Private Cloud Compute take. Projects deliberately left mostly empty: the suggestions were ~0.63 matches to unrelated uni projects.
+- **Security gap closed.** `retag-item`, `semantic-search`, `answer-question`, `presign-media` and `backfill-voice-audio` now require a signed-in user or the service role key (checked: anon key → 401 on all five; signed-in admin calls work). `answer-question` also accepts an `x-shortcut-key` header for the iOS Shortcut; the key is `SHORTCUT_KEY` in `.env` and only its SHA-256 is stored, in `public.function_keys` (migration `20260928000002`). **The Shortcut needs that header added** (see `scripts/ios_shortcut_guide.md`) or it gets 401.
+- **Admin:** Run check now shows the real error (e.g. Gemini spend cap) instead of "non-2xx". `admin-post-media` accepts article links as image addresses (uses the page's share image; `resolve_image` action).
+- **GEO post slug** is now `why-geo-will-rely-on-human-influencers`; `/blog/untitled-mtdm8gna` redirects (vercel.json).
+- **`drafts-lab.html`** (repo root, untracked, local only): the one-off page used to lay out the voice-note drafts: Gemini shape and cutouts, found images and links, an editor like the admin's, "Make it a draft". Its work lives in the browser's IndexedDB. Kept for now; delete when no longer useful, never commit it.
 
 ## 2026-09-23: the blog rebuild (pushed, live) ✅
 
@@ -217,7 +227,8 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 
 **Fixes**
 - Write the older applied migrations back into `supabase/migrations/` (`telegram_query_bot_support` and the RLS fix).
-- Five older edge functions still accept the public anon key as if it were a signed-in user: `retag-item`, `semantic-search`, `answer-question`, `presign-media`, `backfill-voice-audio`. Give them the same check as the blog functions.
+- Add the `x-shortcut-key` header to the iOS answer-question Shortcut (value: `SHORTCUT_KEY` in `.env`).
+- `bookmark-ingest` still accepts the anon key by design (the Chrome extension calls it). Consider a key like the Shortcut's.
 - Mailing list: sign-ups are stored in `blog_subscribers`, but nothing sends yet. It needs Resend (or similar), an unsubscribe link and a double opt-in.
 - MSc copy on the live site.
 - Decide the `tag_captures.py` model version (still 3.5-flash-lite).
@@ -226,7 +237,7 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 - `sync_portfolio.py` is stale and unscheduled.
 - 78 unanswered Q&A questions.
 - `match_nodes()` (HNSW, ef_search 40) only ever returns about 40 nodes, so semantic search elsewhere misses anything ranked lower. The blog now uses the exact-scan `match_nodes_by_kind` instead.
-- The GEO post slug is now `why-geo-will-rely-on-human-influencers`; `/blog/untitled-mtdm8gna` 308-redirects to it (vercel.json).
+- **Captures stopped entering the graph on 2026-08-13.** No inbox row created after that has a `node`, so Tonidexbot/semantic search can't see ~6 weeks of captures, and 6 of the 7 posts' `from_voice_note` edges can't be made yet. Nothing in `scripts/` creates capture nodes any more; find what did (an older sync/migration) and schedule it. `sync_post_edges()` will pick the voice-note edges up once the nodes exist.
 - Skill clusters and the full experience timeline are unrendered.
 - No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
 - YouTube enrichment has never executed; there are no YouTube captures at all.

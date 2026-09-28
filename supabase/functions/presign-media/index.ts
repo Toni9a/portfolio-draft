@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import { AwsClient } from "npm:aws4fetch@1.0.20";
 
 // ---------------------------------------------------------------------------
@@ -6,6 +7,10 @@ import { AwsClient } from "npm:aws4fetch@1.0.20";
 // Given a list of R2 object keys (from inbox.stored_media), returns short-lived
 // presigned GET URLs so the admin UI can display private-bucket images without
 // ever exposing R2 credentials client-side. See second_brain_capture_prd.md Part 3.
+//
+// v4 (2026-09-28): verify_jwt alone accepts the public anon key, which meant
+// anyone could presign any key in the private bucket (captures, voice notes).
+// Now requires a signed-in user (or the service role key).
 // ---------------------------------------------------------------------------
 
 const corsHeaders = {
@@ -29,6 +34,18 @@ const r2 = new AwsClient({
   secretAccessKey: R2_SECRET_ACCESS_KEY,
 });
 
+// verify_jwt only proves the caller holds *a* valid JWT, and the public anon
+// key (visible in the site's HTML) is one. So check for a signed-in user, or
+// the service role key for server-side scripts.
+const authClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+async function isAllowed(req: Request): Promise<boolean> {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return true;
+  const { data, error } = await authClient.auth.getUser(token);
+  return !error && !!data?.user;
+}
+
 async function presignOne(key: string): Promise<string> {
   const url = `${R2_ENDPOINT}/${R2_BUCKET}/${key.split("/").map(encodeURIComponent).join("/")}?X-Amz-Expires=${EXPIRES_SECONDS}`;
   const signed = await r2.sign(new Request(url), { aws: { signQuery: true } });
@@ -42,10 +59,10 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
+  if (!(await isAllowed(req))) {
+    return new Response(JSON.stringify({ error: "Sign in required" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
-  // Auth is enforced at the platform level (verify_jwt: true on this function) —
-  // Supabase rejects unauthenticated calls before this handler ever runs, matching
-  // the admin.html auth screen that signs users in via Supabase auth first.
   try {
     const body = await req.json();
     const keys: unknown = body?.keys;
