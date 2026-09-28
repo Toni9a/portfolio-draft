@@ -7,7 +7,7 @@ This is the pass that covers the visual folders. A bookmark saved purely for a
 screenshot has almost no text, so tag_captures.py correctly left it empty. This
 one sends the actual picture.
 
-Uses gemini-3.7-flash, which takes image input natively.
+Uses gemini-3.8-flash, which takes image input natively.
 
 What it does NOT do:
   - it never touches inbox.folder or media_urls
@@ -44,7 +44,7 @@ SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
-MODEL = os.environ.get("GEMINI_VISION_MODEL", "gemini-3.7-flash")
+MODEL = os.environ.get("GEMINI_VISION_MODEL", "gemini-3.8-flash")
 
 IMAGES_PER_ITEM = 1        # first image only, to keep the bill down
 MAX_TEXT_CHARS = 600

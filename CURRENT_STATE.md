@@ -7,6 +7,19 @@ Everything marked ✅ below was verified on this date directly against the Supab
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
 
+## 2026-09-28 (later): captures flow into the graph again ✅
+
+- **Cause.** Capture nodes only ever came from a one-off SQL backfill on 2026-08-13 (run alongside the `vocabulary_and_graph_spine` migration, which itself only creates tables). No script created them, so the 100 inbox rows added since 2026-08-14 (66 X bookmarks, 20 Telegram links, 10 voice notes, 4 thoughts) never reached the graph, tagging, embedding or Tonidexbot.
+- **`scripts/sync_captures.py`** (new, untracked). Creates a `kind='capture'`, `source_table='inbox'` node for every inbox row without one. Same projection as the backfill, checked against all 902 backfilled nodes: `title` = `inbox.title`, else the first 120 chars of `full_text`; `body` = `full_text`; `url` = `inbox.url`; `occurred_at` = `source_created_at`, else `captured_at`. Nodes have no image fields: `tag_images.py` reads `media_urls` from the inbox row. Insert-only, upserts with `ignore_duplicates` on `(source_table, source_id)`, so re-runs are safe. `--dry-run` supported. Never deletes; nodes whose inbox row is gone are reported only.
+- **Workflow:** `tag-and-embed.yml` now runs `sync_captures.py` first, before `tag_captures.py` (uncommitted, along with `sync_captures.py` and the three model changes).
+- **Backfill run:** the 100 nodes were inserted (ids 1127–1226) with the same projection in SQL through the Supabase MCP, because neither the cloud shell nor the Mac's sandboxed shell can reach Supabase or Gemini (§7.9 in the atlas). Missing count checked afterwards: **0**. 1,003 capture nodes, 1,226 nodes in total.
+- **`sync_post_edges()` run:** 6 edges added. All 7 posts with a `[[voice:]]` token now have their `from_voice_note` edge (7 in total), plus 12 `started_from` and 2 `discusses`.
+- **Tagged and embedded ✅** (run on the Mac, 2026-09-28): all 100 new nodes text-tagged on `gemini-3.8-flash` (263 tag links, 222 concept links); the 40 with media went through the visual pass (37 tagged, 3 images unfetchable); all 100 embedded. Checked in the database afterwards: missing 0, unembedded 0, untagged captures 1 (the old one the tagger has nothing to tag in). The ~900 older captures keep their 3.5-flash-lite tags on purpose.
+- **One orphan node:** capture node for inbox `49ea0331-9ae8-4730-942a-c7751dcd3d01`, whose inbox row was deleted. Left in place.
+- **Drift not synced:** the script only inserts. One backfilled node (a TikTok link whose inbox `full_text` later grew from 32 to ~2,000 chars) still carries the old text.
+- **Models:** the three Python taggers now default to `gemini-3.8-flash` (tag_captures was on 3.5-flash-lite, the others on 3.7-flash). Confirmed working on the 2026-09-28 backfill run.
+- **Housekeeping:** a `git status` from the sandboxed shell left an empty `.git/index.lock` it couldn't remove. Moved to `_to_delete/git-index.lock.stale-2026-09-28` so git works; safe to delete.
+
 ## 2026-09-28: blog posts published, linked into the graph, functions locked down ✅
 
 - **Six new posts published** from blog-candidate voice notes (agents, Apple event, Stripe/OpenRouter, personal superintelligence, Dyson CameraJet, shortification), plus Foldables. All 8 published posts are in the graph (`kind='post'`, real `/blog/<slug>` URL), embedded and tagged.
@@ -152,14 +165,14 @@ The tagging pipeline now covers everything that gets written, not just published
   - **Bug found and fixed 2026-09-22:** the first version selected a non-existent `node_tag.id` column when reconciling `topic_tags` links (the real PK is the composite `(node_id, tag_id)`) — crashed the whole run on the first node processed, before it ever reached the new draft. Fixed; reran clean.
 - **`sync_commentary.py`** — new. Pushes `commentary` (the takes you write on a capture or a digest item) into the graph as their own nodes, `kind='commentary'`, so a thought is searchable the moment you write it, whether or not it ever becomes a post. Title is synthesised from the take's first line, since commentary has no title field. URL is set to the originating capture's URL when the take is about exactly one inbox item, left null for digest takes clustering several.
 - **`tag_posts.py`** — generalised with `--source {published_posts,commentary}` instead of being hardcoded to posts, so one tagger now covers both. Default model bumped from `gemini-3.5-flash-lite` (copied from `tag_captures.py`'s default without checking) to `gemini-3.7-flash`, matching `tag_images.py`. Your one published post was tagged once under the old default before this fix — cosmetic only, rerun with `--retag` if you want it redone.
-- **Workflow (`tag-and-embed.yml`)** now runs, in order: `tag_captures.py` → `tag_images.py` → `sync_posts.py` → `tag_posts.py --all` → `sync_commentary.py` → `tag_posts.py --source commentary --all` → `embed_nodes.py`. **Still uncommitted — see below.**
+- **Workflow (`tag-and-embed.yml`)** now runs, in order: `sync_captures.py` (added 2026-09-28) → `tag_captures.py` → `tag_images.py` → `sync_posts.py` → `tag_posts.py --all` → `sync_commentary.py` → `tag_posts.py --source commentary --all` → `embed_nodes.py`. **Still uncommitted — see below.**
 - Result as of 2026-09-22: 12/12 commentary rows and 2/2 post/draft rows in the graph, all tagged, all embedded. Full node counts below are current.
 
 **Update 2026-09-23:** `related_project_ids` and `commentary_ids` can now be set from the editor (Links & graph). Suggestions come from `blog-link-check` through `match_nodes_by_kind`, and you confirm each one.
 
 **Resolved 2026-09-23:** `da88cf93…` was reworked in place as the test draft, now titled "When Generative Engines Need *Human Influencers*".
 
-**Open question, needs you:** `tag_captures.py` is still on `gemini-3.5-flash-lite`, the one model version left unaudited. Everything else that does text tagging is now on `3.7-flash` or the `gemini-flash-latest` alias.
+**Resolved 2026-09-28:** `tag_captures.py`, `tag_images.py` and `tag_posts.py` all default to `gemini-3.8-flash` now (was 3.5-flash-lite / 3.7-flash). Edge functions stay on the `gemini-flash-latest` alias.
 
 ---
 
@@ -231,13 +244,12 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 - `bookmark-ingest` still accepts the anon key by design (the Chrome extension calls it). Consider a key like the Shortcut's.
 - Mailing list: sign-ups are stored in `blog_subscribers`, but nothing sends yet. It needs Resend (or similar), an unsubscribe link and a double opt-in.
 - MSc copy on the live site.
-- Decide the `tag_captures.py` model version (still 3.5-flash-lite).
 
 **Known gaps**
 - `sync_portfolio.py` is stale and unscheduled.
 - 78 unanswered Q&A questions.
 - `match_nodes()` (HNSW, ef_search 40) only ever returns about 40 nodes, so semantic search elsewhere misses anything ranked lower. The blog now uses the exact-scan `match_nodes_by_kind` instead.
-- **Captures stopped entering the graph on 2026-08-13.** No inbox row created after that has a `node`, so Tonidexbot/semantic search can't see ~6 weeks of captures, and 6 of the 7 posts' `from_voice_note` edges can't be made yet. Nothing in `scripts/` creates capture nodes any more; find what did (an older sync/migration) and schedule it. `sync_post_edges()` will pick the voice-note edges up once the nodes exist.
+- ~~Captures stopped entering the graph on 2026-08-13.~~ Fixed 2026-09-28: `sync_captures.py` backfilled 100 nodes and now runs weekly. Those 100 are tagged and embedded.
 - Skill clusters and the full experience timeline are unrendered.
 - No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
 - YouTube enrichment has never executed; there are no YouTube captures at all.

@@ -42,7 +42,7 @@ SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 # One place to change the model.
-MODEL = os.environ.get("GEMINI_TAGGING_MODEL", "gemini-3.5-flash-lite")
+MODEL = os.environ.get("GEMINI_TAGGING_MODEL", "gemini-3.8-flash")
 
 BATCH = 20
 MAX_ITEM_CHARS = 900

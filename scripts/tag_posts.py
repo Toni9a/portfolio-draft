@@ -46,7 +46,7 @@ SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
-MODEL = os.environ.get("GEMINI_TAGGING_MODEL", "gemini-3.7-flash")
+MODEL = os.environ.get("GEMINI_TAGGING_MODEL", "gemini-3.8-flash")
 
 BATCH = 20
 MAX_ITEM_CHARS = 1400  # posts run longer than captures, give the model more to read

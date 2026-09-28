@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
 
+      - name: Sync new captures into the graph
+        run: python scripts/sync_captures.py
+
       - name: Text tagging pass
         run: python scripts/tag_captures.py --all
 
