@@ -226,7 +226,7 @@ Skill clusters are still not surfaced at all — eight clusters with full skill 
 - `sync_portfolio.py` is stale and unscheduled.
 - 78 unanswered Q&A questions.
 - `match_nodes()` (HNSW, ef_search 40) only ever returns about 40 nodes, so semantic search elsewhere misses anything ranked lower. The blog now uses the exact-scan `match_nodes_by_kind` instead.
-- The live blog's Codex slug is still `untitled-mtdm8gna`. It can be renamed in Details, but that breaks existing links.
+- The GEO post slug is now `why-geo-will-rely-on-human-influencers`; `/blog/untitled-mtdm8gna` 308-redirects to it (vercel.json).
 - Skill clusters and the full experience timeline are unrendered.
 - No claims layer — the reusable statements for job applications, to be distilled from the 96 answers.
 - YouTube enrichment has never executed; there are no YouTube captures at all.

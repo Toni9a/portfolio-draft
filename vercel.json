@@ -1,7 +1,17 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/blog/untitled-mtdm8gna",
+      "destination": "/blog/why-geo-will-rely-on-human-influencers",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/blog/:slug", "destination": "/blog" }
+    {
+      "source": "/blog/:slug",
+      "destination": "/blog"
+    }
   ]
 }
