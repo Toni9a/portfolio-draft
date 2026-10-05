@@ -57,3 +57,6 @@ supabase/.temp/
 # Job-search / application material — CVs, cover letters, client evidence.
 # Never commit: this repo has a public GitHub remote.
 applicationZZ/
+content/work/screenshots-to-add/
+content/work/video-src/
+content/about-extra.json

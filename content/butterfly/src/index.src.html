@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>try { var bg = localStorage.getItem('bf-bg'); if (bg === 'paper' || bg === 'kraft') document.documentElement.classList.add(bg); } catch (e) {}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Toni Esan</title>
@@ -513,435 +512,9 @@
     .card-status { font-size: 0.6rem; letter-spacing: 0.1em; padding: 0.12rem 0.5rem; border-radius: 100px; background: rgba(251,191,36,0.12); color: var(--amber); display: inline-block; margin-bottom: 0.2rem; }
     .card-status.idea { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); }
 
-  
-    /* ══════════════════════════════════
-       BUTTERFLY LAYER (local preview)
-    ══════════════════════════════════ */
-    .hero-right { position: relative; }
-    .bf-art-wrap {
-      position: relative;
-      width: min(54vw, 86vh, 760px);
-      aspect-ratio: 1;
-      margin-right: -1.5vw;
-      flex-shrink: 0;
-    }
-    .bf-art {
-      display: block; width: 100%; height: 100%;
-      /* cut-out PNG (black keyed to alpha), so the page and the butterflies behind it show through */
-      user-select: none; pointer-events: none;
-      opacity: 0; transform: scale(.985);
-      transition: opacity 900ms ease, transform 1400ms cubic-bezier(.22,.72,.2,1);
-    }
-    .bf-art.ready { opacity: 1; transform: none; }
-
-    /* cards are slightly see-through so a butterfly drifting behind one glows faintly through it */
-    .project-card { background: rgba(3,3,3,.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-    .project-card:hover { background: rgba(10,10,10,.82); }
-
-    /* the flock sits BEHIND the page (z-index -1): cards and the hydrangea paint over it */
-    .flock-layer {
-      --butterfly-color: #5BB8FF;
-      --sprite-filter: saturate(.55) brightness(.9);
-      position: fixed; inset: 0; z-index: -1;
-      pointer-events: none; overflow: visible;
-      transition: opacity 700ms ease;
-    }
-    .flock-layer.away, body.modal-open .flock-layer { opacity: 0; }
-
-    .flight {
-      --size: 86px; --scale: 1; --angle: 0deg; --loop: 5.8s;
-      position: absolute;
-      left: var(--x); top: var(--y);
-      width: var(--size); height: calc(var(--size) * .72);
-      transform-origin: 50% 50%;
-      offset-path: var(--path); offset-distance: 0%; offset-rotate: 0deg;
-      animation: bf-follow-path var(--loop) linear var(--delay, 0s) infinite;
-      color: var(--butterfly-color);
-      filter: drop-shadow(0 0 2px color-mix(in srgb, currentColor 48%, transparent))
-              drop-shadow(0 0 6px color-mix(in srgb, currentColor 24%, transparent));
-      perspective: 340px;
-      opacity: 1;
-      transition: left 2.6s cubic-bezier(.3,.6,.2,1), top 2.6s cubic-bezier(.3,.6,.2,1),
-                  opacity 1.4s ease, color 700ms ease, filter 700ms ease, width 600ms ease, height 600ms ease;
-    }
-    .flight.resting { opacity: 0; }
-    .flock-layer.tracking .flight { transition: opacity 1.4s ease, color 700ms ease, filter 700ms ease; }
-    .flock-layer.compact .flight { width: calc(var(--size) * .62); height: calc(var(--size) * .62 * .72); }
-
-    .butterfly {
-      position: absolute; inset: 0;
-      transform-style: preserve-3d; transform-origin: 50% 52%;
-      /* bank + glimmer: each butterfly surfaces out of the dark and sinks back on its own clock */
-      animation:
-        bf-bank var(--bank-loop, 4.8s) ease-in-out var(--bank-delay, 0s) infinite,
-        bf-glimmer var(--glim, 11s) ease-in-out var(--glim-delay, 0s) infinite;
-    }
-    .wing-side {
-      position: absolute; top: 0; width: 50%; height: 100%;
-      transform-style: preserve-3d;
-      background: url("/content/butterfly/assets/butterfly-sprite.webp?v=122535") no-repeat;
-      background-size: 200% 100%;
-      filter: var(--sprite-filter);
-      transition: filter 700ms ease;
-    }
-    .wing-side.left  { left: 0;  transform-origin: 100% 52%; background-position: left center;
-      animation: bf-flap-left  var(--flap, 760ms) cubic-bezier(.4,0,.6,1) var(--flap-delay, 0s) infinite alternate; }
-    .wing-side.right { right: 0; transform-origin: 0 52%;    background-position: right center;
-      animation: bf-flap-right var(--flap, 760ms) cubic-bezier(.4,0,.6,1) var(--flap-delay, 0s) infinite alternate; }
-
-    @keyframes bf-flap-left  { from { transform: rotateY(12deg) rotateZ(-3deg); }  to { transform: rotateY(67deg) rotateZ(3deg); } }
-    @keyframes bf-flap-right { from { transform: rotateY(-12deg) rotateZ(3deg); }  to { transform: rotateY(-67deg) rotateZ(-3deg); } }
-    @keyframes bf-follow-path { from { offset-distance: 0%; } to { offset-distance: 100%; } }
-    @keyframes bf-bank {
-      0%, 100% { transform: rotateZ(var(--angle)) rotateX(0deg) scale(var(--scale)); }
-      24% { transform: rotateZ(var(--bank-a, 14deg)) rotateX(5deg) scale(var(--scale)); }
-      56% { transform: rotateZ(var(--bank-b, -12deg)) rotateX(-4deg) scale(var(--scale)); }
-      79% { transform: rotateZ(var(--bank-c, 8deg)) rotateX(3deg) scale(var(--scale)); }
-    }
-    /* in the hero (--drift: 1) each butterfly surfaces from under the petals, small, and flies
-       outwards as it fades; in the work sections (--drift: 0) it just glimmers in place */
-    @keyframes bf-glimmer {
-      0%   { opacity: 0;   translate: calc(var(--drift, 0) * 46px) calc(var(--drift, 0) * 10px); scale: calc(1 - var(--drift, 0) * .45); }
-      20%  { opacity: 1; }
-      60%  { opacity: .85; }
-      80%  { opacity: 0;   translate: calc(var(--drift, 0) * -130px) calc(var(--drift, 0) * var(--rise, -40px)); scale: 1; }
-      100% { opacity: 0;   translate: calc(var(--drift, 0) * -130px) calc(var(--drift, 0) * var(--rise, -40px)); scale: 1; }
-    }
-    .flock-layer.in-hero { --drift: 1; }
-
-    /* ── paper background (toggle) ── */
-    html.paper body {
-      background-color: #1e1d1a;
-      background-image:
-        radial-gradient(ellipse 120% 90% at 50% 35%, transparent 50%, rgba(0,0,0,.5) 100%),
-        url("/content/butterfly/assets/paper-dark.webp?v=122535");
-      background-repeat: no-repeat, repeat;
-      background-size: 100% 100%, 512px 512px;
-      background-attachment: fixed, fixed;
-    }
-    html.paper .project-card { background: rgba(6,6,6,.66); }
-    html.paper .project-card:hover { background: rgba(12,12,12,.85); }
-    html.paper .projects-grid { box-shadow: 0 24px 70px rgba(0,0,0,.45); }
-    html.paper .hat-section-header,
-    html.paper .section-title { text-shadow: 0 1px 0 rgba(0,0,0,.35); }
-
-    /* ── kraft background (toggle): cardboard + a sparse layer of pencil/chalk sketches ── */
-    html.kraft body {
-      background-color: #56402a;
-      background-image:
-        radial-gradient(ellipse 120% 90% at 50% 35%, transparent 45%, rgba(20,12,4,.55) 100%),
-        url("/content/butterfly/assets/sketches.webp?v=122535"),
-        url("/content/butterfly/assets/kraft.webp?v=122535");
-      background-repeat: no-repeat, repeat, repeat;
-      background-size: 100% 100%, 1600px 1600px, 1024px 1024px;
-      background-attachment: fixed, scroll, fixed;   /* sketches scroll with the page, like doodles on the board */
-    }
-    html.kraft .project-card { background: rgba(14,10,6,.72); }
-    html.kraft .project-card:hover { background: rgba(18,13,8,.88); }
-    html.kraft .projects-grid { box-shadow: 0 26px 70px rgba(20,10,0,.5); border-color: rgba(0,0,0,.35); }
-    /* lift the faint greys that sit directly on the board */
-    html.kraft .hero-bio { color: rgba(255,248,236,.82); }
-    html.kraft .hero-bio-muted { color: rgba(255,248,236,.55); }
-    html.kraft .hnl-label { color: rgba(255,248,236,.72); }
-    html.kraft .hnl-arrow { color: rgba(255,248,236,.4); }
-    html.kraft .section-label, html.kraft .hat-section-desc { color: rgba(255,248,236,.6); }
-    html.kraft .hat-section-header, html.kraft .section-title, html.kraft .hero-name { text-shadow: 0 1px 2px rgba(30,15,0,.45); }
-    /* hat portraits are transparent cut-outs: drop the black box on paper/kraft, keep a soft shadow */
-    html.kraft .hat-thumb, html.paper .hat-thumb { background: transparent; }
-    html.kraft .hat-thumb img, html.paper .hat-thumb img { filter: drop-shadow(0 10px 14px rgba(20,10,0,.45)); }
-    /* E / i / heart tiles: frosted card instead of a black square */
-    html.kraft .dot-tile {
-      background: rgba(255,240,215,.07);
-      box-shadow: inset 0 0 0 1px rgba(255,240,215,.16), 0 10px 24px rgba(20,10,0,.28);
-      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-    }
-    html.kraft .dot-tile:hover { background: rgba(255,240,215,.14); }
-    html.kraft .dot { opacity: .22; }
-    html.kraft .dot.lit { opacity: .95; }
-    html.kraft .about-photo img { box-shadow: 0 18px 40px rgba(20,10,0,.45); }
-
-    /* hover labels on the E / i / heart tiles */
-    .dot-tile { position: relative; }
-    .dot-tile[data-label]::after {
-      content: attr(data-label);
-      position: absolute; top: calc(100% + 9px); left: 50%;
-      transform: translate(-50%, 0); opacity: .55; pointer-events: none;
-      padding: 0; white-space: nowrap; color: rgba(255,255,255,.9);
-      font: 500 .6rem/1 'Space Grotesk', sans-serif; letter-spacing: .16em; text-transform: uppercase;
-      transition: opacity .2s ease, transform .2s ease;
-    }
-    .dot-tile:hover::after, .dot-tile:focus-visible::after { opacity: 1; transform: translate(-50%, 2px); }
-    html.kraft .dot-tile[data-label]::after { color: #fff8ec; opacity: .7; }
-    .dot-tile:focus-visible { outline: 1px solid rgba(255,255,255,.5); outline-offset: 3px; }
-
-    /* work tile = a live map of the five hats: one column per hat, filling as you scroll through it */
-    .dot-tile.work-map .dot { animation: none !important; transition: opacity .35s ease, background-color .4s ease, transform .35s ease; }
-    .dot-tile.work-map .dot.wm-off { opacity: .13; }
-    .dot-tile.work-map .dot.wm-on { opacity: .95; }
-    .dot-tile.work-map .dot.wm-now { opacity: 1; transform: scale(1.15); }
-    .dot-tile.work-map.idle .dot { animation: wm-wave 2.6s ease-in-out infinite !important; animation-delay: calc(var(--c) * .14s + (6 - var(--r)) * .07s) !important; }
-    @keyframes wm-wave { 0%, 100% { opacity: .13; } 40% { opacity: .9; } 70% { opacity: .13; } }
-    .dot-tile.work-map:hover .dot.wm-off { opacity: .32; }
-
-    /* heart / i tiles: crisper — off dots nearly gone, lit dots brighter with a soft glow, slower deeper pulse */
-    .dot-tile[data-pattern="heart"] .dot:not(.lit), .dot-tile[data-pattern="i"] .dot:not(.lit) { opacity: .05; }
-    .dot-tile[data-pattern="heart"] .dot.lit, .dot-tile[data-pattern="i"] .dot.lit {
-      box-shadow: 0 0 6px color-mix(in srgb, var(--dot) 70%, transparent);
-    }
-    .dot-tile[data-pattern="heart"] .dot.lit.pulsing { animation: heart-beat 1.5s ease-in-out infinite; animation-delay: 0s !important; }  /* beats as one */
-    @keyframes heart-beat { 0%, 100% { opacity: 1; transform: scale(1); } 12% { opacity: 1; transform: scale(1.18); } 24% { opacity: .75; transform: scale(1); } 36% { opacity: 1; transform: scale(1.12); } 60% { opacity: .7; } }
-    .dot-tile[data-pattern="i"] .dot.lit.pulsing { animation: i-glow 2.4s ease-in-out infinite; }
-    @keyframes i-glow { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
-    html.kraft .dot-tile[data-pattern="heart"] .dot:not(.lit), html.kraft .dot-tile[data-pattern="i"] .dot:not(.lit) { opacity: .08; }
-
-    /* case-study cards: plain cards with a badge and a link line */
-    .case-card { position: relative; overflow: hidden; isolation: isolate; color: inherit; text-decoration: none; cursor: pointer; }
-    .case-badge {
-      display: inline-block; padding: .08rem .45rem; border-radius: 100px; margin-left: .15rem;
-      border: 1px solid currentColor; font-size: .58rem; letter-spacing: .1em; opacity: .85;
-    }
-    .case-cta { font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; opacity: .75; transition: opacity .2s, transform .2s; }
-    .case-card:hover .case-cta { opacity: 1; transform: translateX(3px); }
-    #contracting .case-badge, #contracting .case-cta { color: var(--hat-contracting); }
-    #thinking .case-badge, #thinking .case-cta { color: var(--hat-thinking); }
-    #artisting .case-badge, #artisting .case-cta { color: var(--hat-artisting); }
-    #engineering .case-badge, #engineering .case-cta { color: var(--hat-engineering); }
-    #marketing .case-badge, #marketing .case-cta { color: var(--hat-marketing); }
-
-    /* left / right arrows beside the scroll dots, for people without a trackpad */
-    .grid-scroll-indicator { align-items: center; }
-    .gsi-arrow {
-      width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-      border: 1px solid rgba(255,255,255,.18); background: rgba(3,3,3,.55); color: rgba(255,255,255,.75);
-      font: 400 .95rem/1 'Space Grotesk', sans-serif; cursor: pointer; margin: 0 .5rem;
-      transition: background .2s, color .2s, opacity .2s, border-color .2s;
-    }
-    .gsi-arrow:hover:not(:disabled) { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.4); }
-    .gsi-arrow:disabled { opacity: .25; cursor: default; }
-    .gsi-arrow:focus-visible { outline: 1px solid rgba(255,255,255,.6); outline-offset: 2px; }
-    .gsi-dot { cursor: pointer; }
-    html.kraft .gsi-arrow { background: rgba(14,10,6,.55); border-color: rgba(255,240,215,.25); color: rgba(255,248,236,.85); }
-
-    /* interests: click a tag to see related projects and writing */
-    .interest-tag.is-btn { cursor: pointer; font-family: inherit; font-size: .7rem; line-height: 1.4; background: transparent; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.12); transition: border-color .2s, background .2s, color .2s; }
-    .interest-tag.is-btn:hover { border-color: rgba(255,255,255,.35); color: #fff; }
-    html.kraft .interest-tag.is-btn { color: rgba(255,248,236,.75); border-color: rgba(255,240,215,.25); }
-    .interest-tag.is-btn[aria-pressed="true"] { border-color: var(--cyan); color: #fff; background: rgba(91,184,255,.12); }
-    .interest-panel { margin-top: .9rem; padding: 1rem 1.1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.1); background: rgba(3,3,3,.55); backdrop-filter: blur(6px); }
-    .interest-panel[hidden] { display: none; }
-    .interest-panel .ip-head { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: .7rem; }
-    .interest-panel .ip-head b { color: #fff; font-weight: 500; }
-    .interest-panel .ip-label { display: block; font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.35); margin: .6rem 0 .35rem; }
-    .interest-panel ul { list-style: none; display: grid; gap: .3rem; }
-    .interest-panel a, .interest-panel button.ip-item { color: rgba(255,255,255,.82); font: inherit; font-size: .84rem; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
-    .interest-panel a:hover, .interest-panel button.ip-item:hover { color: var(--cyan); }
-    .interest-panel .ip-hat { font-size: .62rem; letter-spacing: .08em; margin-left: .4rem; opacity: .7; }
-    .interest-panel .ip-none { font-size: .8rem; color: rgba(255,255,255,.4); }
-    html.kraft .interest-panel { background: rgba(14,10,6,.6); border-color: rgba(255,240,215,.18); }
-    .project-card.ip-flash { animation: ip-flash 1.6s ease 1; }
-    @keyframes ip-flash { 0%, 100% { box-shadow: inset 0 0 0 0 transparent; } 25%, 60% { box-shadow: inset 0 0 0 2px var(--cyan); } }
-
-    /* about: how I work + quiet education */
-    .how-i-work { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 2.2rem; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--border); }
-    .how-i-work > div { background: rgba(3,3,3,.6); padding: 1.1rem 1.1rem 1.2rem; }
-    .how-i-work span { display: block; font-size: .62rem; letter-spacing: .16em; color: var(--cyan); margin-bottom: .55rem; }
-    .how-i-work b { display: block; font-weight: 500; font-size: .88rem; line-height: 1.35; color: rgba(255,255,255,.9); margin-bottom: .45rem; }
-    .about-bio .how-i-work p { font-size: .78rem; line-height: 1.55; color: rgba(255,255,255,.5); margin: 0; }
-    html.kraft .how-i-work > div { background: rgba(14,10,6,.6); }
-    html.kraft .about-bio p { color: rgba(255,248,236,.78); }
-    html.kraft .about-bio .how-i-work p { color: rgba(255,248,236,.6); }
-    .edu-quiet { opacity: .7; }
-    @media (max-width: 760px) { .how-i-work { grid-template-columns: 1fr; } }
-
-    /* why the hydrangea */
-    .bf-story-grid { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: clamp(2rem, 5vw, 5rem); align-items: center; }
-    .bf-story-art { width: 100%; height: auto; color: rgba(255,255,255,.55); }
-    html.kraft .bf-story-art { color: rgba(255,244,226,.7); }
-    .bf-story-text p { font-size: 1.02rem; line-height: 1.75; color: rgba(255,255,255,.62); max-width: 60ch; margin-bottom: 1.1rem; }
-    .bf-story-text p:first-child { font-size: 1.22rem; line-height: 1.6; color: rgba(255,255,255,.88); }
-    .bf-story-text .bf-story-note { font-size: .82rem; color: rgba(255,255,255,.38); margin-top: 1.6rem; }
-    html.kraft .bf-story-text p { color: rgba(255,248,236,.78); }
-    html.kraft .bf-story-text p:first-child { color: #fff8ec; }
-    html.kraft .bf-story-text .bf-story-note { color: rgba(255,248,236,.55); }
-    @media (max-width: 760px) { .bf-story-grid { grid-template-columns: 1fr; } .bf-story-art { max-width: 240px; } }
-
-    /* active hat link in the hero */
-    .hero-nav-link.is-active .hnl-label { color: rgba(255,255,255,.9); }
-    .hero-nav-link:focus-visible { outline: 1px solid rgba(255,255,255,.5); outline-offset: 4px; border-radius: 4px; }
-
-    .bf-controls {
-      position: fixed; left: 16px; bottom: 16px; z-index: 300;
-      display: flex; align-items: center; gap: 4px;
-      padding: 4px 4px 4px 12px; border-radius: 100px;
-      border: 1px solid rgba(255,255,255,.14); background: rgba(3,3,3,.75);
-      backdrop-filter: blur(8px);
-      font-family: 'Space Grotesk', sans-serif;
-    }
-    .bf-controls .bf-tag { font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-right: 6px; }
-    .bf-controls button {
-      font: 500 .68rem/1 'Space Grotesk', sans-serif; letter-spacing: .06em;
-      padding: 6px 11px; border-radius: 100px; border: 0; cursor: pointer;
-      background: transparent; color: rgba(255,255,255,.5);
-      transition: background .2s, color .2s;
-    }
-    .bf-controls button[aria-pressed="true"] { background: rgba(255,255,255,.12); color: #fff; }
-
-    @media (prefers-reduced-motion: reduce) {
-      .flight, .wing-side { animation-play-state: paused !important; }
-      .butterfly { animation: none !important; opacity: .85; }
-      .flight { transition: opacity 1.4s ease, color 700ms ease, filter 700ms ease !important; }
-    }
   </style>
 </head>
 <body>
-  <script>window.__BF_ORB_LABEL = 'Toni Esan';</script>
-  <script>
-  /* ── Connecting orb: page loader + page-to-page transition (local preview) ──
-     Points on a slowly turning sphere, joined to their near neighbours; a few
-     sparks run along the links. Drawn on a canvas, coloured by --orb. */
-  (() => {
-    const LABEL = window.__BF_ORB_LABEL || 'Loading';
-    const root = document.documentElement;
-    const css = `
-      .bf-orb-veil { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; align-content: center; gap: 18px;
-        background: rgba(3,3,3,.94); color: var(--orb, var(--dot, #5BB8FF)); opacity: 1; transition: opacity .45s ease, visibility 0s linear 0s;
-        -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-      html.paper .bf-orb-veil { background: rgba(26,25,22,.95); }
-      html.kraft .bf-orb-veil { background: rgba(62,46,30,.96); --orb: #fff1d8; }
-      .bf-orb-veil.gone { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .55s ease, visibility 0s linear .55s; }
-      .bf-orb-veil canvas { width: 132px; height: 132px; }
-      .bf-orb-veil .bf-orb-label { font: 500 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .22em; text-transform: uppercase; opacity: .7; color: #fff; }
-      html.kraft .bf-orb-veil .bf-orb-label { color: #fff8ec; }
-      @media (prefers-reduced-motion: reduce) { .bf-orb-veil, .bf-orb-veil.gone { transition: none; } }
-    `;
-    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-
-    const veil = document.createElement('div');
-    veil.className = 'bf-orb-veil'; veil.setAttribute('role', 'status'); veil.setAttribute('aria-live', 'polite');
-    veil.innerHTML = '<canvas width="264" height="264" aria-hidden="true"></canvas><span class="bf-orb-label"></span>';
-    const label = veil.querySelector('.bf-orb-label');
-    label.textContent = LABEL;
-    (document.body || root).appendChild(veil);
-
-    // sphere points (Fibonacci) and their links
-    const N = 64, pts = [];
-    for (let i = 0; i < N; i++) {
-      const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), t = i * 2.399963;
-      pts.push([Math.cos(t) * r, y, Math.sin(t) * r]);
-    }
-    const links = [];
-    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
-      const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1], pts[i][2] - pts[j][2]);
-      if (d < .52) links.push([i, j]);
-    }
-    const sparks = Array.from({ length: 7 }, () => ({ l: Math.random() * links.length | 0, t: Math.random() }));
-
-    const cv = veil.querySelector('canvas'), cx = cv.getContext('2d');
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let running = true, t0 = performance.now();
-    function drawConnect(t) {
-      const col = getComputedStyle(veil).color;
-      const W = cv.width, R = W * .36, C = W / 2;
-      const ay = t * .55, ax = .42 + Math.sin(t * .4) * .12, breathe = 1 + Math.sin(t * 1.6) * .035;
-      const cy = Math.cos(ay), sy = Math.sin(ay), cxr = Math.cos(ax), sxr = Math.sin(ax);
-      const P = pts.map(([x, y, z]) => {
-        const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
-        const y2 = y * cxr - z1 * sxr, z2 = y * sxr + z1 * cxr;
-        return [C + x1 * R * breathe, C + y2 * R * breathe, z2];
-      });
-      cx.clearRect(0, 0, W, W);
-      cx.strokeStyle = col; cx.fillStyle = col; cx.lineWidth = 1.1;
-      for (const [i, j] of links) {
-        const z = (P[i][2] + P[j][2]) / 2;
-        cx.globalAlpha = .06 + (z + 1) * .16;
-        cx.beginPath(); cx.moveTo(P[i][0], P[i][1]); cx.lineTo(P[j][0], P[j][1]); cx.stroke();
-      }
-      for (const p of P) {
-        const k = (p[2] + 1) / 2;
-        cx.globalAlpha = .25 + k * .75;
-        cx.beginPath(); cx.arc(p[0], p[1], 1.6 + k * 3, 0, 7); cx.fill();
-      }
-      for (const s of sparks) {            // little pulses travelling along the links
-        s.t += .022;
-        if (s.t >= 1) { s.t = 0; s.l = Math.random() * links.length | 0; }
-        const [i, j] = links[s.l], a = P[i], b = P[j];
-        const x = a[0] + (b[0] - a[0]) * s.t, y = a[1] + (b[1] - a[1]) * s.t, z = a[2] + (b[2] - a[2]) * s.t;
-        cx.globalAlpha = .5 + (z + 1) * .25;
-        cx.beginPath(); cx.arc(x, y, 3.2, 0, 7); cx.fill();
-      }
-    }
-
-    // "composing": a tilted ring of vertical strokes whose heights swell in a travelling wave
-    const M = 84;
-    function drawCompose(t) {
-      const col = getComputedStyle(veil).color;
-      const W = cv.width, C = W / 2, R = W * .34;
-      const ay = t * .7, tilt = .55 + Math.sin(t * .5) * .08;
-      const ct = Math.cos(tilt), stl = Math.sin(tilt);
-      cx.clearRect(0, 0, W, W);
-      cx.strokeStyle = col; cx.lineCap = 'round';
-      const cols = [];
-      for (let k = 0; k < M; k++) {
-        const th = k / M * Math.PI * 2 + ay;
-        const x = Math.cos(th), z = Math.sin(th);
-        const h = .16 + .14 * (0.5 + 0.5 * Math.sin(k / M * Math.PI * 6 - t * 2.4));   // band height
-        const top = [x, -h, z], bot = [x, h, z];
-        const proj = ([px, py, pz]) => { const y2 = py * ct - pz * stl, z2 = py * stl + pz * ct; return [C + px * R, C + y2 * R, z2]; };
-        cols.push([proj(top), proj(bot)]);
-      }
-      cols.sort((p, q) => (p[0][2] + p[1][2]) - (q[0][2] + q[1][2]));          // back to front
-      for (const [a, b] of cols) {
-        const k = ((a[2] + b[2]) / 2 + 1) / 2;
-        cx.globalAlpha = .12 + k * .85;
-        cx.lineWidth = 1.2 + k * 2.2;
-        cx.beginPath(); cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]); cx.stroke();
-      }
-    }
-
-    let mode = 'compose';   // loading = composing ring, transitions = connecting orb
-    function frame(now) {
-      if (!running) return;
-      const t = (now - t0) / 1000;
-      (mode === 'compose' ? drawCompose : drawConnect)(t);
-      cx.globalAlpha = 1;
-      if (!reduce) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-
-    const shownAt = performance.now();
-    let hidden = false;
-    window.bfOrbHide = () => {
-      if (hidden) return; hidden = true;
-      const wait = Math.max(0, 650 - (performance.now() - shownAt));   // never just flash
-      setTimeout(() => { veil.classList.add('gone'); setTimeout(() => { running = false; }, 700); }, wait);
-    };
-    setTimeout(window.bfOrbHide, 4500);                                 // safety net
-
-    // leaving: fade the orb in, then go
-    window.bfGo = (href, text) => {
-      mode = 'connect';
-      label.textContent = text || 'Loading';
-      const was = running; hidden = false; running = true;
-      veil.classList.remove('gone'); if (!was) requestAnimationFrame(frame);
-      setTimeout(() => { location.href = href; }, reduce ? 0 : 420);
-    };
-    const labelFor = u => /^\/blog(-butterfly)?(\.html)?(\/|$)/.test(u.pathname) ? 'Opening the blog'
-      : /^\/work(\.html)?(\/|$)/.test(u.pathname) ? 'Opening the case study'
-      : /^\/(index(-butterfly)?(\.html)?)?$/.test(u.pathname) ? 'Back to the homepage' : null;
-    document.addEventListener('click', e => {
-      const a = e.target.closest && e.target.closest('a[href]');
-      if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
-      const url = new URL(a.getAttribute('href'), location.href);
-      if (url.origin !== location.origin) return;
-      const text = labelFor(url);
-      if (!text || (url.pathname === location.pathname && url.hash)) return;
-      e.preventDefault(); bfGo(url.href, text);
-    });
-    // back/forward cache: never come back to a covered page
-    addEventListener('pageshow', e => { if (e.persisted) { veil.classList.add('gone'); running = false; } });
-  })();
-  </script>
-
 
 <!-- ══════ LEAF SVG DEFS (reusable) ══════ -->
 <!-- bottom-left branch -->
@@ -968,13 +541,13 @@
 <!-- ══════ NAV ══════ -->
 <nav>
   <div class="nav-group">
-    <div class="dot-tile" data-pattern="E" data-label="work" aria-label="work" role="link" tabindex="0" onclick="navTo('work')"></div>
+    <div class="dot-tile" data-pattern="E" onclick="navTo('work')"></div>
   </div>
   <div class="nav-group" style="align-items:center">
-    <div class="dot-tile" data-pattern="heart" data-label="blog" aria-label="blog" role="link" tabindex="0" onclick="bfGo('/blog', 'Opening the blog')"></div>
+    <div class="dot-tile" data-pattern="i" onclick="navTo('about')"></div>
   </div>
   <div class="nav-group row">
-    <div class="dot-tile" data-pattern="i" data-label="about" aria-label="about" role="link" tabindex="0" onclick="navTo('about')"></div>
+    <div class="dot-tile" data-pattern="heart" onclick="window.location.href='blog.html'"></div>
     <a href="context/Toni Esan CV_MLx.pdf" target="_blank">
       <button class="nav-pill" style="font-size:0.82rem">Resumé</button>
     </a>
@@ -994,7 +567,7 @@
       <span class="n-esan">Esan</span>
     </h1>
     <div class="hero-bio-wrap">
-      <p class="hero-bio">Engineering &times; AI &times; Creative product thinking. I build things that bridge disciplines, and I love learning new things and teaching them. <span class="hero-bio-muted">Mechanical engineering, software and product design, joined up with AI. Builder and educator.</span></p>
+      <p class="hero-bio">Engineering &times; AI &times; Creative product thinking. Building things that bridge disciplines and solve real problems with taste. <span class="hero-bio-muted">MSc Applied AI, Cranfield &middot; Technical Officer, Leveret AI.</span></p>
     </div>
 <div class="hero-nav-links">
       <div class="hero-nav-link" data-hat="contracting" onclick="navTo('contracting')">
@@ -1026,23 +599,9 @@
   </div>
 
   <div class="hero-right">
-    <div class="bf-art-wrap">
-      <img class="bf-art" src="/content/butterfly/assets/hydrangea-cutout.webp?v=122535" alt="A blue hydrangea whose edge petals turn into butterflies" onload="this.classList.add('ready')">
-      <div class="flight" style="--hx:0.26;--hy:0.23;--x:-200px;--y:-200px;--size:118px;--angle:-19deg;--bank-a:10deg;--bank-b:-28deg;--bank-c:-5deg;--bank-loop:5.3s;--bank-delay:-1.2s;--path:path('M 0 0 C -36 -32 -92 -13 -84 33 C -76 76 2 72 34 29 C 58 -5 30 -35 0 0 Z');--loop:11.8s;--delay:-2.1s;--flap:820ms;--flap-delay:0s;--glim:13s;--glim-delay:-2s;--rise:-70px">
-        <div class="butterfly"><div class="wing-side left"></div><div class="wing-side right"></div></div>
-      </div>
-      <div class="flight" style="--hx:0.32;--hy:0.36;--x:-200px;--y:-200px;--size:62px;--angle:7deg;--bank-a:24deg;--bank-b:-15deg;--bank-c:17deg;--bank-loop:4.4s;--bank-delay:-2.4s;--path:path('M 0 0 C 18 -36 -14 -67 -51 -47 C -94 -24 -83 34 -34 55 C 16 76 51 28 0 0 Z');--loop:9.6s;--delay:-1.3s;--flap:690ms;--flap-delay:-0.2s;--glim:9.5s;--glim-delay:-6s;--rise:-30px">
-        <div class="butterfly"><div class="wing-side left"></div><div class="wing-side right"></div></div>
-      </div>
-      <div class="flight" style="--hx:0.29;--hy:0.43;--x:-200px;--y:-200px;--size:78px;--angle:16deg;--bank-a:-17deg;--bank-b:29deg;--bank-c:4deg;--bank-loop:5.0s;--bank-delay:-0.8s;--path:path('M 0 0 C -26 -44 -83 -41 -96 5 C -108 53 -45 88 6 65 C 52 43 48 -20 0 0 Z');--loop:12.4s;--delay:-4s;--flap:740ms;--flap-delay:-0.45s;--glim:11s;--glim-delay:-1s;--rise:-10px">
-        <div class="butterfly"><div class="wing-side left"></div><div class="wing-side right"></div></div>
-      </div>
-      <div class="flight" style="--hx:0.325;--hy:0.51;--x:-200px;--y:-200px;--size:54px;--angle:-9deg;--bank-a:18deg;--bank-b:-25deg;--bank-c:12deg;--bank-loop:4.1s;--bank-delay:-1.9s;--path:path('M 0 0 C 8 -35 -33 -60 -68 -36 C -105 -11 -78 45 -27 63 C 25 81 58 25 0 0 Z');--loop:10.3s;--delay:-0.8s;--flap:640ms;--flap-delay:-0.33s;--glim:8.5s;--glim-delay:-4.5s;--rise:20px">
-        <div class="butterfly"><div class="wing-side left"></div><div class="wing-side right"></div></div>
-      </div>
-      <div class="flight" style="--hx:0.3;--hy:0.58;--x:-200px;--y:-200px;--size:70px;--angle:20deg;--bank-a:-11deg;--bank-b:31deg;--bank-c:-19deg;--bank-loop:5.7s;--bank-delay:-3s;--path:path('M 0 0 C -22 -41 -72 -34 -91 10 C -110 59 -44 93 12 66 C 62 40 51 -22 0 0 Z');--loop:13.2s;--delay:-3.2s;--flap:780ms;--flap-delay:-0.51s;--glim:12s;--glim-delay:-8.5s;--rise:45px">
-        <div class="butterfly"><div class="wing-side left"></div><div class="wing-side right"></div></div>
-      </div>
+    <div class="flower-card">
+      <img src="assetsforsite/hyrdangea.png" alt="Hydrangea"
+        onerror="this.outerHTML='<div class=flower-fallback>hydrangea</div>'">
     </div>
   </div>
 </section>
@@ -1061,7 +620,7 @@
     <div class="hat-section" id="contracting">
       <div class="hat-section-header">
         <div class="hat-thumb">
-          <img src="/content/butterfly/assets/Contracting_hat_purple_cutout.webp?v=122535" alt=""
+          <img src="assetsforsite/Contracting_hat_purple.jpg" alt=""
             onerror="this.outerHTML='<div class=hat-thumb-ph></div>'">
         </div>
         <div>
@@ -1082,30 +641,6 @@
           <p class="card-metric">Birmingham City Council · West Midlands Trusts</p>
           <div class="card-tags"><span class="tag">Claude Cowork</span><span class="tag">AI Workflows</span><span class="tag">Consulting</span><span class="tag">Upskilling</span></div>
         </div>
-        <a class="project-card case-card" href="/work/thorne-hale">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">Construction workflows for a renovation contractor</h3>
-          <p class="card-desc">AI workflows in ChatGPT Work that connect a contractor&#x27;s enquiries, tenders, site notes and subcontractor paperwork to records the owner can review.</p>
-          <p class="card-metric">Delivered · in use</p>
-          <div class="card-tags"><span class="tag">ChatGPT Work</span><span class="tag">Workflow design</span><span class="tag">Construction</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
-        <a class="project-card case-card" href="/work/lending-assistant">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">From handwritten notes to a credit paper</h3>
-          <p class="card-desc">Skills for a specialist-lending broker that turn notes, emails and attachments into a sourced deal record and a draft credit paper, tested against a gold case.</p>
-          <p class="card-metric">Delivered · tested build</p>
-          <div class="card-tags"><span class="tag">Claude skills</span><span class="tag">Finance</span><span class="tag">Evidence tracking</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
-        <a class="project-card case-card" href="/work/charity-toolkit">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">An AI toolkit for small charities</h3>
-          <p class="card-desc">Demo organisations and hands-on sessions that turn minutes, surveys and old posts into bids, posts and posters that still sound like the charity.</p>
-          <p class="card-metric">Delivered</p>
-          <div class="card-tags"><span class="tag">Training</span><span class="tag">Charity</span><span class="tag">Writing voice</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
         <div class="project-card"
        data-note="Contracted data engineering work.">
           
@@ -1206,22 +741,6 @@
         </div>
       </div>
       <div class="projects-grid">
-        <a class="project-card case-card" href="/work/grandma-tv">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">Grandma TV</h3>
-          <p class="card-desc">An Android app that lets my grandmother tap a card to put her show on.</p>
-          <p class="card-metric">Installed · used sometimes</p>
-          <div class="card-tags"><span class="tag">Android</span><span class="tag">NFC</span><span class="tag">Accessibility</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
-        <a class="project-card case-card" href="/work/automation-collection">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">Small tools, used daily</h3>
-          <p class="card-desc">Personal automations, led by a fuel finder I use every time I fill up.</p>
-          <p class="card-metric">In use</p>
-          <div class="card-tags"><span class="tag">Apple Shortcuts</span><span class="tag">Scriptable</span><span class="tag">Python</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
         <div class="project-card"
        data-note="Montedera is both a thinking and artisting project, exploring ideas through visual and cultural lenses."
        data-link="https://claudeera.vercel.app">
@@ -1232,14 +751,15 @@
           <p class="card-metric">Live</p>
           <div class="card-tags"><span class="tag">Creative</span><span class="tag">Culture</span><span class="tag">Exploration</span></div>
         </div>
-        <a class="project-card case-card" href="/work/the-full-week">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">The Full Week</h3>
-          <p class="card-desc">A training plan built from my own data, which shows up on the web, my lock screen and an iOS Live Activity.</p>
-          <p class="card-metric">Live</p>
-          <div class="card-tags"><span class="tag">Next.js</span><span class="tag">Neon</span><span class="tag">SwiftUI</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
+        <div class="project-card"
+       data-note="Combined my half-marathon training with an AI health coaching app I built for myself, using GPT Codex.">
+          
+          <p class="card-period">2026</p>
+          <h3 class="card-title">Healthcoach + Halfmara</h3>
+          <p class="card-desc">Personal AI health coaching tool merged with a half-marathon training tracker, built using GPT Codex. Integrated workout scheduling, nutrition logging, and coaching feedback.</p>
+          <p class="card-metric">Personal tool, ongoing</p>
+          <div class="card-tags"><span class="tag">Health</span><span class="tag">Running</span><span class="tag">AI Coach</span></div>
+        </div>
         <div class="project-card"
        data-note="Built to solve the real problem of sorting and ordering photos for a birthday slideshow.">
           
@@ -1347,14 +867,6 @@
         </div>
       </div>
       <div class="projects-grid">
-        <a class="project-card case-card" href="/work/pacetune">
-          <p class="card-period">2026 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">PaceTune</h3>
-          <p class="card-desc">Which song was playing on which split of your run.</p>
-          <p class="card-metric">Live</p>
-          <div class="card-tags"><span class="tag">Next.js</span><span class="tag">Spotify API</span><span class="tag">Strava API</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
         <div class="project-card"
        data-note="Built because lyric videos take ages to make manually. This automates the whole thing."
        data-link="https://github.com/toniesan">
@@ -1490,22 +1002,24 @@
           <div class="card-tags"><span class="tag">Machine Learning</span><span class="tag">Deep RL</span><span class="tag">Computer Vision</span><span class="tag">Cranfield</span></div>
         </div>
         <div class="project-card"
-       data-note="I led our Cranfield Group Design Project: a neural gazetteer that describes, and pictures, places that maps barely label."
-       data-link="https://www.researchgate.net/publication/400702068_Generative_Street-View_using_Satellite_Images_with_Hallucination_Reduction_via_Semantic_Constraining">
-          <p class="card-period">2024–2025 · Project lead</p>
-          <h3 class="card-title">Neural Gazetteer (Cranfield GDP)</h3>
-          <p class="card-desc">Give it a latitude and longitude and it builds a rich description and a street-level picture of the place, even where maps have few labels. Reverse geocoding and Places data, GPT-4o narratives, then Stable Diffusion with ControlNet to synthesise street views from satellite imagery. Published as <em>Generative Street-View using Satellite Images with Hallucination Reduction via Semantic Constraining</em>.</p>
-          <p class="card-metric">Project lead · published paper</p>
-          <div class="card-tags"><span class="tag">Geospatial</span><span class="tag">Diffusion</span><span class="tag">LLMs</span></div>
+       data-note="GDP project at Cranfield, building AI tools for engineering design workflows.">
+          
+          <p class="card-period">2024–2025</p>
+          <h3 class="card-title">Cranfield GDP: Generative Prompt Pipeline</h3>
+          <p class="card-desc">Group Design Project at Cranfield. Built a generative AI prompt pipeline for engineering design assistance.</p>
+          <p class="card-metric">Group project · Cranfield</p>
+          <div class="card-tags"><span class="tag">Generative AI</span><span class="tag">Prompt Engineering</span><span class="tag">Engineering Design</span></div>
         </div>
-        <a class="project-card case-card" href="/work/cornerstore">
-          <p class="card-period">2025 · <span class="case-badge">Case study</span></p>
-          <h3 class="card-title">A digital twin for a corner shop</h3>
-          <p class="card-desc">A LiDAR-scanned 3D model of a corner shop, with photo and voice stock entry and a count manager that follows the supplier sheet.</p>
-          <p class="card-metric">Prototype · tried on a real count</p>
-          <div class="card-tags"><span class="tag">Digital twin</span><span class="tag">LiDAR</span><span class="tag">Gemini</span></div>
-          <span class="case-cta">Read the case study →</span>
-        </a>
+        <div class="project-card"
+       data-note="Built Cornerstore to solve real stock management pain points for small shops."
+       data-link="https://cornerstockv2.vercel.app">
+          
+          <p class="card-period">2025</p>
+          <h3 class="card-title">Cornerstore</h3>
+          <p class="card-desc">Inventory and stock management system for small retailers, a full-stack web app.</p>
+          <p class="card-metric">Live</p>
+          <div class="card-tags"><span class="tag">Full Stack</span><span class="tag">Inventory</span><span class="tag">Retail</span></div>
+        </div>
         <div class="project-card"
        data-note="Built to speed up photo ordering workflows. Takes a batch and sorts them.">
           
@@ -1794,22 +1308,22 @@
   </svg>
   <div class="section">
     <p class="section-label">About</p>
-    <h2 class="section-title">I solve problems by building things</h2>
+    <h2 class="section-title">Mechanical engineer turned AI builder</h2>
     <div class="about-grid">
       <div>
         <div class="about-bio">
-          <p>I'm <strong>Toni Esan</strong>, based in London. I like problem solving, and the way I solve problems is by <strong>building the thing</strong>. I've done that in mechanical engineering, in software, and in product design, where I still sketch and model in 3D.</p>
-          <p>Now I use <strong>AI to bring all of that together</strong>. At <strong>Leveret AI</strong>, a dental AI startup, I built the annotation site dentists actually used to label X-rays, and tested our voice notes with dentists through background noise and different accents. Through <strong>Avalon Insights</strong> I build AI workflows and run training for construction firms, lenders, charities and trade bodies. And I build a lot of my own tools, from a 3D digital twin of a corner shop to a training plan that lives on my lock screen.</p>
-          <p>Before that I worked in industry: logistics deployment at GXO, IT at LiviaSoft, and autonomous vehicles since 2019. I've also grown social accounts past half a million followers.</p>
-          <p>I like learning new things, and I like teaching them just as much. That's a big part of why so much of my work is helping people use AI well, not just building it for them.</p>
-          <p>What I'm into: cars and anything automotive, from autonomous vehicles to logging every fill-up of my old Polo. I'm nearly always in the middle of a side project, building with Codex, Claude and Gemini, and this site is slowly being built out of a second brain of my bookmarks and voice notes. I'm training for a half marathon (PaceTune came out of wanting to know which song was playing on each split), I watch a lot of films, I follow football, and I sign BSL and speak some Spanish and Yoruba.</p>
-          <div class="how-i-work">
-            <div><span>01</span><b>Make it easy for the person using it</b><p>Dentists weren't going to sign up to Roboflow, so I built them a mobile annotation site instead.</p></div>
-            <div><span>02</span><b>Keep a person in the loop where it matters</b><p>Drafts, emails and credit papers wait for the owner's approval before anything goes out.</p></div>
-            <div><span>03</span><b>Test it where it will be used</b><p>On the real TV, in the real shop, with real accents and background noise.</p></div>
-          </div>
+          <p>I'm <strong>Toni Esan</strong>, based in London. I work across engineering, AI and creative product thinking. I'm not a pure researcher and not a pure developer. I <strong>build things that bridge disciplines</strong> and solve real problems with taste.</p>
+          <p>Completed an <strong>MSc in Applied AI at Cranfield</strong> (Distinction, July 2025) while working as Technical Officer at <strong>Leveret AI</strong>, a CV startup bringing AI diagnostics to NHS dental clinics. Before that, I was working in industry as a mechanical engineer, honing in on software engineering skills and web automations.</p>
+          <p>I've worked with autonomous vehicles since 2019, before Waymo made self-driving mainstream. I've grown social accounts to half a million followers, built dental AI products used in real clinics, and now run my own AI consulting practice. I wear a lot of hats, <em>literally</em>.</p>
+          <p>BSL, conversational Spanish and Yoruba, basic Arabic. Currently training for a half marathon. Running is the thinking time.</p>
         </div>
-        
+        <div style="margin-top:3rem;">
+          <p class="side-label" style="margin-bottom:0.75rem">Blog</p>
+          <div class="blog-ph">
+          <p style="font-size:0.9rem;color:rgba(255,255,255,0.35);font-weight:500;margin-bottom:0.4rem">Coming soon</p>
+          <p>Cool news, half-formed thoughts, film takes, tech rabbit holes. Currently living in Twitter bookmarks <a href="https://x.com/tonzownz" style="color:var(--cyan)">@tonzownz</a>.</p>
+        </div>
+        </div>
       </div>
       <div class="about-side">
         <div class="about-photo">
@@ -1825,7 +1339,13 @@
             <a class="contact-link" href="https://boxd.it/5YsGb" target="_blank"><span class="cl-icon">◈</span>Letterboxd</a>
           </div>
         </div>
-        
+        <div>
+          <p class="side-label">Education</p>
+          <div class="contact-links">
+            <span class="contact-link" style="cursor:default">MSc Applied AI, Cranfield (Distinction)</span>
+            <span class="contact-link" style="cursor:default">BEng Design Engineering, Aston (1st)</span>
+          </div>
+        </div>
         <div>
           <p class="side-label">Interests</p>
           <div class="tags-list">
@@ -1842,13 +1362,6 @@
             <span class="interest-tag">Spanish</span><span class="interest-tag">Yoruba</span><span class="interest-tag">Arabic (basic)</span>
           </div>
         </div>
-        <div class="edu-quiet"><div>
-          <p class="side-label">Education</p>
-          <div class="contact-links">
-            <span class="contact-link" style="cursor:default">MSc Applied AI, Cranfield (Distinction)</span>
-            <span class="contact-link" style="cursor:default">BEng Design Engineering, Aston (1st)</span>
-          </div>
-        </div></div>
       </div>
     </div>
   </div>
@@ -2045,392 +1558,4 @@
     document.body.style.overflow = '';
   }
 
-
-  // ══ BUTTERFLY LAYER (local preview; see content/butterfly/README.md) ══
-  (() => {
-    // ── background toggle: ink (black) / paper ──
-    const root = document.documentElement;
-    const store = { get: () => { try { return localStorage.getItem('bf-bg'); } catch { return null; } },
-                    set: v => { try { localStorage.setItem('bf-bg', v); } catch {} } };
-    const controls = document.createElement('div');
-    controls.className = 'bf-controls';
-    controls.innerHTML = '' +
-      '<button type="button" data-bg="ink">Ink</button><button type="button" data-bg="paper">Paper</button>' +
-      '<button type="button" data-bg="kraft">Kraft</button>';
-    document.body.appendChild(controls);
-    const setBg = bg => {
-      root.classList.toggle('paper', bg === 'paper');
-      root.classList.toggle('kraft', bg === 'kraft');
-      controls.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.bg === bg)));
-      store.set(bg);
-    };
-    controls.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setBg(b.dataset.bg); });
-    setBg(['paper', 'kraft'].includes(store.get()) ? store.get() : 'ink');
-
-    document.querySelectorAll('.dot-tile[tabindex]').forEach(t => t.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t.click(); }
-    }));
-
-    // ── project grids: arrows + clickable dots (the dots row is built by index.html's own script) ──
-    document.querySelectorAll('.projects-grid').forEach(grid => {
-      const ind = grid.nextElementSibling;
-      if (!ind || !ind.classList.contains('grid-scroll-indicator')) return;
-      const step = () => grid.clientWidth / 3;                 // one card column
-      const mk = (dir, label) => {
-        const b = document.createElement('button');
-        b.type = 'button'; b.className = 'gsi-arrow'; b.setAttribute('aria-label', label);
-        b.textContent = dir < 0 ? '←' : '→';
-        b.addEventListener('click', () => grid.scrollBy({ left: dir * step(), behavior: 'smooth' }));
-        return b;
-      };
-      const prev = mk(-1, 'Previous projects'), next = mk(1, 'Next projects');
-      ind.prepend(prev); ind.append(next);
-      ind.querySelectorAll('.gsi-dot').forEach((d, i) =>
-        d.addEventListener('click', () => grid.scrollTo({ left: i * step(), behavior: 'smooth' })));
-      const update = () => {
-        prev.disabled = grid.scrollLeft < 4;
-        next.disabled = grid.scrollLeft + grid.clientWidth > grid.scrollWidth - 4;
-      };
-      grid.addEventListener('scroll', update, { passive: true });
-      addEventListener('resize', update);
-      update();
-    });
-    // case-study cards are links: don't let the project modal catch their clicks
-    document.addEventListener('click', e => {
-      if (e.target.closest && e.target.closest('.case-card')) e.stopPropagation();
-    }, true);
-
-    // ── interests: click a tag → related projects on this page + posts from the blog ──
-    (() => {
-      const label = [...document.querySelectorAll('.about-side .side-label')].find(l => l.textContent.trim() === 'Interests');
-      const list = label && label.nextElementSibling;
-      if (!list) return;
-      const KEYS = {
-        'Mobile apps': /\b(apps?|ios|android|iphone|swiftui|mobile|shortcuts?|testflight)\b/i,
-        'Consumer hardware': /\b(hardware|devices?|dyson|foldables?|glasses|speaker|iphone|apple|camera|wearables?|3d print\w*|nfc)\b/i,
-        'Electric vehicles': /\b(electric|evs?|scooter|vehicles?|autonomous|tesla|powertrain)\b/i,
-        'Mixed reality': /\b(mixed reality|ar|vr|xr|vision pro|headsets?|smart glasses|meta glasses|digital twin|lidar)\b/i,
-        'Half marathons': /\b(half[- ]?marathons?|marathons?|running(?!\s+(training|sessions|workshops|programmes|courses))|strava|halfmara|training plan)\b/i,
-        'EdTech': /\b(edtech|tutor\w*|learning|education|flashcards?|workshops?|upskilling|students?)\b/i,
-        'Film': /\b(films?|movies?|cinema|letterboxd|lyric\w*)\b/i,
-        'Football': /\b(football|soccer)\b/i,
-        'BSL': /\b(bsl|sign language|deaf)\b/i,
-      };
-      const BLOG_URL = 'https://dmlwcrbjetpgqacblvqp.supabase.co/rest/v1/published_posts';
-      const BLOG_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
-      let postsP = null;
-      const loadPosts = () => postsP || (postsP = fetch(BLOG_URL + '?select=slug,title,excerpt,body_md,topic_tags,published_at&published_at=lte.' +
-          encodeURIComponent(new Date().toISOString()) + '&order=published_at.desc', { headers: { apikey: BLOG_KEY, Authorization: 'Bearer ' + BLOG_KEY } })
-        .then(r => r.ok ? r.json() : []).catch(() => []));
-      const esc = t => String(t || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-      const plain = t => String(t || '').replace(/\*/g, '');
-
-      const panel = document.createElement('div');
-      panel.className = 'interest-panel'; panel.hidden = true; panel.setAttribute('aria-live', 'polite');
-      list.after(panel);
-
-      const cards = [...document.querySelectorAll('#work .project-card')];
-      async function show(name, re) {
-        const projects = cards.filter(c => re.test(c.textContent + ' ' + (c.dataset.note || ''))).slice(0, 7);
-        panel.hidden = false;
-        const projHtml = projects.length ? '<ul>' + projects.map((c, i) => {
-          const t = esc(c.querySelector('.card-title')?.textContent);
-          const hat = c.closest('.hat-section')?.id || '';
-          return c.matches('a') ? `<li><a href="${c.getAttribute('href')}">${t}</a><span class="ip-hat">${hat} · case study</span></li>`
-                                : `<li><button type="button" class="ip-item" data-i="${cards.indexOf(c)}">${t}</button><span class="ip-hat">${hat}</span></li>`;
-        }).join('') + '</ul>' : '<p class="ip-none">Nothing built on this yet.</p>';
-        const render = posts => {
-          const hits = (posts || []).filter(p => re.test([p.title, p.excerpt, p.body_md, (p.topic_tags || []).join(' ')].join(' '))).slice(0, 4);
-          const postHtml = hits.length ? '<ul>' + hits.map(p => `<li><a href="/blog/${encodeURIComponent(p.slug)}">${esc(plain(p.title))}</a></li>`).join('') + '</ul>'
-                                       : (posts === null ? '<p class="ip-none">Loading…</p>' : '<p class="ip-none">Nothing written on this yet.</p>');
-          panel.innerHTML = `<p class="ip-head">Related to <b>${esc(name)}</b></p><span class="ip-label">Built</span>${projHtml}<span class="ip-label">Written</span>${postHtml}`;
-        };
-        render(null);
-        render(await loadPosts());
-      }
-
-      panel.addEventListener('click', e => {
-        const b = e.target.closest('button.ip-item'); if (!b) return;
-        const card = cards[+b.dataset.i];
-        card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-        card.classList.remove('ip-flash'); void card.offsetWidth; card.classList.add('ip-flash');
-      });
-
-      list.querySelectorAll('.interest-tag').forEach(tag => {
-        const name = tag.textContent.trim(), re = KEYS[name];
-        if (!re) return;
-        const btn = document.createElement('button');
-        btn.type = 'button'; btn.className = tag.className + ' is-btn'; btn.textContent = name; btn.setAttribute('aria-pressed', 'false');
-        tag.replaceWith(btn);
-        btn.addEventListener('click', () => {
-          const on = btn.getAttribute('aria-pressed') !== 'true';
-          list.querySelectorAll('.is-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-          if (!on) { panel.hidden = true; return; }
-          btn.setAttribute('aria-pressed', 'true');
-          show(name, re);
-        });
-      });
-    })();
-
-    // ── the work tile becomes a map of the page: 5 columns = 5 hats, each fills bottom-up as you scroll through it ──
-    (() => {
-      const tile = document.querySelector('.dot-tile[data-pattern="E"]');
-      const order = ['contracting', 'thinking', 'artisting', 'engineering', 'marketing'];
-      const secs = order.map(id => document.getElementById(id));
-      if (!tile || secs.some(s => !s)) return;
-      const colours = { contracting: '#A78BFA', thinking: '#C4956A', artisting: '#6EE7B7', engineering: '#5BB8FF', marketing: '#FBBF24' };
-      const build = () => {
-        const dots = [...tile.querySelectorAll('.dot')];
-        if (dots.length !== 35) return null;
-        tile.classList.add('work-map');
-        dots.forEach((d, i) => {
-          const r = Math.floor(i / 5), c = i % 5;
-          d.classList.remove('lit', 'pulsing', 'hover-boost'); d.dataset.active = '0';
-          d.style.background = colours[order[c]];
-          d.style.setProperty('--c', c); d.style.setProperty('--r', r);
-        });
-        return dots;
-      };
-      let dots = build();
-      if (!dots) return;
-      const paint = () => {
-        const mid = innerHeight * .5;
-        const first = secs[0].getBoundingClientRect(), last = secs[4].getBoundingClientRect();
-        const idle = first.top > mid || last.bottom < 0 && false;
-        tile.classList.toggle('idle', first.top > mid);
-        if (first.top > mid) { dots.forEach(d => d.classList.remove('wm-on', 'wm-off', 'wm-now')); return; }
-        secs.forEach((sec, c) => {
-          const r = sec.getBoundingClientRect();
-          const p = Math.max(0, Math.min(1, (mid - r.top) / Math.max(1, r.height)));
-          const filled = Math.round(p * 7);
-          const current = r.top <= mid && r.bottom > mid;
-          for (let row = 0; row < 7; row++) {
-            const d = dots[row * 5 + c], on = (6 - row) < filled;
-            d.classList.toggle('wm-on', on); d.classList.toggle('wm-off', !on);
-            d.classList.toggle('wm-now', current && on && (6 - row) === filled - 1);
-          }
-        });
-      };
-      let raf;
-      addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = null; paint(); }); }, { passive: true });
-      addEventListener('resize', paint);
-      paint();
-    })();
-
-    const THEMES = {
-      hero:        { color: '#5BB8FF', filter: 'saturate(.55) brightness(.9)' },
-      engineering: { color: '#5BB8FF', filter: 'saturate(.55) brightness(.9)' },
-      contracting: { color: '#A78BFA', filter: 'hue-rotate(52deg) saturate(.48) brightness(.86)' },
-      thinking:    { color: '#C4956A', filter: 'hue-rotate(174deg) saturate(.38) brightness(.82)' },
-      artisting:   { color: '#6EE7B7', filter: 'hue-rotate(-60deg) saturate(.38) brightness(.9)' },
-      marketing:   { color: '#FBBF24', filter: 'hue-rotate(188deg) saturate(.5) brightness(.88)' },
-    };
-    // only two butterflies per hat section; which two varies so each section feels different
-    const DUOS = { contracting: [1, 4], thinking: [2, 3], artisting: [4, 1], engineering: [3, 2], marketing: [1, 2] };
-
-    const art = document.querySelector('.bf-art');
-    const work = document.getElementById('work');
-    const sections = [...document.querySelectorAll('.hat-section')];
-    const links = [...document.querySelectorAll('.hero-nav-link[data-hat]')];
-    const flights = [...document.querySelectorAll('.flight')];
-    if (!art || !flights.length) return;
-
-    const flock = document.createElement('div');
-    flock.className = 'flock-layer';
-    flock.setAttribute('aria-hidden', 'true');
-    flights.forEach(f => flock.appendChild(f));
-    document.body.appendChild(flock);
-
-    let mode = 'hero';            // 'hero' | 'work' | 'away'
-    let active = null;            // active .hat-section
-    let duo = [];
-    let buttonNavigation = false;
-    let trackAfter = 0;           // hero: follow the art without easing once the return flight is done
-    let followTimer, settleTimer, frame, driftTurn = 0;
-
-    const setXY = (f, x, y) => { f.style.setProperty('--x', x + 'px'); f.style.setProperty('--y', y + 'px'); };
-    const sizeOf = f => parseFloat(getComputedStyle(f).width) || 70;
-    const shuffle = a => a.map(v => [Math.random(), v]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
-
-    function applyTheme(key) {
-      const t = THEMES[key] || THEMES.hero;
-      flock.style.setProperty('--butterfly-color', t.color);
-      flock.style.setProperty('--sprite-filter', t.filter);
-      links.forEach(l => l.classList.toggle('is-active', l.dataset.hat === key));
-      links.forEach(l => l.setAttribute('aria-pressed', String(l.dataset.hat === key)));
-    }
-
-    function placeHome() {
-      const r = art.getBoundingClientRect();
-      flights.forEach(f => {
-        const cs = getComputedStyle(f);
-        setXY(f, r.left + r.width * parseFloat(cs.getPropertyValue('--hx')),
-                 r.top + r.height * parseFloat(cs.getPropertyValue('--hy')));
-      });
-    }
-
-    // a hat section can hold several grids (engineering has two): use the one nearest mid-screen
-    function gridIn(section) {
-      const grids = [...section.querySelectorAll('.projects-grid')];
-      if (!grids.length) return null;
-      const mid = innerHeight / 2;
-      return grids.reduce((a, g) => {
-        const r = g.getBoundingClientRect(), d = Math.abs(r.top + r.height / 2 - mid);
-        return !a || d < a.d ? { g, d } : a;
-      }, null).g;
-    }
-
-    function visibleCards(section) {
-      const g = gridIn(section);
-      if (!g) return [];
-      const gr = g.getBoundingClientRect();
-      return [...g.querySelectorAll('.project-card')].filter(c => {
-        const r = c.getBoundingClientRect();
-        return r.right > gr.left + 30 && r.left < gr.right - 30 && r.bottom > 140 && r.top < innerHeight - 80;
-      });
-    }
-
-    // drift behind a card: somewhere around its middle, a little off-centre
-    function behind(f, card) {
-      const r = card.getBoundingClientRect(), s = sizeOf(f);
-      const jx = (Math.random() - .5) * r.width * .45, jy = (Math.random() - .5) * r.height * .35;
-      setXY(f, r.left + r.width / 2 - s / 2 + jx, r.top + r.height / 2 - s * .36 + jy);
-      f._card = card;
-    }
-
-    function stageDuo(section) {
-      duo = (DUOS[section.id] || [1, 3]).map(i => flights[i]);
-      flights.forEach(f => f.classList.toggle('resting', !duo.includes(f)));
-      const cards = shuffle(visibleCards(section));
-      duo.forEach((f, i) => { if (cards.length) behind(f, cards[i % cards.length]); });
-    }
-
-    // after a scroll the cards have moved: follow them (or pick a new one if ours left the screen)
-    function resettle() {
-      if (mode !== 'work' || !active) return;
-      const cards = visibleCards(active);
-      if (!cards.length) return;
-      duo.forEach(f => {
-        const keep = cards.includes(f._card) ? f._card
-          : shuffle(cards.filter(c => !duo.some(o => o !== f && o._card === c)))[0] || cards[0];
-        behind(f, keep);
-      });
-    }
-
-    // every so often one of the pair floats over to a different project
-    setInterval(() => {
-      if (mode !== 'work' || !active || document.hidden) return;
-      const f = duo[driftTurn++ % duo.length];
-      if (!f) return;
-      const options = visibleCards(active).filter(c => !duo.some(o => o._card === c));
-      if (options.length) behind(f, shuffle(options)[0]);
-    }, 7000);
-
-    // hovering a project: the nearer of the pair drifts behind it
-    document.querySelectorAll('.hat-section .project-card').forEach(card => {
-      card.addEventListener('mouseenter', () => {
-        if (mode !== 'work' || !duo.length || duo.some(f => f._card === card)) return;
-        const c = card.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
-        const f = duo.reduce((a, b) => {
-          const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-          return Math.hypot(ra.left - cx, ra.top - cy) <= Math.hypot(rb.left - cx, rb.top - cy) ? a : b;
-        });
-        behind(f, card);
-      });
-    });
-    document.querySelectorAll('.projects-grid').forEach(g => g.addEventListener('scroll', () => {
-      clearTimeout(settleTimer); settleTimer = setTimeout(resettle, 220);
-    }, { passive: true }));
-
-    function settleOn(section, delay = 140) {
-      clearTimeout(followTimer);
-      followTimer = setTimeout(() => stageDuo(section), delay);
-    }
-
-    function setMode(next) {
-      if (next === mode) return;
-      const prev = mode;
-      mode = next;
-      flock.classList.toggle('away', next === 'away');
-      flock.classList.toggle('in-hero', next === 'hero');
-      if (next === 'hero') {
-        active = null; duo = [];
-        flights.forEach(f => f.classList.remove('resting'));
-        applyTheme('hero');
-        flock.classList.remove('tracking');
-        trackAfter = prev === 'hero' ? 0 : performance.now() + 2700;
-      } else {
-        flock.classList.remove('tracking');
-      }
-    }
-
-    function sync() {
-      frame = null;
-      if (buttonNavigation) return;
-      const mid = innerHeight * .5;
-
-      if (scrollY < innerHeight * .35) {
-        setMode('hero');
-        if (performance.now() > trackAfter) flock.classList.add('tracking');
-        placeHome();
-        return;
-      }
-
-      const w = work.getBoundingClientRect();
-      if (w.bottom < mid * .9) { setMode('away'); return; }
-
-      setMode('work');
-      const nearest = sections.reduce((best, s) => {
-        const r = s.getBoundingClientRect();
-        const d = Math.abs(r.top + r.height / 2 - mid);
-        return !best || d < best.d ? { s, d } : best;
-      }, null).s;
-
-      if (nearest !== active) {
-        active = nearest;
-        applyTheme(nearest.id);
-        settleOn(nearest, 160);
-      } else {
-        clearTimeout(settleTimer); settleTimer = setTimeout(resettle, 220);
-      }
-    }
-
-    // hat links in the hero: theme first, then fly with the scroll
-    links.forEach(link => {
-      link.setAttribute('role', 'button');
-      link.setAttribute('tabindex', '0');
-      link.setAttribute('aria-pressed', 'false');
-      link.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); link.click(); } });
-      link.addEventListener('click', () => {
-        const target = document.getElementById(link.dataset.hat);
-        if (!target) return;
-        buttonNavigation = true;
-        mode = 'work';
-        flock.classList.remove('tracking', 'away');
-        active = target;
-        applyTheme(target.id);
-        settleOn(target, 900);
-        setTimeout(() => { buttonNavigation = false; }, 920);
-      });
-    });
-
-    addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(sync); }, { passive: true });
-    addEventListener('scrollend', () => { buttonNavigation = false; resettle(); });
-    addEventListener('resize', () => {
-      flock.classList.toggle('compact', innerWidth < 760);
-      if (mode === 'hero') placeHome(); else resettle();
-    });
-
-    // hide the flock while a project modal is open
-    const backdrop = document.getElementById('modal-backdrop');
-    if (backdrop) new MutationObserver(() => {
-      document.body.classList.toggle('modal-open', backdrop.classList.contains('open'));
-    }).observe(backdrop, { attributes: true, attributeFilter: ['class'] });
-
-    flock.classList.toggle('compact', innerWidth < 760);
-    applyTheme('hero');
-    flock.classList.add('tracking', 'in-hero');
-    const start = () => { placeHome(); requestAnimationFrame(sync); if (window.bfOrbHide) bfOrbHide(); };
-    if (art.complete) start(); else art.addEventListener('load', start);
-  })();
 </script>

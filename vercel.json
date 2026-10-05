@@ -12,6 +12,10 @@
     {
       "source": "/blog/:slug",
       "destination": "/blog"
+    },
+    {
+      "source": "/work/:slug",
+      "destination": "/work"
     }
   ]
 }

@@ -1,0 +1,310 @@
+{
+  "_note": "Local only, not published. Case studies for work.html. Media kinds: image, video, placeholder (a dashed box listing the asset still to add). graph = project_qna_sessions project_id.",
+  "items": [
+    {
+      "slug": "thorne-hale",
+      "graph": "thorne-hale",
+      "order": 1,
+      "title": "Construction workflows for a *renovation contractor*",
+      "excerpt": "AI workflows in ChatGPT Work that connect a contractor's enquiries, tenders, site notes and subcontractor paperwork to records the owner can review.",
+      "date": "2026-08-21",
+      "kind": "Client work",
+      "stage": "Delivered · in use",
+      "tags": [
+        "ChatGPT Work",
+        "Workflow design",
+        "Construction",
+        "Excel"
+      ],
+      "media": {
+        "th-quotes": {
+          "kind": "image",
+          "url": "/content/work/media/thorne-hale/quotes.jpg",
+          "alt": "Thorne & Hale quotes dashboard showing total quoted value, approval status and the quote register",
+          "caption": "Quotes dashboard. Thorne & Hale is a fictional stand-in; all data is demo data."
+        },
+        "th-roadmap": {
+          "kind": "image",
+          "url": "/content/work/media/thorne-hale/roadmap.jpg",
+          "alt": "Project roadmap dashboard with portfolio value, jobs on site, pipeline, a filtered-out job and open flags",
+          "caption": "Roadmap: every job's stage, value and open flags, rebuilt from the source files each run."
+        },
+        "th-highlights": {
+          "kind": "image",
+          "url": "/content/work/media/thorne-hale/highlights.jpg",
+          "alt": "Project highlights feed for one job, with progress, open action, client change and delivery tags",
+          "caption": "Site highlights, written from voice transcripts. The raw transcript is always kept."
+        }
+      }
+    },
+    {
+      "slug": "charity-toolkit",
+      "graph": "charity-toolkit",
+      "order": 2,
+      "title": "An AI toolkit for *small charities*",
+      "excerpt": "Demo organisations and hands-on sessions that turn minutes, surveys and old posts into bids, posts and posters that still sound like the charity.",
+      "date": "2026-09-08",
+      "kind": "Training",
+      "stage": "Delivered",
+      "tags": [
+        "Training",
+        "Charity",
+        "Writing voice",
+        "Content"
+      ],
+      "media": {
+        "km-timetable": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/charity-toolkit/weekly-timetable.jpg",
+          "alt": "Kingsmead Community Trust weekly timetable poster: food pantry, youth club, digital drop-in, befriending",
+          "caption": "Weekly timetable for the fictional Kingsmead Community Trust."
+        },
+        "km-funday": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/charity-toolkit/community-fun-day-poster.jpg",
+          "alt": "Save the date poster for a Kingsmead community fun day",
+          "caption": "AI-generated for the demo. Fictional charity, fictional event."
+        },
+        "km-holiday": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/charity-toolkit/half-term-holiday-club-poster.jpg",
+          "alt": "Half-term holiday club poster showing young people playing table tennis",
+          "caption": "AI-generated for the demo."
+        }
+      }
+    },
+    {
+      "slug": "lending-assistant",
+      "graph": "lending-assistant",
+      "order": 3,
+      "title": "From handwritten notes to a *credit paper*",
+      "excerpt": "Skills for a specialist-lending broker that turn notes, emails and attachments into a sourced deal record and a draft credit paper, tested against a gold case.",
+      "date": "2026-08-11",
+      "kind": "Client work",
+      "stage": "Delivered · tested build",
+      "tags": [
+        "Claude skills",
+        "Finance",
+        "Evidence tracking",
+        "Testing"
+      ],
+      "media": {
+        "la-dashboard": {
+          "kind": "image",
+          "url": "/content/work/media/lending-assistant/dashboard.jpg",
+          "alt": "Deal desk dashboard: active deals, items needing attention, drafts ready, and a lender quick-reference panel",
+          "caption": "The deal dashboard, on the fictional test deals. Review-only: nothing sends on its own."
+        },
+        "la-queue": {
+          "kind": "image",
+          "url": "/content/work/media/lending-assistant/review-queue.jpg",
+          "alt": "Review queue listing a resolved GDV source conflict, a transcribed phone call, a draft credit paper with 10 of 10 checks passed, and missing information",
+          "caption": "The review queue: every item waits for the broker."
+        }
+      }
+    },
+    {
+      "slug": "grandma-tv",
+      "graph": "grandma-tv",
+      "order": 4,
+      "title": "Grandma *TV*",
+      "excerpt": "An Android app that lets my grandmother tap a card to put her show on.",
+      "date": "2026-09-17",
+      "kind": "Personal build",
+      "stage": "Installed · used sometimes",
+      "tags": [
+        "Android",
+        "NFC",
+        "Accessibility",
+        "Home"
+      ],
+      "media": {
+        "ph-cards": {
+          "kind": "placeholder",
+          "caption": "Photo of the NFC cards, plus a short tap-to-play video (Toni to send)."
+        },
+        "gt-mode": {
+          "kind": "image",
+          "url": "/content/work/media/grandma-tv/grandma-mode.jpg",
+          "alt": "Phone showing Grandma TV with large Family Feud, News and Open normal remote buttons and a green confirmation that the news is opening",
+          "caption": "Grandma mode, just after tapping News.",
+          "placement": "right"
+        },
+        "gt-install": {
+          "kind": "image",
+          "url": "/content/work/media/grandma-tv/install-limewire.jpg",
+          "alt": "Phone installing the Grandma TV app from a LimeWire link, with the LimeWire share page and QR code on a laptop behind it",
+          "caption": "Installing v0.4 from a LimeWire link and QR code.",
+          "placement": "left"
+        }
+      }
+    },
+    {
+      "slug": "automation-collection",
+      "graph": "automation-collection",
+      "order": 5,
+      "title": "Small tools, *used daily*",
+      "excerpt": "Personal automations, led by a fuel finder I use every time I fill up.",
+      "date": "2026-08-27",
+      "kind": "Personal build",
+      "stage": "In use",
+      "tags": [
+        "Apple Shortcuts",
+        "Scriptable",
+        "Python",
+        "Home automation"
+      ],
+      "media": {
+        "gallery": {
+          "kind": "image",
+          "url": "/content/work/media/automation-collection/gallery-calendar.jpg",
+          "alt": "Scrapbook-style weekly calendar with two photos on a vintage sheet-music background",
+          "caption": "Week one, made for my brother with his photos. The schedule is fictional."
+        },
+        "ff-results": {
+          "kind": "image",
+          "url": "/content/work/media/automation-collection/fuel-finder.jpg",
+          "alt": "Fuel Finder result list showing five nearby stations with E10 price and distance",
+          "caption": "Five cheapest nearby stations, with price and distance.",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "slug": "the-full-week",
+      "graph": "halfmara",
+      "order": 6,
+      "title": "The Full *Week*",
+      "excerpt": "A training plan built from my own data, which shows up on the web, my lock screen and an iOS Live Activity.",
+      "date": "2026-09-24",
+      "kind": "Personal product",
+      "stage": "Live",
+      "tags": [
+        "Next.js",
+        "Neon",
+        "SwiftUI",
+        "Apple Shortcuts",
+        "Running"
+      ],
+      "media": {
+        "fw-video": {
+          "kind": "video",
+          "url": "/content/work/media/the-full-week/backend-25s.mp4",
+          "poster": "/content/work/media/the-full-week/backend-25s-poster.jpg",
+          "alt": "25-second explainer of how The Full Week is built",
+          "caption": "How it's built, in 25 seconds."
+        },
+        "fw-phone": {
+          "kind": "image",
+          "url": "/content/work/media/the-full-week/phone-strip.jpg",
+          "alt": "Three phone screens: the lock screen with today's session, a strength session with logged weights and the weight plate, and a session checklist",
+          "caption": "Lock screen, a strength session and a day checklist."
+        },
+        "fw-web": {
+          "kind": "image",
+          "url": "/content/work/media/the-full-week/web-strip.jpg",
+          "alt": "Four planner views: the weight plate at 100%, per-set logging with a rest timer, a public profile with weekly consistency, and exercise progression charts",
+          "caption": "The plate, set logging with rest timer, the public profile and exercise progression."
+        }
+      }
+    },
+    {
+      "slug": "pacetune",
+      "graph": "pacetune",
+      "order": 7,
+      "title": "Pace*Tune*",
+      "excerpt": "Which song was playing on which split of your run.",
+      "date": "2026-04-14",
+      "kind": "Personal product",
+      "stage": "Live",
+      "tags": [
+        "Next.js",
+        "Spotify API",
+        "Strava API",
+        "Supabase"
+      ],
+      "media": {
+        "pt-tour": {
+          "kind": "image",
+          "url": "/content/work/media/pacetune/run-tour.jpg",
+          "alt": "A route-style card placing each song as a stop along a 5 km run",
+          "caption": "Another exploration: each song as a stop on the route. Not shipped."
+        },
+        "pt-messages": {
+          "kind": "image",
+          "url": "/content/work/media/pacetune/messages-strip.jpg",
+          "alt": "Four PaceTune Messages-view cards: each kilometre split is a message bubble listing the songs played, over a photo from the run",
+          "caption": "The Messages view: one bubble per split, over a photo from the run. This is what shipped."
+        },
+        "pt-explore": {
+          "kind": "image",
+          "url": "/content/work/media/pacetune/explorations-strip.jpg",
+          "alt": "Three unshipped PaceTune card designs: a cassette tape, concentric rings, and a track list with split paces",
+          "caption": "Design explorations for new share cards: cassette, rings and track list. Not shipped."
+        }
+      }
+    },
+    {
+      "slug": "cornerstore",
+      "graph": "cornerstockv2",
+      "order": 8,
+      "title": "A *digital twin* for a corner shop",
+      "excerpt": "A LiDAR-scanned 3D model of a corner shop, with photo and voice stock entry and a count manager that follows the supplier sheet.",
+      "date": "2025-11-19",
+      "kind": "Prototype build",
+      "stage": "Prototype · tried on a real count",
+      "tags": [
+        "Digital twin",
+        "LiDAR",
+        "Gemini",
+        "AI Studio",
+        "Antigravity",
+        "Three.js"
+      ],
+      "media": {
+        "cs-scan": {
+          "kind": "image",
+          "url": "/content/work/media/cornerstore/scan-textured.jpg",
+          "alt": "Textured LiDAR scan of the corner shop showing fridges, shelves and the entrance turnstiles",
+          "caption": "The shop scanned with LiDAR in Polycam."
+        },
+        "cs-layout": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/cornerstore/blender-layout.jpg",
+          "alt": "Grey Blender model of the shop layout with walls, shelving units and islands",
+          "caption": "The layout rebuilt in Blender from the scan."
+        },
+        "cs-manager": {
+          "kind": "image",
+          "url": "/content/work/media/cornerstore/count-manager.jpg",
+          "alt": "Stock Manager web app listing fridge items with quantities and their linked supplier products",
+          "caption": "The count manager, shelf view."
+        },
+        "cs-check": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/cornerstore/check-data.jpg",
+          "alt": "Data Sanity Check dialog listing supplier items linked to more than one shelf item",
+          "caption": "Check Data flags supplier items linked to several shelves."
+        },
+        "cs-paper": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/cornerstore/paper-count.jpg",
+          "alt": "Printed supplier stock sheet with handwritten counts held up next to a shelf of sweets",
+          "caption": "The paper sheet the count has to end up on."
+        },
+        "cs-concept": {
+          "kind": "image",
+          "url": "/content/work/media/cornerstore/corneros-concept.jpg",
+          "alt": "Corner.OS concept screen suggesting a hot chicken and soup meal deal based on the shopper's outfit and the weather, with a shop map",
+          "caption": "Corner.OS, a concept for the shop's own screen. Not built."
+        }
+      }
+    }
+  ]
+}
