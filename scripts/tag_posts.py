@@ -49,7 +49,7 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 MODEL = os.environ.get("GEMINI_TAGGING_MODEL", "gemini-3.8-flash")
 
 BATCH = 20
-MAX_ITEM_CHARS = 1400  # posts run longer than captures, give the model more to read
+MAX_ITEM_CHARS = 12000  # read the whole post, not just the opening (was 1400), 2026-10-15
 
 DIM, RESET, BOLD = "\033[2m", "\033[0m", "\033[1m"
 GREEN, YELLOW, RED, BLUE = "\033[32m", "\033[33m", "\033[31m", "\033[34m"

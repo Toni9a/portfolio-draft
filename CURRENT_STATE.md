@@ -1,10 +1,21 @@
 # Portfolio — Current State
 
-**Last updated:** 2026-10-05 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
+**Last updated:** 2026-10-15 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
+
+
+## 2026-10-15: Tonidex, the visual map of the second brain (local, ready to push) ✅
+
+- **`tonidex.html`** (repo root, served at `/tonidex`, `noindex`). One canvas, no build step. Four levels, modelled on the TikTok taxonomy map Toni shared: **01 Family** (Intelligence, Building, Craft, Business, as big circles) → **02 Door** (11 chips) → **03 Concept** (top 110 concepts with 4+ examples, each with a generated pictogram) → **04 Examples** (images, plus "ideas" as serif text cards and optional "work" project chips).
+- **Two layouts:** Tree (top-down, paper) and Constellation (radial, families in the middle). Keys `1`/`2`, `F` fits, `/` searches, `Esc` clears. Click a family or door to light its paths in the family colour; click a concept for the dark "01 / 02 / 03 / 04 · n recorded examples" card, with its examples gathered into a cluster. Click an example for a side drawer (image, text, doors, concepts, Gemini tags, link to the original, connected items). Folder filter (e.g. MJ aesthetic), layer toggles, Paper/Ink theme. Search: typing filters instantly; Enter or "meaning" uses the existing `semantic-search` function.
+- **Concept → door links** are worked out on the page from co-occurrence (solid line to the main door, dashed to others), because most visual concepts are `cross_door`.
+- **Data:** new SQL function `tonidex_map_data()` (migration `20261014231153_tonidex_map_data`, service role only, anon and authenticated revoked) and new edge function **`tonidex-map`** (source in `supabase/functions/tonidex-map/`). It requires a signed-in user (anon key → 401, checked) and adds a 1-hour presigned R2 URL per image. The page loads Twitter's `name=small` copy first and falls back to R2. Checked live from the signed-in admin: 817 items (711 images, 42 ideas, 64 work), ~0.75 s.
+- **Private:** the page asks for the admin sign-in (same Supabase session as `/admin`, so it opens straight away if you're signed in there). The admin nav has a "Tonidex ↗" link.
+- **No new tagging needed:** 748 captures were already image-tagged; nothing was written to the database.
+- **Image captions (later, 2026-10-15):** `tag_images.py` always asked Gemini for a one-line caption but only printed it. New `node.image_caption` / `image_caption_source` columns (migration `20261015000100_node_image_caption`). **458 captions recovered** from the logs of the 1 Sep GitHub Actions run (attempts 1–4; the run was restarted 4 times, so GitHub's run list only shows the 32 s final attempt), all matched by image URL, `image_caption_source = 'gha-log-2026-09-01'`. The 18–19 Aug (232) and 28 Sep (40) Mac runs only printed to Terminal, so those are gone. `tag_images.py` now saves the caption, and `--missing-captions` fills the rest without touching tags. Tonidex shows the caption in the drawer and tooltip, and search matches it.
 
 
 ## 2026-10-05 (later): the butterfly homepage, blog backgrounds and case studies go live (ready to push) ✅

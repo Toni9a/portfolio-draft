@@ -1,0 +1,1133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tonidex</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --bg: #f3f2ef; --bg2: #ffffff; --ink: #141414; --muted: #8a8780; --line: #d9d6cf;
+    --card: rgba(255,255,255,.86); --card-ink: #141414; --shadow: 0 10px 40px rgba(20,20,20,.08);
+    --intelligence: #1f3a8a; --building: #b0861c; --craft: #c2272d; --business: #6b4c9a;
+  }
+  :root[data-theme="ink"] {
+    --bg: #0d0e10; --bg2: #16181b; --ink: #ecebe6; --muted: #7c7d80; --line: #2a2c30;
+    --card: rgba(22,24,27,.9); --card-ink: #ecebe6; --shadow: 0 10px 40px rgba(0,0,0,.5);
+    --intelligence: #7f9cff; --building: #e0b445; --craft: #ff5a52; --business: #b48cf0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden;
+    font-family: "Space Grotesk", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  canvas#map { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; cursor: grab; }
+  canvas#map.dragging { cursor: grabbing; }
+  canvas#map.pointer { cursor: pointer; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .serif { font-family: "Instrument Serif", Georgia, serif; }
+
+  /* top bar */
+  #top { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
+  #top > * { pointer-events: auto; }
+  #brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+  #brand a { color: inherit; text-decoration: none; }
+  #brand .word { font-family: "Instrument Serif", serif; font-size: 30px; letter-spacing: -.01em; line-height: 1; }
+  #brand .sub { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+  .seg button { all: unset; cursor: pointer; font-size: 12px; padding: 6px 12px; border-radius: 999px; color: var(--muted); white-space: nowrap; }
+  .seg button.on { background: var(--ink); color: var(--bg); }
+  #sources button { display: inline-flex; align-items: center; gap: 6px; }
+  #sources button:not(.on) { text-decoration: line-through; opacity: .6; }
+  .seg button:focus-visible { outline: 2px solid var(--intelligence); }
+  #search { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 4px 6px 4px 12px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+  #search input { all: unset; width: 190px; font-size: 13px; color: var(--ink); }
+  #search input::placeholder { color: var(--muted); }
+  #search kbd { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  #search button { all: unset; cursor: pointer; font-size: 11px; padding: 4px 9px; border-radius: 999px; background: var(--ink); color: var(--bg); }
+  select.pill { appearance: none; background: var(--card); border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 7px 28px 7px 12px;
+    font: 12px "Space Grotesk", sans-serif; box-shadow: var(--shadow); cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+
+  /* breadcrumb / focus card (the "01 OPERATION" card) */
+  #focus { position: fixed; left: 18px; top: 78px; z-index: 6; width: min(360px, calc(100vw - 36px));
+    background: #121315; color: #f1efe9; border: 1px solid #2b2d31; border-radius: 16px; padding: 16px 18px 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35); opacity: 0; transform: translateY(-6px); transition: opacity .25s, transform .25s; pointer-events: none; }
+  #focus.show { opacity: 1; transform: none; pointer-events: auto; }
+  #focus .row { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; position: relative; }
+  #focus .row + .row { margin-top: 10px; }
+  #focus .row:not(:last-child)::after { content: ""; position: absolute; left: 21px; top: 42px; height: 12px; width: 1.5px; background: var(--fc); opacity: .9; }
+  #focus .ico { width: 44px; height: 40px; display: grid; place-items: center; border: 1.5px solid var(--fc); border-radius: 12px; }
+  #focus .ico.round { border-radius: 50%; height: 44px; }
+  #focus .k { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .14em; color: #9a9893; }
+  #focus .k b { color: var(--fc); font-weight: 500; margin-right: 6px; }
+  #focus .v { font-size: 21px; line-height: 1.1; margin-top: 2px; }
+  #focus .v.serif { font-size: 28px; }
+  #focus .v.mono { font-size: 17px; }
+  #focus .v.it { font-family: "Instrument Serif", serif; font-style: italic; font-size: 21px; }
+  #focus .x { position: absolute; top: 8px; right: 10px; all: unset; cursor: pointer; color: #9a9893; font-size: 18px; padding: 4px 8px; position: absolute; top: 6px; right: 6px; }
+  #focus .stack { width: 40px; height: 36px; position: relative; }
+  #focus .stack img, #focus .stack span { position: absolute; width: 26px; height: 32px; object-fit: cover; border-radius: 3px; border: 1px solid #f1efe9; background: #333; }
+
+  /* detail drawer */
+  #drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); z-index: 8; background: var(--bg2); color: var(--ink);
+    border-left: 1px solid var(--line); box-shadow: -20px 0 60px rgba(0,0,0,.12); transform: translateX(102%); transition: transform .32s cubic-bezier(.2,.8,.2,1);
+    display: flex; flex-direction: column; }
+  #drawer.open { transform: none; }
+  #drawer header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  #drawer header .k { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  #drawer header button { all: unset; cursor: pointer; font-size: 20px; color: var(--muted); padding: 2px 6px; }
+  #drawer .body { overflow-y: auto; padding: 18px; flex: 1; }
+  #drawer .hero { width: 100%; border-radius: 10px; display: block; background: var(--line); max-height: 60vh; object-fit: contain; }
+  #drawer .idea { font-family: "Instrument Serif", serif; font-size: 26px; line-height: 1.2; padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+  #drawer p.cap { font-family: "Instrument Serif", serif; font-style: italic; font-size: 17px; line-height: 1.35; color: var(--muted); margin: 10px 0 0; }
+  #drawer h3 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 24px; line-height: 1.2; margin: 16px 0 8px; }
+  #drawer p.txt { font-size: 14px; line-height: 1.55; color: var(--ink); opacity: .85; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px; }
+  #drawer .meta { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  #drawer .group { margin: 14px 0; }
+  #drawer .group .k { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; margin: 0 6px 6px 0; cursor: pointer; background: var(--bg); color: var(--ink); }
+  .chip:hover { border-color: var(--ink); }
+  .chip i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .chip.tag { cursor: default; font-family: "IBM Plex Mono", monospace; font-size: 11px; border-style: dashed; }
+  #drawer a.open { display: inline-block; margin-top: 4px; font-size: 13px; color: var(--ink); }
+  #drawer .back { all: unset; cursor: pointer; font-size: 12px; color: var(--muted); margin-bottom: 12px; display: inline-block; }
+  #drawer .back:hover { color: var(--ink); }
+  .srcs { margin: 6px 0 14px; } .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .rows { display: flex; flex-direction: column; gap: 2px; }
+  .lrow { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 8px; border-radius: 8px; cursor: pointer; align-items: start; }
+  .lrow:hover { background: var(--bg); }
+  .lrow .th { width: 64px; height: 64px; border-radius: 6px; overflow: hidden; background: var(--bg); border: 1px solid var(--line); display: grid; place-items: center; }
+  .lrow .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lrow .th span { font-family: "Instrument Serif", serif; font-style: italic; font-size: 10px; line-height: 1.1; padding: 5px; color: var(--muted); overflow: hidden; max-height: 100%; }
+  .lrow .src { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .lrow .t { font-size: 13.5px; line-height: 1.4; margin-top: 3px; }
+  .lrow .d { font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .sb { width: 8px; height: 8px; border-radius: 2px; display: inline-block; background: var(--muted); }
+  .sb-x { background: var(--ink); } .sb-tiktok { background: #ff0050; } .sb-instagram { background: #c13584; } .sb-youtube { background: #ff0000; }
+  .sb-voice, .sb-thought { background: var(--building); } .sb-take, .sb-post { background: var(--craft); } .sb-work { background: var(--intelligence); }
+  .related { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .related div { aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: var(--line); cursor: pointer; display: grid; place-items: center;
+    font-family: "Instrument Serif", serif; font-size: 12px; padding: 4px; text-align: center; line-height: 1.1; color: var(--ink); }
+  .related img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* bottom bar */
+  #bottom { position: fixed; left: 18px; right: 18px; bottom: 16px; display: flex; gap: 10px; align-items: center; z-index: 5; pointer-events: none; flex-wrap: wrap; }
+  #bottom > * { pointer-events: auto; }
+  #legend { display: flex; gap: 14px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; color: var(--muted); margin-left: auto;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; backdrop-filter: blur(10px); }
+  #legend span { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-transform: uppercase; }
+  #legend span i { width: 8px; height: 8px; border-radius: 50%; }
+  #legend span.off { opacity: .35; }
+  .iconbtn { all: unset; cursor: pointer; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--ink); font-size: 14px; }
+
+  #tip { position: fixed; z-index: 7; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 6px 9px; border-radius: 6px; max-width: 280px;
+    opacity: 0; transition: opacity .12s; line-height: 1.35; }
+  #tip.show { opacity: 1; }
+  #tip .n { font-family: "IBM Plex Mono", monospace; font-size: 10px; opacity: .6; display: block; margin-top: 2px; }
+
+  /* loader + auth */
+  #veil { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; place-items: center; transition: opacity .5s; }
+  #veil.gone { opacity: 0; pointer-events: none; }
+  #veil .box { text-align: center; width: min(340px, 90vw); }
+  #veil .word { font-family: "Instrument Serif", serif; font-size: 54px; line-height: 1; }
+  #veil .k { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin: 10px 0 22px; }
+  #veil .orbit { width: 64px; height: 64px; margin: 0 auto; position: relative; }
+  #veil .orbit i { position: absolute; width: 9px; height: 9px; border-radius: 50%; left: 27px; top: 27px; animation: orb 1.6s cubic-bezier(.5,0,.5,1) infinite; }
+  #veil .orbit i:nth-child(1) { background: var(--intelligence); }
+  #veil .orbit i:nth-child(2) { background: var(--building); animation-delay: -.4s; }
+  #veil .orbit i:nth-child(3) { background: var(--craft); animation-delay: -.8s; }
+  #veil .orbit i:nth-child(4) { background: var(--business); animation-delay: -1.2s; }
+  @keyframes orb { 0% { transform: rotate(0) translateX(24px); } 100% { transform: rotate(360deg) translateX(24px); } }
+  #auth { display: none; flex-direction: column; gap: 8px; }
+  #auth input { font: 14px "Space Grotesk", sans-serif; padding: 11px 13px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); }
+  #auth button { font: 500 14px "Space Grotesk", sans-serif; padding: 11px; border-radius: 8px; border: 0; background: var(--ink); color: var(--bg); cursor: pointer; }
+  #auth .err { color: var(--craft); font-size: 12px; min-height: 16px; }
+  #veil .msg { font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+  @media (max-width: 720px) {
+    #top { padding: 10px 12px; gap: 8px; }
+    #brand .sub { display: none; }
+    #search input { width: 120px; }
+    #search kbd { display: none; }
+    #brand .word { font-size: 26px; }
+    .seg button { padding: 5px 9px; font-size: 11px; }
+    select.pill { padding: 6px 24px 6px 10px; font-size: 11px; max-width: 130px; }
+    #legend { display: none; }
+    #sources button { padding: 5px 8px; }
+    #focus { top: auto; bottom: 64px; left: 12px; }
+    #bottom { left: 12px; right: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="map" aria-label="Tonidex map of saved images, ideas and work, connected by concept"></canvas>
+
+<div id="top">
+  <div id="brand"><a href="/" class="word">Tonidex</a><span class="sub" id="stats">loading</span></div>
+  <div id="search"><input id="q" placeholder="Find, or ask by meaning…" autocomplete="off" /><kbd>/</kbd><button id="qgo" title="Search by meaning (Gemini embeddings)">meaning</button></div>
+  <select id="folder" class="pill" title="Folder"><option value="">All folders</option></select>
+  <div class="seg" id="layers" role="group" aria-label="Layers">
+    <button data-l="image" class="on">Images</button><button data-l="idea" class="on">Ideas</button><button data-l="link" class="on">Links</button><button data-l="work">Work</button>
+  </div>
+  <div class="seg" id="layout" role="group" aria-label="Layout">
+    <button data-v="tree" class="on">Tree</button><button data-v="web">Constellation</button>
+  </div>
+</div>
+
+<div id="focus" aria-live="polite"></div>
+
+<aside id="drawer" aria-hidden="true">
+  <header><span class="k" id="d-k">Item</span><button id="d-x" aria-label="Close">×</button></header>
+  <div class="body" id="d-body"></div>
+</aside>
+
+<div id="bottom">
+  <button class="iconbtn" id="theme" title="Paper / Ink">◐</button>
+  <button class="iconbtn" id="zin" title="Zoom in (+)">+</button>
+  <button class="iconbtn" id="zout" title="Zoom out (−)">−</button>
+  <button class="iconbtn" id="fit" title="Fit to screen (F)">⤢</button>
+  <div class="seg" id="sources" role="group" aria-label="Sources">
+    <button data-s="x" class="on" title="Twitter / X bookmarks"><i class="sb sb-x"></i>X</button><button data-s="tiktok" class="on" title="TikToks (sent via Telegram)"><i class="sb sb-tiktok"></i>TikTok</button><button data-s="telegram" class="on" title="Telegram: voice notes, thoughts, other links"><i class="sb sb-voice"></i>Telegram</button><button data-s="mine" class="on" title="Your blog posts, takes and work"><i class="sb sb-post"></i>Mine</button>
+  </div>
+  <div id="legend"></div>
+</div>
+
+<div id="tip"></div>
+
+<div id="veil">
+  <div class="box">
+    <div class="word">Tonidex</div>
+    <div class="k">everything I've saved, connected</div>
+    <div class="orbit" id="orbit"><i></i><i></i><i></i><i></i></div>
+    <form id="auth">
+      <input type="email" id="a-email" placeholder="email" autocomplete="username" required />
+      <input type="password" id="a-pass" placeholder="password" autocomplete="current-password" required />
+      <button type="submit">Sign in</button>
+      <div class="err" id="a-err"></div>
+    </form>
+    <div class="msg" id="veil-msg"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   Tonidex — a visual mind map of the second brain.
+   Families (4) → Doors (11) → Concepts (techniques) → Examples (images, ideas, work).
+   Data: edge function tonidex-map (signed-in only). Rendering: one canvas.
+   ========================================================================= */
+(() => {
+const SUPABASE_URL = 'https://dmlwcrbjetpgqacblvqp.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtbHdjcmJqZXRwZ3FhY2JsdnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQ2MjgsImV4cCI6MjEwMTYwMDYyOH0.tbeqoQojdkXggB6yVdzHI0qnQJ-EHc94vadStciWzlk';
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+const FAMILIES = [
+  { id: 'Intelligence', label: 'Intelligence', glyph: 'dots3' },
+  { id: 'Building',     label: 'Building',     glyph: 'seq' },
+  { id: 'Craft',        label: 'Craft',        glyph: 'split' },
+  { id: 'Business',     label: 'Business',     glyph: 'bars' },
+];
+const FAM_VAR = { Intelligence: '--intelligence', Building: '--building', Craft: '--craft', Business: '--business' };
+
+/* ---------- small utils ---------- */
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function rgba(hex, a) { const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function cleanTitle(s) { return String(s || '').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim(); }
+
+/* ---------- state ---------- */
+const S = {
+  raw: null, layers: new Set(['image', 'idea', 'link']), folder: '', layout: 'tree',
+  fams: [], doors: [], concepts: [], items: [], byId: new Map(), conceptById: new Map(), doorById: new Map(),
+  sel: null,            // {type:'family'|'door'|'concept'|'search', id, set:Set(itemIds), nodes:Set(keys)}
+  hover: null, cam: { x: 0, y: 0, k: 1 }, camT: null, anim: null, dirty: true,
+  famOff: new Set(), srcOff: new Set(), theme: 'paper', colors: {}, minCount: 3,
+};
+
+/* ---------- canvas ---------- */
+const cv = $('#map'); const ctx = cv.getContext('2d'); const CTX0 = ctx;
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = Math.min(1.5, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; S.dirty = true; }
+addEventListener('resize', resize); resize();
+function readColors() {
+  S.colors = { bg: css('--bg'), bg2: css('--bg2'), ink: css('--ink'), muted: css('--muted'), line: css('--line') };
+  for (const f of FAMILIES) S.colors[f.id] = css(FAM_VAR[f.id]);
+  S.dirty = true;
+}
+
+/* =========================================================================
+   DATA
+   ========================================================================= */
+async function load() {
+  if (window.__TONIDEX_DATA__) return window.__TONIDEX_DATA__;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw Object.assign(new Error('signin'), { signin: true });
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/tonidex-map`, { headers: { Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_ANON } });
+  if (res.status === 401) throw Object.assign(new Error('signin'), { signin: true });
+  const j = await res.json();
+  if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+  return j;
+}
+
+function thumbUrls(it) {
+  const out = []; const m = it.media_url || '';
+  if (/^https:\/\/pbs\.twimg\.com\//.test(m)) {
+    try {
+      const u = new URL(m);
+      if (!u.searchParams.get('format')) { const ext = (u.pathname.match(/\.(jpe?g|png|webp)$/i) || [])[1]; if (ext) { u.pathname = u.pathname.replace(/\.(jpe?g|png|webp)$/i, ''); u.searchParams.set('format', ext.toLowerCase() === 'jpeg' ? 'jpg' : ext.toLowerCase()); } }
+      for (const name of ['240x240', 'small']) { u.searchParams.set('name', name); out.push(u.toString()); }
+    } catch { /* fall through */ }
+  }
+  if (it.r2) out.push(it.r2);
+  return out;
+}
+const thumbUrl = (it) => thumbUrls(it)[1] || thumbUrls(it)[0] || null;
+
+function build() {
+  const raw = S.raw;
+  S.doorById = new Map(raw.doors.map(d => [d.id, d]));
+  S.conceptById = new Map(raw.concepts.map(c => [c.id, c]));
+  // items in view
+  const items = raw.items.filter(it => S.layers.has(it.layer) && (!S.folder || it.folder === S.folder) && !S.srcOff.has(channelOf(it)));
+  // concept frequency in view
+  const cnt = new Map();
+  for (const it of items) for (const c of it.concepts) cnt.set(c, (cnt.get(c) || 0) + 1);
+  const minC = items.length > 300 ? S.minCount : 2;
+  let concepts = [...cnt.entries()].filter(([, n]) => n >= minC).map(([id, n]) => ({ ...S.conceptById.get(id), n })).filter(c => c.slug);
+  concepts.sort((a, b) => b.n - a.n);
+  concepts = concepts.slice(0, 80);
+  const cset = new Set(concepts.map(c => c.id));
+  // concept → doors by co-occurrence (+ own door)
+  for (const c of concepts) {
+    const dc = new Map();
+    for (const it of items) if (it.concepts.includes(c.id)) for (const d of it.doors) dc.set(d, (dc.get(d) || 0) + 1);
+    if (c.door && c.door !== 'cross_door') dc.set(c.door, (dc.get(c.door) || 0) + c.n * 0.6);
+    const ranked = [...dc.entries()].sort((a, b) => b[1] - a[1]);
+    const top = ranked[0]?.[1] || 0;
+    c.doors = ranked.filter(([, v], i) => i === 0 || (v >= top * 0.35 && i < 3)).map(([d]) => d).filter(d => S.doorById.has(d));
+    if (!c.doors.length) c.doors = ['creative_media'];
+    c.primary = c.doors[0];
+    c.family = S.doorById.get(c.primary)?.family || 'Craft';
+    c.key = 'c' + c.id; c.r = 14 + 12 * Math.sqrt(c.n / Math.max(1, concepts[0]?.n || 1));
+    c.label = c.label || c.slug.replace(/-/g, ' ');
+  }
+  // items: attach visible concepts; primary = most specific (smallest n)
+  const nById = new Map(concepts.map(c => [c.id, c]));
+  const shown = []; const loose = [];
+  for (const it of items) {
+    const cs = it.concepts.filter(id => cset.has(id)).map(id => nById.get(id)).sort((a, b) => a.n - b.n);
+    if (!cs.length) { loose.push(it); continue; }
+    it.cs = cs; it.pc = cs[0]; it.family = it.pc.family; it.key = 'i' + it.id;
+    it.label = cleanTitle(it.title) || cleanTitle(it.body) || '(untitled)';
+    shown.push(it);
+  }
+  // nothing to hang from yet (mostly text-only bookmarks with no concept): one "Not yet sorted" column
+  if (loose.length) {
+    const dc = new Map(); for (const it of loose) for (const d of it.doors) dc.set(d, (dc.get(d) || 0) + 1);
+    const doorsU = [...dc.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d).filter(d => S.doorById.has(d)).slice(0, 1);
+    const u = { id: 'none', slug: 'not-yet-sorted', label: 'Not yet sorted', n: loose.length, doors: doorsU.length ? doorsU : ['creative_media'], key: 'cnone', r: 18 };
+    u.primary = u.doors[0]; u.family = S.doorById.get(u.primary)?.family || 'Craft';
+    concepts.push(u);
+    for (const it of loose) { it.cs = [u]; it.pc = u; it.family = u.family; it.key = 'i' + it.id; it.label = cleanTitle(it.title) || cleanTitle(it.body) || '(untitled)'; shown.push(it); }
+  }
+  // doors in view (with counts)
+  const doorN = new Map();
+  for (const c of concepts) for (const d of c.doors) doorN.set(d, (doorN.get(d) || 0) + c.n);
+  const doors = raw.doors.filter(d => doorN.has(d.id)).map(d => ({ ...d, n: doorN.get(d.id), key: 'd' + d.id }));
+  const fams = FAMILIES.filter(f => doors.some(d => d.family === f.id)).map(f => ({ ...f, key: 'f' + f.id, n: doors.filter(d => d.family === f.id).reduce((a, d) => a + d.n, 0) }));
+  // keep positions across rebuilds
+  const old = new Map([...S.fams, ...S.doors, ...S.concepts, ...S.items].map(n => [n.key, n]));
+  for (const n of [...fams, ...doors, ...concepts, ...shown]) { const o = old.get(n.key); if (o) { n.x = o.x; n.y = o.y; n.img = o.img; n.imgState = o.imgState; n.ar = o.ar; } }
+  S.fams = fams; S.doors = doors; S.concepts = concepts; S.items = shown;
+  S.byKey = new Map([...fams, ...doors, ...concepts, ...shown].map(n => [n.key, n]));
+  S.byId = new Map(S.raw.items.map(i => [i.id, i]));
+  $('#stats').textContent = `${shown.length} examples · ${concepts.length} concepts · ${doors.length} doors`;
+  renderLegend();
+}
+
+/* =========================================================================
+   LAYOUTS
+   ========================================================================= */
+function sizeOf(n) {
+  if (n.layer === 'image') { const ar = n.ar || 1; const s = CELL - 8; return ar >= 1 ? [s, s / ar] : [s * ar, s]; }
+  if (n.kind === 'post') return [CELL * 2 - 8, CELL - 6];
+  if (n.layer === 'idea' || n.layer === 'link') return [CELL - 6, CELL - 6];
+  return [CELL - 6, 26];
+}
+const CELL = 62;          // one grid cell under a concept
+const FAM_ORDER = ['Craft', 'Intelligence', 'Building', 'Business'];
+
+// Every example hangs under ONE concept (its most specific one), in a small tidy grid.
+// Order: family → door → concept, so the map reads left to right like the reference.
+function groupBlocks() {
+  const byC = new Map(S.concepts.map(c => [c, []]));
+  for (const it of S.items) byC.get(it.pc)?.push(it);
+  const layerRank = { image: 0, idea: 1, link: 2, work: 3 };
+  const rank = (i) => i.kind === 'post' ? -1 : layerRank[i.layer];
+  const doorRank = new Map([...S.doors].sort((a, b) => FAM_ORDER.indexOf(a.family) - FAM_ORDER.indexOf(b.family) || b.n - a.n).map((d, i) => [d.id, i]));
+  const blocks = S.concepts.map(c => {
+    const its = byC.get(c).sort((a, b) => rank(a) - rank(b) || String(b.at || '').localeCompare(String(a.at || '')));
+    const hasPost = its.some(i => i.kind === 'post');
+    const cols = clamp(Math.ceil(Math.sqrt(its.length / 3)), hasPost ? 2 : 1, 4);
+    // slots: a blog post takes two cells side by side (centre offset by half a cell)
+    const slots = []; let col = 0, row = 0;
+    for (const it of its) {
+      if (it.kind === 'post') { if (col > cols - 2) { col = 0; row++; } slots.push({ col: col + .5, row }); col += 2; }
+      else { slots.push({ col, row }); col++; }
+      if (col >= cols) { col = 0; row++; }
+    }
+    return { c, its, cols, slots, rows: row + (col ? 1 : 0), w: Math.max(cols, 1) * CELL };
+  }).sort((a, b) => (doorRank.get(a.c.primary) ?? 99) - (doorRank.get(b.c.primary) ?? 99) || b.its.length - a.its.length);
+  return blocks;
+}
+
+function layoutTree() {
+  const P = new Map();
+  const blocks = groupBlocks(); const GAP = 12;
+  const total = blocks.reduce((a, b) => a + b.w + GAP, -GAP);
+  let x = -total / 2;
+  blocks.forEach((b, i) => {
+    const cx = x + b.w / 2;
+    P.set(b.c.key, { x: cx, y: 640 + (i % 3) * 82 });
+    b.its.forEach((it, j) => { const { col, row } = b.slots[j];
+      P.set(it.key, { x: x + CELL / 2 + col * CELL, y: 1000 + CELL / 2 + row * CELL }); });
+    x += b.w + GAP;
+  });
+  // doors sit over the middle of their concepts; keep them apart
+  const doors = [...S.doors].sort((a, b) => FAM_ORDER.indexOf(a.family) - FAM_ORDER.indexOf(b.family) || b.n - a.n);
+  const dx = doors.map(d => { const xs = blocks.filter(b => b.c.primary === d.id).map(b => P.get(b.c.key).x); return xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0; });
+  const dw = (d) => d.label.length * 8.6 + 70; // chip width at the largest label size, plus air
+  for (let i = 1; i < dx.length; i++) { const gap = (dw(doors[i - 1]) + dw(doors[i])) / 2; if (dx[i] < dx[i - 1] + gap) dx[i] = dx[i - 1] + gap; }
+  doors.forEach((d, i) => P.set(d.key, { x: dx[i], y: 330 }));
+  const fs = FAM_ORDER.map(id => S.fams.find(f => f.id === id)).filter(Boolean);
+  const fx = fs.map(f => { const xs = doors.filter(d => d.family === f.id).map(d => P.get(d.key).x); return (Math.min(...xs) + Math.max(...xs)) / 2; });
+  for (let i = 1; i < fx.length; i++) if (fx[i] < fx[i - 1] + 360) fx[i] = fx[i - 1] + 360;
+  fs.forEach((f, i) => P.set(f.key, { x: fx[i], y: 0 }));
+  return P;
+}
+
+function layoutWeb() {
+  const P = new Map();
+  const blocks = groupBlocks(); const R0 = 1200;
+  // each concept gets an arc wide enough for its grid
+  const arcs = blocks.map(b => b.w + 30); const sum = arcs.reduce((a, b) => a + b, 0);
+  const R = Math.max(R0, sum / (2 * Math.PI));
+  let a0 = -Math.PI / 2;
+  blocks.forEach((b, i) => {
+    const span = arcs[i] / R, mid = a0 + span / 2; b.c._a = mid;
+    P.set(b.c.key, { x: Math.cos(mid) * (R - 330), y: Math.sin(mid) * (R - 330) });
+    b.its.forEach((it, j) => { const { col, row } = b.slots[j];
+      const rr = R + CELL / 2 + row * CELL, aa = mid + ((col - (b.cols - 1) / 2) * CELL) / rr;
+      P.set(it.key, { x: Math.cos(aa) * rr, y: Math.sin(aa) * rr }); });
+    a0 += span;
+  });
+  const circMean = (as) => { let sx = 0, sy = 0; for (const a of as) { sx += Math.cos(a); sy += Math.sin(a); } return Math.atan2(sy, sx); };
+  for (const d of S.doors) { const as = blocks.filter(b => b.c.primary === d.id).map(b => b.c._a); d._a = as.length ? circMean(as) : 0; P.set(d.key, { x: Math.cos(d._a) * (R - 760), y: Math.sin(d._a) * (R - 760) }); }
+  for (const f of S.fams) { const as = S.doors.filter(d => d.family === f.id).map(d => d._a); const a = circMean(as); P.set(f.key, { x: Math.cos(a) * 170, y: Math.sin(a) * 170 }); }
+  return P;
+}
+
+function applyLayout(animate = true) {
+  const P = S.layout === 'web' ? layoutWeb() : layoutTree();
+  // focus cluster overrides
+  if (S.sel && S.sel.cluster) {
+    const c = S.byKey.get(S.sel.anchor); const ids = [...S.sel.set];
+    const center = S.layout === 'web' ? { x: c ? P.get(c.key).x * 1.25 : 0, y: c ? P.get(c.key).y * 1.25 : 0 } : { x: c ? P.get(c.key).x : 0, y: 1060 };
+    const keys = ids.map(id => 'i' + id).filter(k => P.has(k));
+    const cols = clamp(Math.ceil(Math.sqrt(keys.length * 1.8)), 1, 14), cs = CELL * 1.5;
+    keys.forEach((k, i) => { const col = i % cols, row = Math.floor(i / cols);
+      P.set(k, { x: center.x + (col - (cols - 1) / 2) * cs, y: center.y + row * cs }); });
+    S.sel.center = center;
+  }
+  const all = [...S.fams, ...S.doors, ...S.concepts, ...S.items];
+  for (const n of all) {
+    const t = P.get(n.key); if (!t) continue;
+    if (n.x == null || !animate) { n.x = t.x; n.y = t.y; n.fx = n.tx = t.x; n.fy = n.ty = t.y; continue; }
+    n.fx = n.x; n.fy = n.y; n.tx = t.x; n.ty = t.y;
+  }
+  S.anim = animate ? { t0: performance.now(), dur: 900 } : null;
+  S.dirty = true;
+}
+
+/* =========================================================================
+   SELECTION
+   ========================================================================= */
+function itemsOf(n) {
+  if (n.key[0] === 'f') return S.items.filter(it => it.cs.some(c => S.byKey.get('d' + c.primary)?.family === n.id));
+  if (n.key[0] === 'd') return S.items.filter(it => it.cs.some(c => c.doors.includes(n.id)));
+  if (n.key[0] === 'c') return S.items.filter(it => it.cs.includes(n));
+  return [];
+}
+function select(n, opts = {}) {
+  if (!n) { const had = S.sel?.cluster; closeDrawer(); S.sel = null; $('#focus').classList.remove('show'); applyLayout(); if (had) setTimeout(() => frame(), 40); updateHash(); return; }
+  const its = opts.items || itemsOf(n);
+  const set = new Set(its.map(i => i.id));
+  const nodes = new Set([n.key]);
+  const fam = n.key[0] === 'f' ? n.id : n.key[0] === 'd' ? n.family : n.family;
+  if (n.key[0] === 'f') { for (const d of S.doors) if (d.family === n.id) nodes.add(d.key); for (const c of S.concepts) if (c.doors.some(d => S.doorById.get(d)?.family === n.id)) nodes.add(c.key); }
+  if (n.key[0] === 'd') { nodes.add('f' + n.family); for (const c of S.concepts) if (c.doors.includes(n.id)) nodes.add(c.key); }
+  if (n.key[0] === 'c') { for (const d of n.doors) { nodes.add('d' + d); nodes.add('f' + S.doorById.get(d)?.family); } }
+  S.sel = { key: n.key, node: n, set, nodes, fam, cluster: n.key[0] === 'c' || !!opts.cluster, anchor: n.key };
+  renderFocus();
+  applyLayout();
+  if (n.key[0] === 'c') openConcept(n.id); else closeDrawer();
+  if (S.sel.cluster) setTimeout(() => frame(clusterBounds()), 40);
+  updateHash();
+}
+function clusterBounds() {
+  const its = S.items.filter(i => S.sel?.set.has(i.id)); if (!its.length) return null;
+  let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+  for (const i of its) { a = Math.min(a, i.tx); b = Math.min(b, i.ty); c = Math.max(c, i.tx); d = Math.max(d, i.ty); }
+  const n = S.sel.node; if (n && n.tx != null) { a = Math.min(a, n.tx); b = Math.min(b, n.ty); c = Math.max(c, n.tx); d = Math.max(d, n.ty); }
+  return { x0: a - 60, y0: b - 60, x1: c + 60, y1: d + 60 };
+}
+function searchSelect(label, ids, sub) {
+  const set = new Set(ids.filter(id => S.items.some(i => i.id === id)));
+  const nodes = new Set();
+  for (const it of S.items) if (set.has(it.id)) for (const c of it.cs) { nodes.add(c.key); }
+  // anchor: most shared concept
+  const tally = new Map(); for (const it of S.items) if (set.has(it.id)) for (const c of it.cs) tally.set(c.key, (tally.get(c.key) || 0) + 1);
+  const anchor = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  S.sel = { key: 'search', node: { label, sub }, set, nodes, fam: null, cluster: true, anchor, search: true, order: ids };
+  renderFocus(); applyLayout(); setTimeout(() => frame(clusterBounds()), 40);
+}
+function isLit(n) {
+  if (!S.sel) return !S.famOff.has(n.family || n.id);
+  if (n.key[0] === 'i') return S.sel.set.has(n.id);
+  return S.sel.nodes.has(n.key);
+}
+
+/* =========================================================================
+   GLYPHS — small pictograms, one per concept (deterministic)
+   ========================================================================= */
+const GLYPHS = ['dot2', 'circles', 'tri', 'bars', 'grid', 'line', 'half', 'eye', 'frame', 'stack', 'cross', 'arc', 'seq', 'split', 'dots3', 'spark'];
+function drawGlyph(g, x, y, s, col, target) {
+  const ctx = target || CTX0;
+  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = Math.max(1, s * 0.09); ctx.lineCap = 'round';
+  const u = s / 2;
+  switch (g) {
+    case 'dot2': ctx.beginPath(); ctx.arc(-u * .25, 0, u * .42, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .55, u * .2, u * .14, 0, 7); ctx.fill(); break;
+    case 'circles': ctx.beginPath(); ctx.arc(-u * .2, 0, u * .45, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .3, 0, u * .45, 0, 7); ctx.stroke(); break;
+    case 'tri': ctx.beginPath(); ctx.moveTo(-u * .7, u * .5); ctx.lineTo(-u * .05, -u * .6); ctx.lineTo(-u * .05, u * .5); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(u * .05, u * .5); ctx.lineTo(u * .05, -u * .6); ctx.lineTo(u * .7, u * .5); ctx.closePath(); ctx.stroke(); break;
+    case 'bars': for (let i = 0; i < 3; i++) { ctx.fillRect(-u * .55 + i * u * .4, -u * .45, u * .2, u * .9); } break;
+    case 'grid': for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.arc((i - 1) * u * .45, (j - 1) * u * .45, u * .11, 0, 7); (i + j) % 3 === 0 ? ctx.fill() : ctx.stroke(); } break;
+    case 'line': for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(-u * .7 + i * u * .35, u * .3 - i * u * .15, u * .08, 0, 7); ctx.fill(); } break;
+    case 'half': ctx.beginPath(); ctx.arc(0, 0, u * .55, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, u * .55, Math.PI / 2, Math.PI * 1.5); ctx.fill(); break;
+    case 'eye': ctx.beginPath(); ctx.ellipse(-u * .15, 0, u * .5, u * .28, 0, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(-u * .15, 0, u * .12, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .6, 0, u * .1, 0, 7); ctx.fill(); break;
+    case 'frame': ctx.strokeRect(-u * .55, -u * .5, u * 1.1, u); ctx.fillRect(-u * .18, -u * .2, u * .36, u * .4); break;
+    case 'stack': for (let i = 0; i < 4; i++) ctx.fillRect(-u * .6, -u * .45 + i * u * .3, u * (1.2 - i * .25), u * .12); break;
+    case 'cross': ctx.beginPath(); ctx.moveTo(0, -u * .6); ctx.lineTo(0, u * .6); ctx.moveTo(-u * .5, 0); ctx.lineTo(u * .5, 0); ctx.stroke(); ctx.beginPath(); ctx.arc(0, -u * .25, u * .12, 0, 7); ctx.fill(); break;
+    case 'arc': ctx.beginPath(); ctx.arc(0, u * .4, u * .7, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, -u * .45); ctx.lineTo(-u * .45, u * .45); ctx.moveTo(0, -u * .45); ctx.lineTo(u * .45, u * .45); ctx.moveTo(0, -u * .45); ctx.lineTo(0, u * .45); ctx.stroke(); break;
+    case 'seq': ctx.beginPath(); ctx.arc(-u * .5, 0, u * .09, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(-u * .12, 0, u * .09, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .38, -u * .05, u * .2, 0, 7); ctx.fill(); break;
+    case 'split': ctx.strokeRect(-u * .6, -u * .42, u * 1.2, u * .84); ctx.fillRect(-u * .6, -u * .42, u * .6, u * .84); break;
+    case 'dots3': ctx.beginPath(); ctx.arc(-u * .2, -u * .3, u * .14, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(-u * .2, u * .1, u * .14, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .25, -u * .1, u * .14, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(u * .45, u * .45, u * .06, 0, 7); ctx.fill(); break;
+    case 'spark': for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * u * .2, Math.sin(a) * u * .2); ctx.lineTo(Math.cos(a) * u * .6, Math.sin(a) * u * .6); ctx.stroke(); } break;
+  }
+  ctx.restore();
+}
+const glyphOf = (c) => GLYPHS[hash(c.slug || c.id || '') % GLYPHS.length];
+const DOOR_GLYPH = { ai_ml: 'dots3', computer_vision: 'eye', data_analytics: 'bars', web_software: 'frame', automation_iot: 'seq', design_engineering: 'tri', creative_tech: 'spark', creative_media: 'split', product_management: 'stack', business_consulting: 'grid', entrepreneurship: 'arc' };
+
+/* =========================================================================
+   IMAGES — lazy, visible-first, 8 at a time
+   ========================================================================= */
+let inflight = 0; const queue = []; const THUMB = 240;
+let softT = 0; function softDirty() { if (!softT) softT = setTimeout(() => { softT = 0; S.dirty = true; }, 250); }
+function want(it) {
+  if (it.layer !== 'image' || it.imgState) return;
+  it.imgState = 'queued'; queue.push(it); pump();
+}
+function pump() {
+  while (inflight < 16 && queue.length) {
+    // nearest to the middle of the screen first
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < queue.length; i++) { const q = queue[i]; const d = (q.x - S.cam.x) ** 2 + (q.y - S.cam.y) ** 2; if (d < bd) { bd = d; bi = i; } }
+    const it = queue.splice(bi, 1)[0]; inflight++;
+    const im = new Image(); im.decoding = 'async'; im.referrerPolicy = 'no-referrer';
+    const urls = thumbUrls(it); let ui = 0;
+    im.onload = () => {
+      // draw from a small copy: scaling a 1,400px photo every frame is what makes panning slow
+      const nw = im.naturalWidth || 1, nh = im.naturalHeight || 1, sc = Math.min(1, THUMB / Math.max(nw, nh));
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(nw * sc)); c.height = Math.max(1, Math.round(nh * sc));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      it.img = c; it.fullSrc = thumbUrl(it) || im.src; it.ar = nw / nh; it.imgState = 'ok'; inflight--; softDirty(); pump();
+    };
+    im.onerror = () => { if (++ui < urls.length) { im.src = urls[ui]; return; } it.imgState = 'err'; inflight--; softDirty(); pump(); };
+    if (!urls.length) { it.imgState = 'err'; inflight--; continue; }
+    im.src = urls[0];
+  }
+  if (!queue.length && !inflight) S.dirty = true;
+}
+
+/* =========================================================================
+   DRAW
+   ========================================================================= */
+const toScreen = (x, y) => [(x - S.cam.x) * S.cam.k + W / 2, (y - S.cam.y) * S.cam.k + H / 2];
+const toWorld = (sx, sy) => [(sx - W / 2) / S.cam.k + S.cam.x, (sy - H / 2) / S.cam.k + S.cam.y];
+function visibleRect() { const [x0, y0] = toWorld(-80, -80), [x1, y1] = toWorld(W + 80, H + 80); return { x0, y0, x1, y1 }; }
+
+function famColor(f, a = 1) { const c = S.colors[f] || S.colors.ink; return a === 1 ? c : rgba(c, a); }
+
+function curve(ax, ay, bx, by, mode) {
+  ctx.moveTo(ax, ay);
+  if (mode === 'tree') { const my = (ay + by) / 2; ctx.bezierCurveTo(ax, my, bx, my, bx, by); }
+  else { const mx = (ax + bx) / 2 * 0.72, my = (ay + by) / 2 * 0.72; ctx.quadraticCurveTo(mx, my, bx, by); }
+}
+
+function draw() {
+  const C = S.colors, k = S.cam.k, mode = S.layout;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // background: soft vertical wash like the reference
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.bg); g.addColorStop(1, C.bg2); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(DPR * k, 0, 0, DPR * k, DPR * (W / 2 - S.cam.x * k), DPR * (H / 2 - S.cam.y * k));
+  const vr = visibleRect();
+  const sel = S.sel; const anyHi = !!sel;
+  const hov = S.hover;
+
+  // row labels in tree mode
+  if (mode === 'tree' && S.fams.length && !S.moving) {
+    const lx = Math.min(...S.concepts.map(c => c.x), ...S.doors.map(d => d.x)) - 140;
+    ctx.fillStyle = C.muted; ctx.font = `500 ${11}px "IBM Plex Mono"`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    [['01  FAMILY', 0], ['02  DOOR', 330], ['03  CONCEPT', 640], ['04  EXAMPLES', 1000]].forEach(([t, y]) => { ctx.save(); ctx.globalAlpha = .7; ctx.fillText(t, lx, y); ctx.restore(); });
+  }
+
+  // ---- edges: family → door
+  ctx.lineWidth = 1.4 / Math.sqrt(k) ;
+  for (const d of S.doors) {
+    const f = S.byKey.get('f' + d.family); if (!f) continue;
+    const lit = !anyHi ? !S.famOff.has(d.family) : (sel.nodes.has(d.key) && sel.nodes.has(f.key));
+    ctx.strokeStyle = lit ? famColor(d.family, anyHi ? .95 : .55) : famColor(d.family, .08); ctx.setLineDash([]);
+    ctx.beginPath(); curve(f.x, f.y + (mode === 'tree' ? (f._R || 72) : 0), d.x, d.y - (mode === 'tree' ? (d._h || 30) / 2 : 0), mode); ctx.stroke();
+  }
+  // ---- edges: door → concept (solid primary, dashed secondary)
+  for (const c of S.concepts) for (const did of c.doors) {
+    const d = S.byKey.get('d' + did); if (!d) continue;
+    const prim = did === c.primary;
+    const lit = !anyHi ? !S.famOff.has(c.family) : (sel.nodes.has(c.key) && sel.nodes.has(d.key) && (sel.key[0] !== 'f' || d.family === sel.fam));
+    const fam = d.family;
+    ctx.strokeStyle = lit ? famColor(fam, anyHi ? (prim ? .85 : .45) : (prim ? .4 : .14)) : famColor(fam, .05);
+    ctx.lineWidth = (prim ? 1.2 : .9) / Math.sqrt(k);
+    ctx.beginPath(); curve(d.x, d.y + (mode === 'tree' ? 16 : 0), c.x, c.y - (mode === 'tree' ? 24 : 0), mode); ctx.stroke();
+  }
+  // ---- edges: concept → item (batched into one path per colour; hidden while panning)
+  ctx.lineWidth = .7 / Math.sqrt(k);
+  const groups = new Map();
+  const off = (x, y) => x < vr.x0 || x > vr.x1 || y < vr.y0 || y > vr.y1;
+  for (const it of S.items) {
+    const itLit = anyHi ? sel.set.has(it.id) : false;
+    const isHov = hov && (hov === it || (hov.key && hov.key[0] === 'c' && it.cs.includes(hov)));
+    if (anyHi && !itLit && !isHov) continue;
+    if (!anyHi && !isHov) continue;
+    for (const c of it.cs) {
+      const prim = c === it.pc;
+      if (anyHi && sel.key[0] === 'c' && c !== sel.node && !isHov) continue;
+      const a = isHov ? .9 : anyHi ? (prim ? .55 : .3) : (S.famOff.has(c.family) ? 0 : (prim ? .1 : .05));
+      if (a === 0) continue;
+      const ey = it.y - sizeOf(it)[1] / 2;
+      if (off(c.x, c.y) && off(it.x, ey)) continue;
+      const gk = c.family + '|' + a + '|' + (prim ? 1 : 0);
+      let g = groups.get(gk); if (!g) { g = { fam: c.family, a, prim, p: new Path2D() }; groups.set(gk, g); }
+      g.p.moveTo(c.x, c.y + (mode === 'tree' ? 24 : 0));
+      if (mode === 'tree') { const my = (c.y + 24 + ey) / 2; g.p.bezierCurveTo(c.x, my, it.x, my, it.x, ey); }
+      else { g.p.quadraticCurveTo((c.x + it.x) / 2 * .72, (c.y + ey) / 2 * .72, it.x, ey); }
+    }
+  }
+  for (const g of groups.values()) { ctx.strokeStyle = famColor(g.fam, g.prim ? g.a : g.a * .6); ctx.stroke(g.p); }
+  ctx.setLineDash([]);
+
+  // ---- items
+  const drawItem = (it, lift) => {
+    const [w, h] = sizeOf(it);
+    const scl = ((sel && sel.cluster && sel.set.has(it.id)) ? 1.5 : 1) * (lift ? 1.9 : 1);
+    const ww = w * scl, hh = h * scl;
+    if (it.x + ww < vr.x0 || it.x - ww > vr.x1 || it.y + hh < vr.y0 || it.y - hh > vr.y1) return;
+    if (lift) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 24 / k * .6; ctx.shadowOffsetY = 6 / k * .6; ctx.fillStyle = C.bg2; ctx.fillRect(it.x - ww / 2, it.y - hh / 2, ww, hh); ctx.restore(); }
+    const lit = isLit(it) || hov === it;
+    const alpha = lit ? 1 : anyHi ? (sel.cluster ? .05 : .1) : .18;
+    ctx.globalAlpha = alpha;
+    const x = it.x - ww / 2, y = it.y - hh / 2;
+    if (it.layer === 'image') {
+      if (ww * k > 5) want(it);
+      if (it.img) { ctx.drawImage(it.img, x, y, ww, hh); }
+      else { ctx.fillStyle = famColor(it.family, .18); ctx.fillRect(x, y, ww, hh); }
+      if (lift) { ctx.strokeStyle = famColor(it.family); ctx.lineWidth = 2 / k; ctx.strokeRect(x, y, ww, hh); }
+      if (ww * k > 46 && !S.moving) { const sk = it._s || (it._s = sourceOf(it).k); const b = 7 / k * .9; ctx.fillStyle = sk === 'x' ? '#111' : sk === 'tiktok' ? '#ff0050' : sk === 'instagram' ? '#c13584' : sk === 'youtube' ? '#f00' : '#888'; ctx.fillRect(x + ww - b - 2 / k, y + 2 / k, b, b); }
+    } else if (it.layer === 'link') {
+      ctx.fillStyle = C.bg2; ctx.strokeStyle = C.line; ctx.lineWidth = 1 / k;
+      ctx.beginPath(); ctx.rect(x, y, ww, hh); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = famColor(it.family); ctx.fillRect(x, y, ww, 2.5 * scl);
+      if (ww * k > 34 && !S.moving) {
+        ctx.fillStyle = C.muted; ctx.font = `500 ${5.2 * scl}px "IBM Plex Mono"`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(trunc(it.handle ? '@' + it.handle : (it.src || '').replace('telegram_', 'tg '), 18), x + 5 * scl, y + 6 * scl);
+        ctx.fillStyle = C.ink; ctx.font = `${6.6 * scl}px "Space Grotesk"`;
+        wrap(it.label, x + 5 * scl, y + 14 * scl, ww - 9 * scl, 7.6 * scl, 5);
+      } else { ctx.fillStyle = C.line; for (let i = 0; i < 4; i++) ctx.fillRect(x + 6, y + 9 + i * 8, ww - 12 - (i % 2) * 10, 2.5); }
+    } else if (it.kind === 'post') {
+      // blog posts: dark ink card, paper text, family accent, so they read as finished pieces
+      ctx.fillStyle = '#141414'; ctx.beginPath(); ctx.rect(x, y, ww, hh); ctx.fill();
+      ctx.strokeStyle = famColor(it.family); ctx.lineWidth = 1.5 / k; ctx.strokeRect(x, y, ww, hh);
+      ctx.fillStyle = famColor(it.family); ctx.beginPath(); ctx.arc(x + 7 * scl, y + 7 * scl, 2.2 * scl, 0, 7); ctx.fill();
+      if (ww * k > 40 && !S.moving) {
+        ctx.fillStyle = '#9a9893'; ctx.font = `500 ${5 * scl}px "IBM Plex Mono"`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('BLOG POST', x + 12 * scl, y + 7.4 * scl);
+        ctx.fillStyle = '#f1efe9'; ctx.font = `${10 * scl}px "Instrument Serif"`; ctx.textBaseline = 'top';
+        wrap(it.label, x + 6 * scl, y + 14 * scl, ww - 12 * scl, 10.5 * scl, 3);
+      } else { ctx.fillStyle = 'rgba(241,239,233,.35)'; for (let i = 0; i < 3; i++) ctx.fillRect(x + 8, y + 16 + i * 9, ww - 16 - i * 14, 3); }
+    } else if (it.layer === 'idea') {
+      ctx.fillStyle = C.bg2; ctx.strokeStyle = famColor(it.family, .9); ctx.lineWidth = 1 / k;
+      ctx.beginPath(); ctx.rect(x, y, ww, hh); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = famColor(it.family); ctx.fillRect(x, y, 3 * scl, hh);
+      if (ww * k > 34 && !S.moving) {
+        ctx.fillStyle = C.ink; ctx.font = `italic ${8.5 * scl}px "Instrument Serif"`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        wrap(it.label, x + 6 * scl, y + 4 * scl, ww - 9 * scl, 9 * scl, 4);
+        ctx.fillStyle = C.muted; ctx.font = `${5 * scl}px "IBM Plex Mono"`; ctx.textBaseline = 'bottom'; ctx.fillText((it.kind === 'capture' ? (it.src || '').replace('telegram_', '') : it.kind).toUpperCase(), x + 6 * scl, y + hh - 3 * scl);
+      } else { ctx.fillStyle = famColor(it.family, .35); for (let i = 0; i < 3; i++) ctx.fillRect(x + 7, y + 10 + i * 9, ww - 14 - i * 8, 3); }
+    } else {
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.rect(x, y, ww, hh); ctx.fill();
+      if (ww * k > 34) { ctx.fillStyle = C.bg; ctx.font = `500 ${7 * scl}px "Space Grotesk"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(trunc(it.label, 16), it.x, it.y); }
+    }
+    ctx.globalAlpha = 1;
+  };
+  for (const it of S.items) if (it !== hov) drawItem(it, false);
+
+  // ---- concepts
+  for (const c of S.concepts) {
+    const lit = isLit(c) || hov === c; const r = c.r || 22;
+    if (c.x + r < vr.x0 || c.x - r > vr.x1 || c.y + r + 30 < vr.y0 || c.y - r > vr.y1) continue;
+    ctx.globalAlpha = lit ? 1 : anyHi ? .2 : .35;
+    const on = (sel && sel.key === c.key) || hov === c;
+    ctx.fillStyle = on ? famColor(c.family) : C.bg2; ctx.strokeStyle = on ? famColor(c.family) : famColor(c.family, lit && anyHi ? .9 : .45); ctx.lineWidth = (on ? 2 : 1.2) / Math.min(1, k);
+    ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 7); ctx.fill(); ctx.stroke();
+    drawGlyph(glyphOf(c), c.x, c.y, r, on ? C.bg2 : (lit && anyHi ? famColor(c.family) : C.ink));
+    if ((k > .26 && !S.moving) || on) {
+      const fs = clamp(11 / k, 10, 22), lh = fs * 1.1;
+      ctx.fillStyle = lit ? C.ink : C.muted; ctx.font = `${fs}px "IBM Plex Mono"`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const words = c.label.split(' ');
+      const lines = []; let cur = '';
+      for (const wd of words) { if ((cur + ' ' + wd).trim().length > 14 && cur) { lines.push(cur); cur = wd; } else cur = (cur + ' ' + wd).trim(); }
+      if (cur) lines.push(cur);
+      lines.slice(0, 2).forEach((l, i) => ctx.fillText(l, c.x, c.y + r + 6 + i * lh));
+      if (k > .7) { ctx.fillStyle = C.muted; ctx.font = `9px "IBM Plex Mono"`; ctx.fillText(String(c.n), c.x, c.y + r + 6 + Math.min(lines.length, 2) * lh); }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- doors (chips)
+  for (const d of S.doors) {
+    const lit = isLit(d) || hov === d; const on = (sel && sel.nodes.has(d.key)) || hov === d;
+    ctx.globalAlpha = lit ? 1 : .35;
+    const dfs = clamp(12 / k, 11, 17), u = dfs / 11;
+    ctx.font = `500 ${dfs}px "Space Grotesk"`; const tw = ctx.measureText(d.label).width; const w = tw + 34 * u, h = 30 * u;
+    ctx.fillStyle = C.bg2; ctx.strokeStyle = on ? famColor(d.family) : famColor(d.family, .45); ctx.lineWidth = (on ? 2 : 1.2) / Math.min(1, k);
+    ctx.beginPath(); ctx.rect(d.x - w / 2, d.y - h / 2, w, h); ctx.fill(); ctx.stroke();
+    drawGlyph(DOOR_GLYPH[d.id] || 'dot2', d.x - w / 2 + 14 * u, d.y, 13 * u, on ? famColor(d.family) : C.ink);
+    ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(d.label, d.x - w / 2 + 25 * u, d.y + .5);
+    d._w = w; d._h = h;
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- families (big circles)
+  for (const f of S.fams) {
+    const lit = isLit(f) || hov === f; const on = (sel && sel.fam === f.id && sel.key[0] !== 'c') || hov === f;
+    const ffs = clamp(14 / k, 24, 46); ctx.font = `${ffs}px "Instrument Serif"`;
+    const R = Math.max(mode === 'tree' ? 72 : 62, ctx.measureText(f.label).width / 2 + 22); f._R = R;
+    ctx.globalAlpha = lit ? 1 : .4;
+    ctx.fillStyle = C.bg2; ctx.strokeStyle = famColor(f.id, on ? 1 : .55); ctx.lineWidth = (on ? 3 : 1.5) / Math.min(1, k);
+    if (on) { ctx.save(); ctx.shadowColor = famColor(f.id, .35); ctx.shadowBlur = 24; }
+    ctx.beginPath(); ctx.arc(f.x, f.y, R, 0, 7); ctx.fill(); ctx.stroke();
+    if (on) ctx.restore();
+    drawGlyph(f.glyph, f.x, f.y - ffs * .85, ffs * .75, famColor(f.id));
+    ctx.fillStyle = C.ink; ctx.font = `${ffs}px "Instrument Serif"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.label, f.x, f.y + ffs * .45);
+    ctx.globalAlpha = 1;
+  }
+  if (hov && hov.key && hov.key[0] === 'i') drawItem(hov, true);
+}
+function trunc(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function wrap(text, x, y, maxW, lh, maxLines) {
+  const words = String(text).split(' '); let line = '', n = 0;
+  for (let i = 0; i < words.length; i++) {
+    const test = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(test).width > maxW && line) { if (n === maxLines - 1) { ctx.fillText(line + '…', x, y + n * lh); return; } ctx.fillText(line, x, y + n * lh); n++; line = words[i]; }
+    else line = test;
+  }
+  if (line) ctx.fillText(line, x, y + n * lh);
+}
+
+/* ---------- loop ---------- */
+function tick(now) {
+  if (S.anim) {
+    const t = clamp((now - S.anim.t0) / S.anim.dur, 0, 1), e = ease(t);
+    for (const n of [...S.fams, ...S.doors, ...S.concepts, ...S.items]) { if (n.tx == null) continue; n.x = lerp(n.fx, n.tx, e); n.y = lerp(n.fy, n.ty, e); }
+    if (t >= 1) S.anim = null; S.dirty = true;
+  }
+  if (S.camT) {
+    const t = clamp((now - S.camT.t0) / S.camT.dur, 0, 1), e = ease(t);
+    S.cam.x = lerp(S.camT.a.x, S.camT.b.x, e); S.cam.y = lerp(S.camT.a.y, S.camT.b.y, e); S.cam.k = Math.exp(lerp(Math.log(S.camT.a.k), Math.log(S.camT.b.k), e));
+    if (t >= 1) S.camT = null; S.dirty = true;
+  }
+  if (S.dirty) { S.dirty = false; draw(); }
+  requestAnimationFrame(tick);
+}
+
+function frame(b, instant) {
+  if (!b) { const all = [...S.fams, ...S.doors, ...S.concepts, ...S.items]; if (!all.length) return;
+    b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    for (const n of all) { const x = n.tx ?? n.x, y = n.ty ?? n.y; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
+    b.x0 -= 80; b.y0 -= 110; b.x1 += 80; b.y1 += 80; }
+  const padTop = 70, padBot = 60;
+  const k = clamp(Math.min(W / (b.x1 - b.x0), (H - padTop - padBot) / (b.y1 - b.y0)), .05, 3);
+  const target = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 - (padTop - padBot) / 2 / k, k };
+  if (instant) { S.cam = target; S.dirty = true; return; }
+  S.camT = { t0: performance.now(), dur: 850, a: { ...S.cam }, b: target };
+}
+
+/* =========================================================================
+   INTERACTION
+   ========================================================================= */
+function hitTest(sx, sy) {
+  const [x, y] = toWorld(sx, sy);
+  for (const f of S.fams) if (Math.hypot(f.x - x, f.y - y) < (f._R || 72)) return f;
+  for (const d of S.doors) if (Math.abs(d.x - x) < (d._w || 100) / 2 && Math.abs(d.y - y) < (d._h || 30) / 2) return d;
+  for (const c of S.concepts) if (Math.hypot(c.x - x, c.y - y) < (c.r || 22) + 5) return c;
+  for (let i = S.items.length - 1; i >= 0; i--) { const it = S.items[i]; const scl = (S.sel && S.sel.cluster && S.sel.set.has(it.id)) ? 1.5 : 1; const [w, h] = sizeOf(it);
+    if (Math.abs(it.x - x) < w * scl / 2 && Math.abs(it.y - y) < h * scl / 2) { if (S.sel && !S.sel.set.has(it.id) && S.sel.cluster) continue; return it; } }
+  return null;
+}
+const pointers = new Map(); let drag = null, pinch = null, moved = 0;
+cv.addEventListener('pointerdown', (e) => {
+  cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1) { drag = { x: e.clientX, y: e.clientY, cx: S.cam.x, cy: S.cam.y }; moved = 0; }
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: S.cam.k, mid: toWorld((a.x + b.x) / 2, (a.y + b.y) / 2) }; drag = null; }
+  S.camT = null;
+});
+cv.addEventListener('pointermove', (e) => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+    moving(); S.cam.k = clamp(pinch.k * d / pinch.d, .04, 4); const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    S.cam.x = pinch.mid[0] - (mx - W / 2) / S.cam.k; S.cam.y = pinch.mid[1] - (my - H / 2) / S.cam.k; S.dirty = true; moved += 10; return;
+  }
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; moved = Math.max(moved, Math.hypot(dx, dy));
+    if (moved > 3) { moving(); cv.classList.add('dragging'); S.cam.x = drag.cx - dx / S.cam.k; S.cam.y = drag.cy - dy / S.cam.k; S.dirty = true; hideTip(); }
+    return;
+  }
+  const n = hitTest(e.clientX, e.clientY);
+  if (n !== S.hover) { S.hover = n; S.dirty = true; cv.classList.toggle('pointer', !!n); }
+  n ? showTip(n, e.clientX, e.clientY) : hideTip();
+});
+const endPtr = (e) => {
+  pointers.delete(e.pointerId); cv.classList.remove('dragging');
+  if (pointers.size < 2) pinch = null;
+  if (drag && moved <= 3 && e.type === 'pointerup') click(e.clientX, e.clientY);
+  if (!pointers.size) drag = null;
+};
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+cv.addEventListener('pointerleave', () => { if (S.hover) { S.hover = null; S.dirty = true; } hideTip(); });
+let moveT;
+function moving() { S.moving = true; clearTimeout(moveT); moveT = setTimeout(() => { S.moving = false; S.dirty = true; }, 160); }
+cv.addEventListener('wheel', (e) => {
+  e.preventDefault(); S.camT = null; moving();
+  if (e.ctrlKey || e.metaKey) {           // trackpad pinch (or ctrl/cmd + wheel): zoom at the cursor
+    const [wx, wy] = toWorld(e.clientX, e.clientY);
+    S.cam.k = clamp(S.cam.k * Math.exp(-e.deltaY * .01), .04, 4);
+    S.cam.x = wx - (e.clientX - W / 2) / S.cam.k; S.cam.y = wy - (e.clientY - H / 2) / S.cam.k;
+  } else {                                 // two-finger scroll / mouse wheel: pan
+    S.cam.x += e.deltaX / S.cam.k; S.cam.y += e.deltaY / S.cam.k;
+  }
+  S.dirty = true;
+}, { passive: false });
+function zoomBy(f) { S.camT = { t0: performance.now(), dur: 280, a: { ...S.cam }, b: { ...S.cam, k: clamp(S.cam.k * f, .04, 4) } }; }
+
+function click(sx, sy) {
+  const n = hitTest(sx, sy); hideTip();
+  if (!n) { if (S.sel) select(null); closeDrawer(); return; }
+  if (n.key[0] === 'i') { openDrawer(n); return; }
+  if (S.sel && S.sel.key === n.key) { select(null); return; }
+  select(n);
+}
+
+const tip = $('#tip');
+function showTip(n, x, y) {
+  let html = '';
+  if (n.key[0] === 'f') html = `${esc(n.label)}<span class="n">family · ${n.n} links</span>`;
+  else if (n.key[0] === 'd') html = `${esc(n.label)}<span class="n">door · ${n.family}</span>`;
+  else if (n.key[0] === 'c') html = `${esc(n.label)}<span class="n">${n.n} examples · ${esc(n.doors.map(d => S.doorById.get(d)?.label).join(' / '))}</span>`;
+  else html = `${esc(trunc(n.caption || n.label, 110))}<span class="n">${esc(n.folder || n.kind)} · ${n.cs.map(c => esc(c.label)).slice(0, 3).join(', ')}</span>`;
+  tip.innerHTML = html; tip.classList.add('show');
+  const r = tip.getBoundingClientRect();
+  tip.style.left = clamp(x + 14, 8, W - r.width - 8) + 'px'; tip.style.top = clamp(y + 16, 8, H - r.height - 8) + 'px';
+}
+function hideTip() { tip.classList.remove('show'); }
+
+/* ---------- focus card (01 / 02 / 03 / 04) ---------- */
+function renderFocus() {
+  const el = $('#focus'); const s = S.sel; if (!s) { el.classList.remove('show'); return; }
+  const n = s.node; let fam, door, concept;
+  if (s.search) {
+    const thumbs = S.items.filter(i => s.set.has(i.id) && i.fullSrc).slice(0, 3);
+    el.style.setProperty('--fc', '#d9d6cf');
+    el.innerHTML = `<button class="x" aria-label="Clear">×</button>
+      <div class="row"><div class="ico round">${svgGlyph('eye', '#d9d6cf')}</div><div><div class="k"><b>⌕</b>${esc(n.sub || 'SEARCH')}</div><div class="v serif">${esc(trunc(n.label, 40))}</div></div></div>
+      <div class="row"><div class="stack">${stackHtml(thumbs)}</div><div><div class="k"><b>04</b>EXAMPLES</div><div class="v it">${s.set.size} recorded example${s.set.size === 1 ? '' : 's'}</div></div></div>`;
+  } else {
+    if (n.key[0] === 'f') fam = n;
+    if (n.key[0] === 'd') { door = n; fam = S.byKey.get('f' + n.family); }
+    if (n.key[0] === 'c') { concept = n; door = S.byKey.get('d' + n.primary); fam = S.byKey.get('f' + n.family); }
+    const fc = S.colors[fam?.id] || '#ff5a52';
+    el.style.setProperty('--fc', fc);
+    const thumbs = S.items.filter(i => s.set.has(i.id) && i.fullSrc).slice(0, 3);
+    const rows = [];
+    if (fam) rows.push(`<div class="row"><div class="ico">${svgGlyph(fam.glyph, fc)}</div><div><div class="k"><b>01</b>FAMILY</div><div class="v serif">${esc(fam.label)}</div></div></div>`);
+    if (door) rows.push(`<div class="row"><div class="ico">${svgGlyph(DOOR_GLYPH[door.id] || 'dot2', '#f1efe9')}</div><div><div class="k"><b>02</b>DOOR</div><div class="v">${esc(door.label)}</div></div></div>`);
+    if (concept) rows.push(`<div class="row"><div class="ico round">${svgGlyph(glyphOf(concept), '#f1efe9')}</div><div><div class="k"><b>03</b>CONCEPT</div><div class="v mono">${esc(concept.label)}</div></div></div>`);
+    rows.push(`<div class="row"><div class="stack">${stackHtml(thumbs)}</div><div><div class="k"><b>04</b>EXAMPLES</div><div class="v it">${s.set.size} recorded example${s.set.size === 1 ? '' : 's'}</div></div></div>`);
+    el.innerHTML = `<button class="x" aria-label="Clear">×</button>` + rows.join('');
+  }
+  el.querySelector('.x').onclick = () => select(null);
+  el.classList.add('show');
+}
+function stackHtml(thumbs) {
+  if (!thumbs.length) return '<span style="left:4px;top:2px"></span><span style="left:9px;top:4px"></span>';
+  return thumbs.map((t, i) => `<img src="${esc(t.fullSrc)}" alt="" style="left:${i * 6}px;top:${i * 2}px;transform:rotate(${(i - 1) * 5}deg)" />`).join('');
+}
+function svgGlyph(g, col) {
+  const c = document.createElement('canvas'); c.width = c.height = 56; const x = c.getContext('2d');
+  drawGlyph(g, 28, 28, 34, col, x);
+  return `<img src="${c.toDataURL()}" width="28" height="28" alt="" />`;
+}
+
+/* ---------- where a saved thing came from ---------- */
+function sourceOf(it) {
+  const u = String(it.url || '').toLowerCase();
+  if (it.kind === 'commentary') return { k: 'take', label: 'Your take' };
+  if (it.kind === 'post') return { k: 'post', label: 'Blog post' };
+  if (it.kind === 'project') return { k: 'work', label: 'Your work' };
+  if (it.src === 'telegram_voice') return { k: 'voice', label: 'Voice note' };
+  if (it.src === 'telegram_thought') return { k: 'thought', label: 'Thought' };
+  if (/tiktok\.com/.test(u)) return { k: 'tiktok', label: 'TikTok' };
+  if (/instagram\.com/.test(u)) return { k: 'instagram', label: 'Instagram' };
+  if (/youtube\.com|youtu\.be/.test(u)) return { k: 'youtube', label: 'YouTube' };
+  if (/(^|\/\/)(www\.)?(x|twitter)\.com/.test(u) || it.src === 'twitter') return { k: 'x', label: 'X' };
+  let host = ''; try { host = new URL(it.url).hostname.replace(/^www\./, ''); } catch {}
+  return { k: 'web', label: host || 'Link' };
+}
+// which on/off switch an item belongs to: X, TikTok, Telegram, or your own stuff
+function channelOf(it) {
+  if (it._ch) return it._ch;
+  const u = String(it.url || '').toLowerCase();
+  return it._ch = /tiktok\.com/.test(u) ? 'tiktok'
+    : it.src === 'twitter' ? 'x'
+    : String(it.src || '').startsWith('telegram') ? 'telegram'
+    : 'mine';
+}
+const SRC_ORDER = ['x', 'tiktok', 'instagram', 'youtube', 'web', 'voice', 'thought', 'take', 'post', 'work'];
+
+/* ---------- concept panel: everything you saved that is linked to one concept ---------- */
+let panelFilter = 'all', panelStack = [];
+function openConcept(cid, filter) {
+  const c = S.conceptById.get(cid) || S.byKey.get('c' + cid);
+  const all = cid === 'none'
+    ? S.items.filter(i => i.pc && i.pc.id === 'none')
+    : S.raw.items.filter(i => (i.concepts || []).includes(cid) && (!S.folder || i.folder === S.folder));
+  all.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  const counts = new Map(); all.forEach(i => { const s = sourceOf(i).k; counts.set(s, (counts.get(s) || 0) + 1); });
+  panelFilter = filter && counts.has(filter) ? filter : 'all';
+  const list = panelFilter === 'all' ? all : all.filter(i => sourceOf(i).k === panelFilter);
+  const label = c?.label || c?.slug || 'Concept';
+  const onMap = S.byKey.get('c' + cid);
+  $('#d-k').textContent = `Concept · ${all.length} saved`;
+  $('#d-body').innerHTML = `
+    <h3 style="margin-top:0">${esc(label)}</h3>
+    <div class="meta">${onMap ? esc(onMap.doors.map(d => S.doorById.get(d)?.label).join(' / ')) : 'Not one of the top concepts on the map'}${S.folder ? ' · folder: ' + esc(S.folder) : ''}</div>
+    <div class="srcs">
+      <span class="chip ${panelFilter === 'all' ? 'on' : ''}" data-f="all">All ${all.length}</span>
+      ${SRC_ORDER.filter(k => counts.has(k)).map(k => `<span class="chip ${panelFilter === k ? 'on' : ''}" data-f="${k}"><b class="sb sb-${k}"></b>${esc(sourceOf(all.find(i => sourceOf(i).k === k)).label === 'Link' || k === 'web' ? 'Web' : sourceOf(all.find(i => sourceOf(i).k === k)).label)} ${counts.get(k)}</span>`).join('')}
+    </div>
+    <div class="rows">${list.map(rowHtml).join('') || '<p class="txt">Nothing here.</p>'}</div>`;
+  $('#d-body').querySelectorAll('[data-f]').forEach(el => el.onclick = () => openConcept(cid, el.dataset.f));
+  $('#d-body').querySelectorAll('[data-row]').forEach(el => el.onclick = () => {
+    const id = +el.dataset.row; const it = S.byKey.get('i' + id) || S.byId.get(id);
+    panelStack = [() => openConcept(cid, panelFilter)]; openDrawer(it, true);
+  });
+  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false'); $('#d-body').scrollTop = 0;
+}
+function rowHtml(i) {
+  const s = sourceOf(i); const onMap = S.byKey.get('i' + i.id);
+  const thumb = onMap?.fullSrc || (i.layer === 'image' ? thumbUrl(i) : null);
+  const text = cleanTitle(i.caption) || cleanTitle(i.title) || cleanTitle(i.body) || '(untitled)';
+  const when = i.at ? new Date(i.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '';
+  return `<div class="lrow" data-row="${i.id}">
+    <div class="th">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" />` : `<span>${esc(trunc(cleanTitle(i.title) || text, 60))}</span>`}</div>
+    <div class="tx"><div class="src"><b class="sb sb-${s.k}"></b>${esc(s.label)}${i.handle ? ' · @' + esc(i.handle) : ''}${i.folder ? ' · ' + esc(i.folder) : ''}</div>
+    <div class="t">${esc(trunc(text, 150))}</div><div class="d">${esc(when)}</div></div></div>`;
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(it, fromPanel) {
+  if (!fromPanel) panelStack = [];
+  const src = S.byId.get(it.id) || it;
+  const doors = it.cs ? [...new Set(it.cs.flatMap(c => c.doors))] : (it.doors || []);
+  if (!it.label) it.label = cleanTitle(it.title) || cleanTitle(it.body) || '(untitled)';
+  const allConcepts = (src.concepts || []).map(id => S.conceptById.get(id)).filter(Boolean);
+  const related = it.cs ? relatedTo(it, 8) : [];
+  $('#d-k').textContent = `${sourceOf(it).label} · ${it.folder || it.kind}`;
+  const when = src.at ? new Date(src.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const hero = it.layer === 'image'
+    ? `<img class="hero" src="${esc(it.fullSrc || thumbUrl(it) || '')}" alt="${esc(trunc(it.label, 120))}" />`
+    : it.layer === 'link' ? `<div class="idea" style="font-family:'Space Grotesk',sans-serif;font-size:17px;line-height:1.45">${src.handle ? `<div class="meta" style="margin-bottom:8px">@${esc(src.handle)}</div>` : ''}${esc(trunc(cleanTitle(src.body) || it.label, 420))}</div>`
+    : `<div class="idea">“${esc(trunc(cleanTitle(src.body) || it.label, 280))}”</div>`;
+  const body = cleanTitle(src.body);
+  $('#d-body').innerHTML = `${hero}
+    ${src.caption ? `<p class="cap">${esc(src.caption)}</p>` : ''}
+    ${it.layer === 'image' || it.layer === 'work' ? `<h3>${esc(trunc(it.label, 140))}</h3>` : '<div style="height:12px"></div>'}
+    ${it.layer === 'image' && body && body !== it.label ? `<p class="txt">${esc(trunc(body, 420))}</p>` : ''}
+    <div class="meta">${esc([when, src.src || src.kind].filter(Boolean).join(' · '))}</div>
+    <div class="group"><div class="k">Doors</div>${doors.map(d => { const dd = S.doorById.get(d); return `<span class="chip" data-door="${esc(d)}"><i style="background:${famColor(dd?.family)}"></i>${esc(dd?.label || d)}</span>`; }).join('')}</div>
+    <div class="group"><div class="k">Concepts</div>${allConcepts.map(c => `<span class="chip" data-concept="${c.id}">${esc(c.label || c.slug)}</span>`).join('')}</div>
+    ${(src.tags || []).length ? `<div class="group"><div class="k">Seen by Gemini</div>${src.tags.map(t => `<span class="chip tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${src.url ? `<a class="open" href="${esc(src.url)}" target="_blank" rel="noopener">Open the original ↗</a>` : ''}
+    ${related.length ? `<div class="group" style="margin-top:20px"><div class="k">Connected</div><div class="related">${related.map(r => `<div data-item="${r.id}" title="${esc(trunc(r.label, 80))}">${r.fullSrc ? `<img src="${esc(r.fullSrc)}" alt="" />` : esc(trunc(r.label, 40))}</div>`).join('')}</div></div>` : ''}`;
+  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
+  $('#d-body').scrollTop = 0;
+  $('#d-body').querySelectorAll('[data-concept]').forEach(el => el.onclick = () => { const id = +el.dataset.concept; const c = S.byKey.get('c' + id); if (c) select(c); else openConcept(id); });
+  if (panelStack.length) { const b = document.createElement('button'); b.className = 'back'; b.textContent = '← Back to the list'; b.onclick = () => { const f = panelStack.pop(); f && f(); }; $('#d-body').prepend(b); }
+  $('#d-body').querySelectorAll('[data-door]').forEach(el => el.onclick = () => { const d = S.byKey.get('d' + el.dataset.door); if (d) { closeDrawer(); select(d); } });
+  $('#d-body').querySelectorAll('[data-item]').forEach(el => el.onclick = () => { const r = S.byKey.get('i' + el.dataset.item); if (r) openDrawer(r); });
+  if (S.byKey.get('i' + it.id)) { S.hover = S.byKey.get('i' + it.id); S.dirty = true; }
+}
+function closeDrawer() { $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); }
+function relatedTo(it, n) {
+  const mine = new Set((S.byId.get(it.id)?.concepts) || []); const edges = new Set();
+  for (const e of S.raw.edges || []) { if (e.a === it.id) edges.add(e.b); if (e.b === it.id) edges.add(e.a); }
+  return S.items.filter(o => o !== it).map(o => {
+    let s = edges.has(o.id) ? 5 : 0; for (const c of (S.byId.get(o.id)?.concepts || [])) if (mine.has(c)) s += 1 / Math.log2(2 + (S.byKey.get('c' + c)?.n || 2));
+    for (const t of (S.byId.get(o.id)?.tags || [])) if ((S.byId.get(it.id)?.tags || []).includes(t)) s += 1.2;
+    return [o, s]; }).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(([o]) => o);
+}
+$('#d-x').onclick = closeDrawer;
+
+/* ---------- legend ---------- */
+function renderLegend() {
+  $('#legend').innerHTML = S.fams.map(f => `<span data-f="${f.id}" class="${S.famOff.has(f.id) ? 'off' : ''}"><i style="background:${famColor(f.id)}"></i>${f.label}</span>`).join('');
+  $('#legend').querySelectorAll('span').forEach(el => el.onclick = () => { const f = S.byKey.get('f' + el.dataset.f); if (f) select(S.sel && S.sel.key === f.key ? null : f); });
+}
+
+/* ---------- search ---------- */
+const qEl = $('#q');
+function localSearch(q) {
+  q = q.trim().toLowerCase(); if (!q) { if (S.sel?.search) select(null); return; }
+  const terms = q.split(/\s+/);
+  const hits = S.items.filter(it => { const src = S.byId.get(it.id) || {}; const hay = (it.label + ' ' + (src.handle || '') + ' ' + (src.caption || '') + ' ' + (src.body || '') + ' ' + (src.tags || []).join(' ') + ' ' + it.cs.map(c => c.label).join(' ') + ' ' + (it.folder || '')).toLowerCase(); return terms.every(t => hay.includes(t)); });
+  // exact concept name? jump to it
+  const c = S.concepts.find(c => c.label.toLowerCase() === q || c.slug === q.replace(/\s+/g, '-'));
+  if (c) { select(c); return; }
+  searchSelect(q, hits.map(h => h.id), 'FIND');
+}
+let qT; qEl.addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => localSearch(qEl.value), 260); });
+qEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); semantic(qEl.value); } if (e.key === 'Escape') { qEl.value = ''; qEl.blur(); select(null); } });
+$('#qgo').onclick = () => semantic(qEl.value);
+async function semantic(q) {
+  q = q.trim(); if (!q || !sb) return;
+  $('#qgo').textContent = '…';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/semantic-search`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, apikey: SUPABASE_ANON }, body: JSON.stringify({ query: q, limit: 50 }) });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
+    const ids = (j.results || []).map(x => x.id ?? x.node_id).filter(Boolean);
+    searchSelect(q, ids, 'BY MEANING');
+  } catch (err) { console.warn(err); $('#qgo').textContent = 'retry'; setTimeout(() => $('#qgo').textContent = 'meaning', 1600); return; }
+  $('#qgo').textContent = 'meaning';
+}
+
+/* ---------- controls ---------- */
+$('#layout').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; setLayout(b.dataset.v); });
+function setLayout(v) {
+  S.layout = v; [...$('#layout').children].forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  applyLayout(); setTimeout(() => S.sel?.cluster ? frame(clusterBounds()) : frame(), 30); updateHash();
+}
+$('#layers').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return; const l = b.dataset.l;
+  if (S.layers.has(l) && S.layers.size === 1) return;
+  S.layers.has(l) ? S.layers.delete(l) : S.layers.add(l); b.classList.toggle('on');
+  rebuild();
+});
+$('#sources').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return; const k = b.dataset.s;
+  const on = !S.srcOff.has(k); if (on && S.srcOff.size >= 3) return; // keep at least one on
+  on ? S.srcOff.add(k) : S.srcOff.delete(k); b.classList.toggle('on', !on);
+  try { localStorage.setItem('tonidex-src-off', JSON.stringify([...S.srcOff])); } catch {}
+  rebuild();
+});
+$('#folder').addEventListener('change', (e) => { S.folder = e.target.value; rebuild(); });
+function rebuild() { const keep = S.sel && S.sel.key; S.sel = null; $('#focus').classList.remove('show'); build(); applyLayout(); setTimeout(() => frame(), 30);
+  if (keep && S.byKey.get(keep)) setTimeout(() => select(S.byKey.get(keep)), 60); }
+$('#zin').onclick = () => zoomBy(1.6); $('#zout').onclick = () => zoomBy(1 / 1.6);
+$('#fit').onclick = () => frame(S.sel?.cluster ? clusterBounds() : null);
+$('#theme').onclick = () => setTheme(S.theme === 'paper' ? 'ink' : 'paper');
+function setTheme(t) { S.theme = t; document.documentElement.dataset.theme = t === 'ink' ? 'ink' : ''; try { localStorage.setItem('tonidex-theme', t); } catch {} readColors(); renderLegend(); if (S.sel) renderFocus(); }
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === '/') { e.preventDefault(); qEl.focus(); }
+  else if (e.key === 'Escape') { closeDrawer(); select(null); }
+  else if (e.key === '1') setLayout('tree'); else if (e.key === '2') setLayout('web');
+  else if (e.key === 'f' || e.key === 'F') $('#fit').click();
+  else if (e.key === '+' || e.key === '=') zoomBy(1.6); else if (e.key === '-') zoomBy(1 / 1.6);
+});
+function updateHash() {
+  const p = new URLSearchParams(); if (S.layout !== 'tree') p.set('v', S.layout);
+  if (S.sel && !S.sel.search) p.set('n', S.sel.key);
+  const h = p.toString(); history.replaceState(null, '', h ? '#' + h : location.pathname + location.search);
+}
+
+/* ---------- auth + boot ---------- */
+async function boot() {
+  try { const t = localStorage.getItem('tonidex-theme'); if (t) setTheme(t); else readColors(); } catch { readColors(); }
+  await document.fonts.ready.catch(() => {});
+  readColors();
+  try {
+    S.raw = await load();
+  } catch (err) {
+    if (err.signin) { $('#orbit').style.display = 'none'; $('#auth').style.display = 'flex'; $('#veil-msg').textContent = 'Private. Sign in with your admin account.'; $('#a-email').focus(); return; }
+    $('#veil-msg').textContent = 'Could not load the map: ' + err.message; return;
+  }
+  try { JSON.parse(localStorage.getItem('tonidex-src-off') || '[]').forEach(k => { S.srcOff.add(k); $(`#sources [data-s="${k}"]`)?.classList.remove('on'); }); } catch {}
+  for (const it of S.raw.items) { it.r2 = typeof it.img === 'string' ? it.img : null; it.img = null; }
+  const folders = [...new Set(S.raw.items.map(i => i.folder).filter(Boolean))];
+  const fc = new Map(); S.raw.items.forEach(i => i.folder && fc.set(i.folder, (fc.get(i.folder) || 0) + 1));
+  folders.sort((a, b) => fc.get(b) - fc.get(a));
+  $('#folder').innerHTML = '<option value="">All folders</option>' + folders.map(f => `<option value="${esc(f)}">${esc(f)} (${fc.get(f)})</option>`).join('');
+  const hp = new URLSearchParams(location.hash.slice(1));
+  if (hp.get('v') === 'web' || (!hp.get('v') && innerWidth < 720)) { S.layout = 'web'; [...$('#layout').children].forEach(x => x.classList.toggle('on', x.dataset.v === 'web')); }
+  build(); applyLayout(false); frame(null, true);
+  if (S.layout === 'tree' && S.cam.k < .32) { S.cam = { x: 0, y: 520, k: .32 }; }
+  // intro: start zoomed on the families, settle to the whole map
+  const fin = { ...S.cam }; S.cam = { x: fin.x, y: S.layout === 'tree' ? 200 : 0, k: fin.k * 2.4 }; S.camT = { t0: performance.now() + 250, dur: 1400, a: { ...S.cam }, b: fin };
+  $('#veil').classList.add('gone');
+  const n = hp.get('n'); if (n && S.byKey.get(n)) setTimeout(() => select(S.byKey.get(n)), 1700);
+}
+$('#auth').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('#a-err').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#a-email').value, password: $('#a-pass').value });
+  if (error) { $('#a-err').textContent = error.message; return; }
+  $('#auth').style.display = 'none'; $('#orbit').style.display = ''; $('#veil-msg').textContent = ''; boot();
+});
+window.__tonidex = S;
+requestAnimationFrame(tick);
+boot();
+})();
+</script>
+</body>
+</html>

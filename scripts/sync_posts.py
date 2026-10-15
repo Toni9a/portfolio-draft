@@ -43,7 +43,7 @@ SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 
 SITE_ORIGIN = os.environ.get("SITE_ORIGIN", "https://toniesan.com")
-MAX_BODY = 3000
+MAX_BODY = 20000  # whole post (was 3000, which cut longer posts off), 2026-10-15
 MIN_BODY_CHARS = 20  # below this, a draft is treated as not-yet-real-content
 
 DIM, RESET, GREEN, YELLOW, BLUE = "\033[2m", "\033[0m", "\033[32m", "\033[33m", "\033[34m"

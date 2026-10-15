@@ -20,6 +20,7 @@ Usage
   python scripts/tag_images.py --folder "MJ aesthetic" --limit 10 --dry-run
   python scripts/tag_images.py --folder "MJ aesthetic"
   python scripts/tag_images.py --all
+  python scripts/tag_images.py --all --missing-captions   # captions only, for images tagged before 2026-10-15
 
 Re-running skips anything already image-tagged unless you pass --retag.
 
@@ -122,6 +123,8 @@ def main() -> None:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--retag", action="store_true")
+    ap.add_argument("--missing-captions", action="store_true",
+                    help="only images already tagged but with no saved caption; writes the caption, leaves tags alone")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -181,7 +184,7 @@ def main() -> None:
 
     nodes, off = [], 0
     while True:
-        page = (sb.table("node").select("id,source_id,title,image_tagged_at")
+        page = (sb.table("node").select("id,source_id,title,image_tagged_at,image_tagged_model,image_caption")
                 .eq("source_table", "inbox").eq("kind", "capture")
                 .order("id").range(off, off + 999)).execute().data
         if not page:
@@ -189,7 +192,11 @@ def main() -> None:
         for r in page:
             if r["source_id"] not in by_source:
                 continue
-            if r.get("image_tagged_at") and not args.retag:
+            if args.missing_captions:
+                if r.get("image_caption") or not r.get("image_tagged_at") \
+                        or r.get("image_tagged_model") == "unfetchable":
+                    continue
+            elif r.get("image_tagged_at") and not args.retag:
                 continue
             nodes.append(r)
         off += 1000
@@ -227,7 +234,7 @@ def main() -> None:
 
         if not parts:
             stats["unfetchable"] += 1
-            if not args.dry_run:
+            if not args.dry_run and not args.missing_captions:
                 sb.table("node").update({"image_tagged_at": "now()",
                                          "image_tagged_model": "unfetchable"}) \
                     .eq("id", node["id"]).execute()
@@ -273,6 +280,12 @@ def main() -> None:
             continue
 
         nid = node["id"]
+        if args.missing_captions:
+            if caption:
+                sb.table("node").update({"image_caption": caption, "image_caption_source": MODEL}) \
+                    .eq("id", nid).execute()
+            time.sleep(0.15)
+            continue
         if picked_doors:
             sb.table("node_door").upsert(
                 [{"node_id": nid, "door_id": d, "origin": "gemini-image"} for d in picked_doors]
@@ -293,8 +306,11 @@ def main() -> None:
                 sb.table("node_tag").upsert(
                     {"node_id": nid, "tag_id": tag[0]["id"], "origin": "gemini-image"}
                 ).execute()
-        sb.table("node").update({"image_tagged_at": "now()", "image_tagged_model": MODEL}) \
-            .eq("id", nid).execute()
+        upd = {"image_tagged_at": "now()", "image_tagged_model": MODEL}
+        if caption:
+            # Saved since 2026-10-15. Before that the caption was only printed.
+            upd.update({"image_caption": caption, "image_caption_source": MODEL})
+        sb.table("node").update(upd).eq("id", nid).execute()
         time.sleep(0.15)
 
     print(f"\n{BOLD}Done.{RESET} {stats['tagged']} tagged, {stats['empty']} nothing to tag, "
