@@ -1,6 +1,6 @@
 # To do
 
-**Last updated:** 2026-10-15 · Replaces `claude/next_session_todo.md` (2026-08-29), whose open items are folded in below.
+**Last updated:** 2026-10-22 · Replaces `claude/next_session_todo.md` (2026-08-29), whose open items are folded in below.
 
 This is the single to-do list for both layers. `CURRENT_STATE.md` says what exists and how it works; this file says what's left. When something here is done, delete it here and record it in `CURRENT_STATE.md` under a dated heading. Update the date above whenever you edit this file.
 
@@ -24,6 +24,8 @@ None open.
 - [ ] **Work page:** add the background switch and orb transitions to `work.html` too.
 
 ## Layer 1: the second brain
+
+- [ ] **Visuals, optional:** run `python3 scripts/embed_nodes.py --reembed-images` (cheap) so meaning search and `tonidex_similar` use image captions; later consider true image embeddings (~711 Gemini calls) for look-alike matching.
 
 - [ ] **Tonidex next steps** (built 2026-10-15): push and try it on real data; decide whether a public, curated version belongs on the site (only images/ideas Toni marks public, never the raw bookmarks); image captions are done (746 of 748; 288 filled by `--missing-captions` on 2026-10-15). Delete the retired `caption-import` edge function, the empty `caption_import` table and the `caption-import-temp` row in `function_keys` (all temporary, from 2026-10-15).
 

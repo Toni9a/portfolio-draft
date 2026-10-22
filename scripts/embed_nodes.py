@@ -47,13 +47,16 @@ DIM, RESET, RED = "\033[2m", "\033[0m", "\033[31m"
 
 def text_for(row: dict) -> str:
     """What gets embedded. Kind and title first, then the body, capped."""
-    parts = [row.get("kind") or "", row.get("title") or "", row.get("body") or ""]
+    # image_caption (Gemini's description of the picture) makes image bookmarks findable by what they show
+    parts = [row.get("kind") or "", row.get("title") or "", row.get("image_caption") or "", row.get("body") or ""]
     return "\n".join(p for p in parts if p).strip()[:MAX_CHARS]
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None, help="stop after this many rows")
+    ap.add_argument("--reembed-images", action="store_true",
+                    help="clear and redo embeddings for nodes with an image caption, so the caption counts (one-off, 2026-10-22)")
     args = ap.parse_args()
 
     sb: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -63,6 +66,18 @@ def main() -> None:
         task_type="SEMANTIC_SIMILARITY",
     )
 
+    if args.reembed_images:
+        ids, off = [], 0
+        while True:
+            page = (sb.table("node").select("id").not_.is_("image_caption", "null")
+                    .order("id").range(off, off + 999).execute().data)
+            ids += [r["id"] for r in page]; off += 1000
+            if len(page) < 1000:
+                break
+        for i in range(0, len(ids), 200):
+            sb.table("node").update({"embedding": None}).in_("id", ids[i:i + 200]).execute()
+        print(f"Cleared {len(ids)} image embeddings so they are redone with their captions.")
+
     total = sb.table("node").select("id", count="exact", head=True) \
         .is_("embedding", "null").execute().count or 0
     print(f"{total} rows need an embedding. Using {MODEL} at {DIMS} dimensions.\n")
@@ -70,7 +85,7 @@ def main() -> None:
     done, failed = 0, 0
     batch_size = BATCH
     while True:
-        rows = (sb.table("node").select("id, kind, title, body")
+        rows = (sb.table("node").select("id, kind, title, body, image_caption")
                 .is_("embedding", "null").limit(PAGE).execute().data)
         if not rows:
             break

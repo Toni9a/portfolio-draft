@@ -1,11 +1,19 @@
 # Portfolio — Current State
 
-**Last updated:** 2026-10-15 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
+**Last updated:** 2026-10-22 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
+
+## 2026-10-22: Tonidex Visuals, a mood board of every saved image ✅
+
+- **Map | Visuals** switch at the top of `/tonidex`. Visuals is a tile wall (CSS-grid masonry, images fade in as you scroll) of the ~711 image bookmarks, with folder chips, 11 colour swatches, sort (Mixed shuffle, By colour rainbow, Newest), word search over Gemini captions/tags, Enter for meaning search. Clicking a tile opens a lightbox: big image, caption, tweet text, palette (tap to filter by that colour), tags (tap to search), open original, show on the map, and 12 "more like this" ranked in the browser by caption/tag tf-idf + colour overlap. ← → step through.
+- **Colours** are measured in the browser from Twitter's 240px copy (pbs.twimg.com allows CORS) and cached per browser in localStorage (`tonidex-colors-v1`). R2-only images (~20) can't be measured (no CORS on the bucket) so never match a colour filter.
+- **`embed_nodes.py`** now includes `image_caption` in the text it embeds; `--reembed-images` redoes the ~746 captioned images once (not yet run).
+- **`tonidex_similar(p_id, p_limit)`** SQL function exists (service role only, migration `20261022000100`) but the page doesn't use it yet; it becomes useful after `--reembed-images` or image embeddings.
+- Tested on real data in Toni's Chrome on localhost: blue filter → 83 images.
 
 ## 2026-10-15: Tonidex, the visual map of the second brain (local, ready to push) ✅
 

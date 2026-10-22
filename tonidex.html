@@ -33,6 +33,7 @@
   #top { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 14px;
     padding: 14px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
   #top > * { pointer-events: auto; }
+  #controls { display: flex; gap: 14px; align-items: center; }
   #brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
   #brand a { color: inherit; text-decoration: none; }
   #brand .word { font-family: "Instrument Serif", serif; font-size: 30px; letter-spacing: -.01em; line-height: 1; }
@@ -152,6 +153,20 @@
 
   @media (max-width: 720px) {
     #top { padding: 10px 12px; gap: 8px; }
+    #brand { margin-right: 0; flex: 0 0 auto; }
+    #search { flex: 1 1 auto; min-width: 0; } #search input { width: 100%; min-width: 60px; }
+    #controls { width: calc(100% + 24px); margin: 0 -12px; padding: 2px 12px 8px; gap: 8px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    #controls::-webkit-scrollbar { display: none; }
+    #controls > * { flex: 0 0 auto; }
+    #zin, #zout { display: none; }
+    #bottom { flex-wrap: nowrap; }
+    /* panels become a bottom sheet so the map stays visible above */
+    #drawer { top: auto; height: 64vh; width: 100vw; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; transform: translateY(102%); box-shadow: 0 -20px 60px rgba(0,0,0,.18); }
+    #drawer.open { transform: none; }
+    #drawer header { padding: 10px 16px; position: relative; }
+    #drawer header::before { content: ""; position: absolute; left: 50%; top: 5px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: var(--line); }
+    #drawer .body { padding: 14px 16px 28px; }
+    body.sheet #focus, body.sheet #bottom { display: none; }
     #brand .sub { display: none; }
     #search input { width: 120px; }
     #search kbd { display: none; }
@@ -163,6 +178,71 @@
     #focus { top: auto; bottom: 64px; left: 12px; }
     #bottom { left: 12px; right: 12px; }
   }
+  /* ===== Visuals: mood board ===== */
+  #visuals { position: fixed; inset: 0; z-index: 4; background: var(--bg); overflow-y: auto; overflow-x: hidden; display: none; -webkit-overflow-scrolling: touch; }
+  body.vis #visuals { display: block; }
+  body.vis canvas#map, body.vis #bottom, body.vis #focus, body.vis #layers, body.vis #layout, body.vis #folder { display: none !important; }
+  body.vis #top { background: linear-gradient(var(--bg) 70%, transparent); }
+  #vbar { position: sticky; top: 0; z-index: 2; padding: 74px 18px 12px; background: linear-gradient(var(--bg) 82%, transparent); display: flex; flex-direction: column; gap: 10px; }
+  #vbar .line { display: flex; gap: 8px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+  #vbar .line::-webkit-scrollbar { display: none; }
+  #vbar .lbl { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; flex: 0 0 auto; width: 58px; }
+  .vchip { flex: 0 0 auto; font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .vchip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .vchip small { opacity: .55; margin-left: 4px; }
+  .swatch { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer; position: relative; }
+  .swatch.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
+  .swatch[data-c=""] { background: conic-gradient(#e5484d, #f5a524, #f5d90a, #46a758, #12a594, #0091ff, #8e4ec6, #e93d82, #e5484d); }
+  #vcount { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--muted); margin-left: auto; flex: 0 0 auto; padding-left: 10px; }
+  #vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); grid-auto-rows: 6px; gap: 0 14px; padding: 4px 18px 80px; }
+  .vt { grid-row-end: span 40; margin-bottom: 14px; position: relative; border-radius: 10px; overflow: hidden; background: var(--line); cursor: zoom-in;
+    opacity: 0; transform: translateY(18px) scale(.985); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1); }
+  .vt.in { opacity: 1; transform: none; }
+  .vt img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  .vt:hover img { transform: scale(1.035); }
+  .vt .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 11px 9px; font-size: 11.5px; line-height: 1.35; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.72));
+    opacity: 0; transition: opacity .25s; pointer-events: none; }
+  .vt:hover .cap { opacity: 1; }
+  .vt .pal { position: absolute; top: 8px; left: 8px; display: flex; gap: 3px; opacity: 0; transition: opacity .25s; }
+  .vt:hover .pal { opacity: 1; }
+  .vt .pal i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(255,255,255,.7); }
+  #vempty { padding: 60px 18px; text-align: center; color: var(--muted); font-family: "Instrument Serif", serif; font-size: 24px; display: none; }
+  /* lightbox */
+  #vlight { position: fixed; inset: 0; z-index: 12; background: rgba(10,10,12,.94); display: none; grid-template-columns: 1fr 380px; color: #f1efe9; }
+  #vlight.open { display: grid; }
+  #vlight .stage { display: grid; place-items: center; padding: 28px; min-height: 0; position: relative; }
+  #vlight .stage img { max-width: 100%; max-height: calc(100vh - 56px); object-fit: contain; border-radius: 8px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  #vlight .nav { all: unset; position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.08); cursor: pointer; font-size: 18px; }
+  #vlight .nav:hover { background: rgba(255,255,255,.16); }
+  #vlight .prev { left: 14px; } #vlight .next { right: 14px; }
+  #vlight aside { background: #141517; border-left: 1px solid #26282c; overflow-y: auto; padding: 20px 20px 40px; }
+  #vlight aside .x { all: unset; cursor: pointer; float: right; font-size: 22px; color: #9a9893; padding: 0 4px; }
+  #vlight .k { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .14em; color: #9a9893; text-transform: uppercase; margin: 18px 0 8px; }
+  #vlight .cp { font-family: "Instrument Serif", serif; font-size: 24px; line-height: 1.25; margin-top: 10px; }
+  #vlight .tw { font-size: 13px; line-height: 1.5; color: #c9c7c1; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word; }
+  #vlight .meta { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #9a9893; margin-top: 10px; }
+  #vlight .pals { display: flex; gap: 8px; }
+  #vlight .pals button { all: unset; cursor: pointer; width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2); }
+  #vlight .tags span { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; border: 1px dashed #3a3c41; border-radius: 6px; padding: 4px 8px; margin: 0 6px 6px 0; cursor: pointer; color: #d8d6d0; }
+  #vlight .tags span:hover { border-color: #f1efe9; }
+  #vlight .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  #vlight .acts a, #vlight .acts button { all: unset; cursor: pointer; font-size: 12.5px; padding: 8px 12px; border-radius: 8px; background: #23252a; color: #f1efe9; }
+  #vlight .acts a:hover, #vlight .acts button:hover { background: #2f3238; }
+  #vlight .sim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #vlight .sim div { aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: pointer; background: #23252a; }
+  #vlight .sim img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+  #vlight .sim div:hover img { transform: scale(1.06); }
+  @media (max-width: 720px) {
+    #vbar { padding: 110px 12px 10px; }
+    #vbar .lbl { display: none; }
+    #vgrid { grid-template-columns: repeat(2, 1fr); gap: 0 8px; padding: 2px 10px 60px; }
+    .vt { margin-bottom: 8px; border-radius: 8px; }
+    .vt .cap, .vt .pal { display: none; }
+    #vlight { grid-template-columns: 1fr; grid-template-rows: 52vh 1fr; }
+    #vlight .stage { padding: 12px; } #vlight .stage img { max-height: calc(52vh - 24px); }
+    #vlight aside { border-left: 0; border-top: 1px solid #26282c; }
+    #vlight .nav { display: none; }
+  }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -172,6 +252,8 @@
 <div id="top">
   <div id="brand"><a href="/" class="word">Tonidex</a><span class="sub" id="stats">loading</span></div>
   <div id="search"><input id="q" placeholder="Find, or ask by meaning…" autocomplete="off" /><kbd>/</kbd><button id="qgo" title="Search by meaning (Gemini embeddings)">meaning</button></div>
+  <div id="controls">
+  <div class="seg" id="mode" role="group" aria-label="View"><button data-m="map" class="on">Map</button><button data-m="visuals">Visuals</button></div>
   <select id="folder" class="pill" title="Folder"><option value="">All folders</option></select>
   <div class="seg" id="layers" role="group" aria-label="Layers">
     <button data-l="image" class="on">Images</button><button data-l="idea" class="on">Ideas</button><button data-l="link" class="on">Links</button><button data-l="work">Work</button>
@@ -179,8 +261,23 @@
   <div class="seg" id="layout" role="group" aria-label="Layout">
     <button data-v="tree" class="on">Tree</button><button data-v="web">Constellation</button>
   </div>
+  </div>
 </div>
 
+<section id="visuals" aria-label="Visuals mood board">
+  <div id="vbar">
+    <div class="line" id="vfolders"><span class="lbl">Folder</span></div>
+    <div class="line"><span class="lbl">Colour</span><span id="vcolors" style="display:flex;gap:8px"></span>
+      <div class="seg" id="vsort" style="margin-left:14px;flex:0 0 auto"><button data-s="mix" class="on">Mixed</button><button data-s="hue">By colour</button><button data-s="new">Newest</button></div>
+      <span id="vcount"></span></div>
+  </div>
+  <div id="vgrid"></div>
+  <div id="vempty">Nothing matches that yet.</div>
+</section>
+<div id="vlight" aria-modal="true" role="dialog">
+  <div class="stage"><button class="nav prev" aria-label="Previous">←</button><img id="vl-img" alt="" /><button class="nav next" aria-label="Next">→</button></div>
+  <aside id="vl-side"></aside>
+</div>
 <div id="focus" aria-live="polite"></div>
 
 <aside id="drawer" aria-hidden="true">
@@ -249,7 +346,7 @@ function cleanTitle(s) { return String(s || '').replace(/https?:\/\/\S+/g, '').r
 
 /* ---------- state ---------- */
 const S = {
-  raw: null, layers: new Set(['image', 'idea', 'link']), folder: '', layout: 'tree',
+  mode: 'map', raw: null, layers: new Set(['image', 'idea', 'link']), folder: '', layout: 'tree',
   fams: [], doors: [], concepts: [], items: [], byId: new Map(), conceptById: new Map(), doorById: new Map(),
   sel: null,            // {type:'family'|'door'|'concept'|'search', id, set:Set(itemIds), nodes:Set(keys)}
   hover: null, cam: { x: 0, y: 0, k: 1 }, camT: null, anim: null, dirty: true,
@@ -777,7 +874,7 @@ function tick(now) {
     S.cam.x = lerp(S.camT.a.x, S.camT.b.x, e); S.cam.y = lerp(S.camT.a.y, S.camT.b.y, e); S.cam.k = Math.exp(lerp(Math.log(S.camT.a.k), Math.log(S.camT.b.k), e));
     if (t >= 1) S.camT = null; S.dirty = true;
   }
-  if (S.dirty) { S.dirty = false; draw(); }
+  if (S.dirty && S.mode !== 'visuals') { S.dirty = false; draw(); }
   requestAnimationFrame(tick);
 }
 
@@ -786,7 +883,8 @@ function frame(b, instant) {
     b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
     for (const n of all) { const x = n.tx ?? n.x, y = n.ty ?? n.y; b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); }
     b.x0 -= 80; b.y0 -= 110; b.x1 += 80; b.y1 += 80; }
-  const padTop = 70, padBot = 60;
+  const sheet = innerWidth < 720 && document.body.classList.contains('sheet');
+  const padTop = innerWidth < 720 ? 110 : 70, padBot = sheet ? H * .64 + 16 : 60;
   const k = clamp(Math.min(W / (b.x1 - b.x0), (H - padTop - padBot) / (b.y1 - b.y0)), .05, 3);
   const target = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 - (padTop - padBot) / 2 / k, k };
   if (instant) { S.cam = target; S.dirty = true; return; }
@@ -962,7 +1060,7 @@ function openConcept(cid, filter) {
     const id = +el.dataset.row; const it = S.byKey.get('i' + id) || S.byId.get(id);
     panelStack = [() => openConcept(cid, panelFilter)]; openDrawer(it, true);
   });
-  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false'); $('#d-body').scrollTop = 0;
+  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false'); $('#d-body').scrollTop = 0; document.body.classList.add('sheet');
 }
 function rowHtml(i) {
   const s = sourceOf(i); const onMap = S.byKey.get('i' + i.id);
@@ -1000,7 +1098,7 @@ function openDrawer(it, fromPanel) {
     ${(src.tags || []).length ? `<div class="group"><div class="k">Seen by Gemini</div>${src.tags.map(t => `<span class="chip tag">${esc(t)}</span>`).join('')}</div>` : ''}
     ${src.url ? `<a class="open" href="${esc(src.url)}" target="_blank" rel="noopener">Open the original ↗</a>` : ''}
     ${related.length ? `<div class="group" style="margin-top:20px"><div class="k">Connected</div><div class="related">${related.map(r => `<div data-item="${r.id}" title="${esc(trunc(r.label, 80))}">${r.fullSrc ? `<img src="${esc(r.fullSrc)}" alt="" />` : esc(trunc(r.label, 40))}</div>`).join('')}</div></div>` : ''}`;
-  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
+  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false'); document.body.classList.add('sheet');
   $('#d-body').scrollTop = 0;
   $('#d-body').querySelectorAll('[data-concept]').forEach(el => el.onclick = () => { const id = +el.dataset.concept; const c = S.byKey.get('c' + id); if (c) select(c); else openConcept(id); });
   if (panelStack.length) { const b = document.createElement('button'); b.className = 'back'; b.textContent = '← Back to the list'; b.onclick = () => { const f = panelStack.pop(); f && f(); }; $('#d-body').prepend(b); }
@@ -1008,7 +1106,7 @@ function openDrawer(it, fromPanel) {
   $('#d-body').querySelectorAll('[data-item]').forEach(el => el.onclick = () => { const r = S.byKey.get('i' + el.dataset.item); if (r) openDrawer(r); });
   if (S.byKey.get('i' + it.id)) { S.hover = S.byKey.get('i' + it.id); S.dirty = true; }
 }
-function closeDrawer() { $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); }
+function closeDrawer() { document.body.classList.remove('sheet'); $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); }
 function relatedTo(it, n) {
   const mine = new Set((S.byId.get(it.id)?.concepts) || []); const edges = new Set();
   for (const e of S.raw.edges || []) { if (e.a === it.id) edges.add(e.b); if (e.b === it.id) edges.add(e.a); }
@@ -1028,6 +1126,7 @@ function renderLegend() {
 /* ---------- search ---------- */
 const qEl = $('#q');
 function localSearch(q) {
+  if (S.mode === 'visuals') { V.q = q.trim(); V.ids = null; renderVisuals(); return; }
   q = q.trim().toLowerCase(); if (!q) { if (S.sel?.search) select(null); return; }
   const terms = q.split(/\s+/);
   const hits = S.items.filter(it => { const src = S.byId.get(it.id) || {}; const hay = (it.label + ' ' + (src.handle || '') + ' ' + (src.caption || '') + ' ' + (src.body || '') + ' ' + (src.tags || []).join(' ') + ' ' + it.cs.map(c => c.label).join(' ') + ' ' + (it.folder || '')).toLowerCase(); return terms.every(t => hay.includes(t)); });
@@ -1037,7 +1136,7 @@ function localSearch(q) {
   searchSelect(q, hits.map(h => h.id), 'FIND');
 }
 let qT; qEl.addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => localSearch(qEl.value), 260); });
-qEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); semantic(qEl.value); } if (e.key === 'Escape') { qEl.value = ''; qEl.blur(); select(null); } });
+qEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); semantic(qEl.value); } if (e.key === 'Escape') { qEl.value = ''; qEl.blur(); if (S.mode === 'visuals') { V.q = ''; V.ids = null; renderVisuals(); } else select(null); } });
 $('#qgo').onclick = () => semantic(qEl.value);
 async function semantic(q) {
   q = q.trim(); if (!q || !sb) return;
@@ -1047,7 +1146,8 @@ async function semantic(q) {
     const r = await fetch(`${SUPABASE_URL}/functions/v1/semantic-search`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, apikey: SUPABASE_ANON }, body: JSON.stringify({ query: q, limit: 50 }) });
     const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
     const ids = (j.results || []).map(x => x.id ?? x.node_id).filter(Boolean);
-    searchSelect(q, ids, 'BY MEANING');
+    if (S.mode === 'visuals') { V.ids = ids; V.q = ''; renderVisuals(); $('#visuals').scrollTo({ top: 0 }); }
+    else searchSelect(q, ids, 'BY MEANING');
   } catch (err) { console.warn(err); $('#qgo').textContent = 'retry'; setTimeout(() => $('#qgo').textContent = 'meaning', 1600); return; }
   $('#qgo').textContent = 'meaning';
 }
@@ -1080,17 +1180,236 @@ $('#theme').onclick = () => setTheme(S.theme === 'paper' ? 'ink' : 'paper');
 function setTheme(t) { S.theme = t; document.documentElement.dataset.theme = t === 'ink' ? 'ink' : ''; try { localStorage.setItem('tonidex-theme', t); } catch {} readColors(); renderLegend(); if (S.sel) renderFocus(); }
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  if (e.key === '/') { e.preventDefault(); qEl.focus(); }
-  else if (e.key === 'Escape') { closeDrawer(); select(null); }
+  if (e.key === '/') { e.preventDefault(); qEl.focus(); return; }
+  if (S.mode === 'visuals') {
+    if (e.key === 'Escape') { if ($('#vlight').classList.contains('open')) closeLight(); else if (V.color || V.q || V.ids || V.folder) { V.color = ''; V.q = ''; V.ids = null; qEl.value = ''; syncSwatches(); renderVisuals(); } }
+    else if (e.key === 'ArrowRight') stepLight(1); else if (e.key === 'ArrowLeft') stepLight(-1);
+    return;
+  }
+  if (e.key === 'Escape') { closeDrawer(); select(null); }
   else if (e.key === '1') setLayout('tree'); else if (e.key === '2') setLayout('web');
   else if (e.key === 'f' || e.key === 'F') $('#fit').click();
   else if (e.key === '+' || e.key === '=') zoomBy(1.6); else if (e.key === '-') zoomBy(1 / 1.6);
 });
 function updateHash() {
-  const p = new URLSearchParams(); if (S.layout !== 'tree') p.set('v', S.layout);
+  const p = new URLSearchParams(); if (S.mode === 'visuals') p.set('m', 'visuals'); if (S.layout !== 'tree') p.set('v', S.layout);
   if (S.sel && !S.sel.search) p.set('n', S.sel.key);
   const h = p.toString(); history.replaceState(null, '', h ? '#' + h : location.pathname + location.search);
 }
+
+/* =========================================================================
+   VISUALS — a mood board of every saved image.
+   Filter by folder and colour, search by words or meaning, open one to see
+   what looks and reads like it. Colours are measured in the browser from a
+   small copy of each image and remembered per browser.
+   ========================================================================= */
+const V = { built: false, folder: '', color: '', sort: 'mix', q: '', ids: null, list: [], order: [], colors: {}, vecs: null, idf: null };
+const COLORS = [
+  { k: '', label: 'Any' },
+  { k: 'red', hex: '#e5484d' }, { k: 'orange', hex: '#f5a524' }, { k: 'yellow', hex: '#f5d90a' },
+  { k: 'green', hex: '#46a758' }, { k: 'teal', hex: '#12a594' }, { k: 'blue', hex: '#0091ff' },
+  { k: 'purple', hex: '#8e4ec6' }, { k: 'pink', hex: '#e93d82' },
+  { k: 'black', hex: '#111111' }, { k: 'white', hex: '#f4f3ef' }, { k: 'grey', hex: '#8b8d98' },
+];
+const COLOR_KEY = 'tonidex-colors-v1';
+try { V.colors = JSON.parse(localStorage.getItem(COLOR_KEY) || '{}'); } catch { V.colors = {}; }
+let colorSaveT = 0;
+function saveColors() { clearTimeout(colorSaveT); colorSaveT = setTimeout(() => { try { localStorage.setItem(COLOR_KEY, JSON.stringify(V.colors)); } catch {} }, 800); }
+
+function twSized(it, name) {
+  const m = it.media_url || ''; if (!/^https:\/\/pbs\.twimg\.com\//.test(m)) return null;
+  try { const u = new URL(m); if (!u.searchParams.get('format')) { const ext = (u.pathname.match(/\.(jpe?g|png|webp)$/i) || [])[1]; if (ext) { u.pathname = u.pathname.replace(/\.(jpe?g|png|webp)$/i, ''); u.searchParams.set('format', ext.toLowerCase() === 'jpeg' ? 'jpg' : ext.toLowerCase()); } } u.searchParams.set('name', name); return u.toString(); } catch { return null; }
+}
+const colorSrc = (it) => twSized(it, '240x240') || (/^data:/.test(it.r2 || '') ? it.r2 : null); // R2 has no CORS, so its colours can't be read
+const tileUrls = (it) => [twSized(it, '360x360'), twSized(it, 'small'), it.r2].filter(Boolean);
+const bigUrls = (it) => [twSized(it, 'large'), twSized(it, 'small'), it.r2].filter(Boolean);
+
+/* ---- colour measurement ---- */
+function rgb2hsv(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0;
+  if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, mx ? d / mx : 0, mx]; }
+function bucketOf(h, s, v) {
+  if (v < .18) return 'black';
+  if (s < .16) return v > .82 ? 'white' : 'grey';
+  if (h < 15 || h >= 345) return 'red'; if (h < 42) return 'orange'; if (h < 68) return 'yellow';
+  if (h < 160) return 'green'; if (h < 195) return 'teal'; if (h < 255) return 'blue'; if (h < 290) return 'purple'; return 'pink';
+}
+const measureCanvas = document.createElement('canvas'); measureCanvas.width = measureCanvas.height = 28;
+function measure(img) {
+  const x = measureCanvas.getContext('2d', { willReadFrequently: true });
+  x.clearRect(0, 0, 28, 28); x.drawImage(img, 0, 0, 28, 28);
+  const d = x.getImageData(0, 0, 28, 28).data; const share = {}; const q = new Map(); let hs = 0, hc = 0, tl = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const [h, s, v] = rgb2hsv(d[i], d[i + 1], d[i + 2]); const b = bucketOf(h, s, v);
+    share[b] = (share[b] || 0) + 1; tl += v;
+    if (s > .25 && v > .2) { hs += h; hc++; }
+    const key = ((d[i] >> 5) << 6) | ((d[i + 1] >> 5) << 3) | (d[i + 2] >> 5); const e = q.get(key) || [0, 0, 0, 0];
+    e[0] += d[i]; e[1] += d[i + 1]; e[2] += d[i + 2]; e[3]++; q.set(key, e);
+  }
+  const n = d.length / 4; for (const k in share) share[k] = Math.round(share[k] / n * 100) / 100;
+  const chroma = Object.entries(share).filter(([k]) => !['black', 'white', 'grey'].includes(k)).sort((a, b) => b[1] - a[1]);
+  const dom = chroma[0] && chroma[0][1] >= .12 ? chroma[0][0] : Object.entries(share).sort((a, b) => b[1] - a[1])[0][0];
+  const pal = [...q.values()].sort((a, b) => b[3] - a[3]).map(e => [e[0] / e[3], e[1] / e[3], e[2] / e[3]])
+    .filter((c, i, arr) => arr.slice(0, i).every(o => Math.hypot(o[0] - c[0], o[1] - c[1], o[2] - c[2]) > 48)).slice(0, 4)
+    .map(c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join(''));
+  return { s: share, d: dom, p: pal, h: hc ? Math.round(hs / hc) : -1, l: Math.round(tl / n * 100) / 100 };
+}
+// background pass so colour filters cover everything, not just what has scrolled past
+let colorQueue = [], colorBusy = 0;
+function startColorPass() {
+  colorQueue = V.list.filter(it => !V.colors[it.id] && colorSrc(it));
+  pumpColors();
+}
+function pumpColors() {
+  while (colorBusy < 6 && colorQueue.length) {
+    const it = colorQueue.shift(); colorBusy++;
+    const im = new Image(); im.crossOrigin = 'anonymous'; im.decoding = 'async';
+    im.onload = () => { try { V.colors[it.id] = measure(im); saveColors(); paintPalette(it.id); } catch {} colorBusy--; afterColor(); pumpColors(); };
+    im.onerror = () => { colorBusy--; pumpColors(); };
+    im.src = colorSrc(it);
+  }
+}
+let afterT = 0;
+function afterColor() { if (V.color || V.sort === 'hue') { clearTimeout(afterT); afterT = setTimeout(renderVisuals, 700); } updateCount(); }
+
+/* ---- words for "more like this" (caption + Gemini tags + concepts), tf-idf in the browser ---- */
+const STOP = new Set('a an the of and or in on at to with for from by is are this that its it as into over under against showing shows featuring depicting image photo picture digital ai generated midjourney style render rendered 3d close up view grid six panel two three set'.split(' '));
+function tokens(it) {
+  const words = [it.caption, ...(it.tags || []), ...(it.concepts || []).map(id => S.conceptById.get(id)?.label || '')].join(' ').toLowerCase().match(/[a-z][a-z-]{2,}/g) || [];
+  return words.filter(w => !STOP.has(w));
+}
+function buildVecs() {
+  const df = new Map(); const docs = V.list.map(it => { const t = tokens(it); new Set(t).forEach(w => df.set(w, (df.get(w) || 0) + 1)); return [it.id, t]; });
+  const N = docs.length; V.vecs = new Map();
+  for (const [id, t] of docs) { const tf = new Map(); t.forEach(w => tf.set(w, (tf.get(w) || 0) + 1)); let norm = 0; const vec = new Map();
+    for (const [w, c] of tf) { const val = c * Math.log(1 + N / (df.get(w) || 1)); vec.set(w, val); norm += val * val; }
+    norm = Math.sqrt(norm) || 1; for (const [w, val] of vec) vec.set(w, val / norm); V.vecs.set(id, vec); }
+}
+function cos(a, b) { let s = 0; const [x, y] = a.size < b.size ? [a, b] : [b, a]; for (const [w, v] of x) { const u = y.get(w); if (u) s += v * u; } return s; }
+function colorSim(a, b) { const A = V.colors[a], B = V.colors[b]; if (!A || !B) return 0;
+  let s = 0; for (const k in A.s) s += Math.min(A.s[k], B.s[k] || 0); return s; }
+function similar(it, n = 12) {
+  if (!V.vecs) buildVecs(); const me = V.vecs.get(it.id); if (!me) return [];
+  return V.list.filter(o => o.id !== it.id).map(o => [o, cos(me, V.vecs.get(o.id)) * .65 + colorSim(it.id, o.id) * .35 + (o.folder === it.folder ? .03 : 0)])
+    .sort((a, b) => b[1] - a[1]).slice(0, n).map(([o]) => o);
+}
+
+/* ---- the board ---- */
+function buildVisuals() {
+  V.list = S.raw.items.filter(i => i.layer === 'image');
+  const fc = new Map(); V.list.forEach(i => i.folder && fc.set(i.folder, (fc.get(i.folder) || 0) + 1));
+  const folders = [...fc.entries()].sort((a, b) => b[1] - a[1]);
+  $('#vfolders').innerHTML = '<span class="lbl">Folder</span>' + [['', V.list.length], ...folders].map(([f, n]) =>
+    `<button class="vchip ${V.folder === f ? 'on' : ''}" data-f="${esc(f)}">${f ? esc(f) : 'Everything'}<small>${n}</small></button>`).join('');
+  $('#vfolders').onclick = (e) => { const b = e.target.closest('[data-f]'); if (!b) return; V.folder = b.dataset.f; [...$('#vfolders').querySelectorAll('.vchip')].forEach(x => x.classList.toggle('on', x === b)); renderVisuals(); };
+  $('#vcolors').innerHTML = COLORS.map(c => `<button class="swatch ${V.color === c.k ? 'on' : ''}" data-c="${c.k}" title="${c.k || 'Any colour'}" style="${c.hex ? 'background:' + c.hex : ''}"></button>`).join('');
+  $('#vcolors').onclick = (e) => { const b = e.target.closest('[data-c]'); if (!b) return; V.color = V.color === b.dataset.c ? '' : b.dataset.c; syncSwatches(); renderVisuals(); };
+  $('#vsort').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; V.sort = b.dataset.s; [...$('#vsort').children].forEach(x => x.classList.toggle('on', x === b)); renderVisuals(); };
+  // a stable shuffle so "Mixed" feels like a mood board, not a timeline
+  const r = rng(42); V.mix = new Map(V.list.map(i => [i.id, r()]));
+  V.built = true; startColorPass();
+}
+function syncSwatches() { [...$('#vcolors').children].forEach(x => x.classList.toggle('on', x.dataset.c === V.color && !!V.color)); }
+function hasColor(it, c) { const m = V.colors[it.id]; if (!m) return false; return m.d === c || (m.s[c] || 0) >= .2; }
+function filtered() {
+  let out = V.list;
+  if (V.folder) out = out.filter(i => i.folder === V.folder);
+  if (V.color) out = out.filter(i => hasColor(i, V.color));
+  if (V.ids) { const rank = new Map(V.ids.map((id, i) => [id, i])); out = out.filter(i => rank.has(i.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id)); return out; }
+  if (V.q) { const terms = V.q.toLowerCase().split(/\s+/).filter(Boolean);
+    out = out.filter(i => { const hay = [i.caption, i.title, i.body, i.handle, i.folder, ...(i.tags || []), ...(i.concepts || []).map(id => S.conceptById.get(id)?.label || '')].join(' ').toLowerCase(); return terms.every(t => hay.includes(t)); }); }
+  if (V.sort === 'new') out = [...out].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  else if (V.sort === 'hue') { const key = (i) => { const m = V.colors[i.id]; if (!m) return 999; if (['black', 'grey', 'white'].includes(m.d) || m.h < 0) return 400 + (1 - m.l) * 50; return m.h; }; out = [...out].sort((a, b) => key(a) - key(b)); }
+  else out = [...out].sort((a, b) => V.mix.get(a.id) - V.mix.get(b.id));
+  return out;
+}
+const vio = 'IntersectionObserver' in window ? new IntersectionObserver((ents) => ents.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); vio.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px' }) : null;
+function renderVisuals() {
+  if (!V.built) buildVisuals();
+  const list = filtered(); V.order = list;
+  const grid = $('#vgrid'); const frag = document.createDocumentFragment();
+  grid.innerHTML = '';
+  for (const it of list) {
+    const t = document.createElement('div'); t.className = 'vt'; t.dataset.id = it.id;
+    const ar = it.ar || V.colors[it.id]?.ar; if (ar) t.style.gridRowEnd = `span ${Math.max(12, Math.round(210 / ar / 6))}`;
+    const im = document.createElement('img'); im.alt = it.caption || ''; im.loading = 'lazy'; im.decoding = 'async';
+    const urls = tileUrls(it); let k = 0;
+    if (urls[0] && /twimg/.test(urls[0])) im.crossOrigin = 'anonymous';
+    im.onload = () => {
+      const a = im.naturalWidth / Math.max(1, im.naturalHeight); it.ar = a;
+      t.style.gridRowEnd = `span ${Math.max(12, Math.round((t.clientWidth || 210) / a / 6))}`;
+      if (!V.colors[it.id] && (im.crossOrigin || /^data:/.test(im.src))) { try { V.colors[it.id] = measure(im); saveColors(); paintPalette(it.id); } catch {} }
+    };
+    im.onerror = () => { k++; if (k < urls.length) { if (!/twimg/.test(urls[k])) im.removeAttribute('crossorigin'); im.src = urls[k]; } else t.remove(); };
+    im.src = urls[0] || '';
+    t.appendChild(im);
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = trunc(it.caption || cleanTitle(it.title) || '', 140); t.appendChild(cap);
+    const pal = document.createElement('div'); pal.className = 'pal'; t.appendChild(pal);
+    frag.appendChild(t);
+  }
+  grid.appendChild(frag);
+  list.forEach(it => paintPalette(it.id));
+  grid.querySelectorAll('.vt').forEach(t => vio ? vio.observe(t) : t.classList.add('in'));
+  $('#vempty').style.display = list.length ? 'none' : 'block';
+  updateCount();
+}
+function paintPalette(id) {
+  const m = V.colors[id]; if (!m) return; const t = $(`#vgrid .vt[data-id="${id}"] .pal`); if (!t || t.childElementCount) return;
+  t.innerHTML = m.p.slice(0, 4).map(c => `<i style="background:${c}"></i>`).join('');
+}
+function updateCount() {
+  const measured = V.list.filter(i => V.colors[i.id]).length;
+  $('#vcount').textContent = `${V.order.length} images` + (measured < V.list.length ? ` · reading colours ${measured}/${V.list.length}` : '');
+}
+$('#vgrid').addEventListener('click', (e) => { const t = e.target.closest('.vt'); if (t) openLight(+t.dataset.id); });
+$('#vgrid').addEventListener('load', () => {}, true);
+window.addEventListener('resize', () => { if (S.mode === 'visuals') $('#vgrid').querySelectorAll('.vt').forEach(t => { const it = S.byId.get(+t.dataset.id); if (it?.ar) t.style.gridRowEnd = `span ${Math.max(12, Math.round(t.clientWidth / it.ar / 6))}`; }); });
+
+/* ---- lightbox ---- */
+let lightId = null;
+function openLight(id) {
+  const it = S.byId.get(id); if (!it) return; lightId = id;
+  const img = $('#vl-img'); const urls = bigUrls(it); let k = 0;
+  img.onerror = () => { k++; if (k < urls.length) img.src = urls[k]; };
+  img.src = urls[0] || ''; img.alt = it.caption || '';
+  const m = V.colors[id]; const s = sourceOf(it);
+  const when = it.at ? new Date(it.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const tweet = cleanTitle(it.body || it.title);
+  const sims = similar(it, 12);
+  $('#vl-side').innerHTML = `<button class="x" aria-label="Close">×</button>
+    <div class="k" style="margin-top:4px">${esc(s.label)}${it.handle ? ' · @' + esc(it.handle) : ''}</div>
+    ${it.caption ? `<div class="cp">${esc(it.caption)}</div>` : ''}
+    ${tweet && tweet !== it.caption ? `<div class="tw">${esc(trunc(tweet, 360))}</div>` : ''}
+    <div class="meta">${esc([it.folder, when].filter(Boolean).join(' · '))}</div>
+    ${m ? `<div class="k">Colours · tap one to see more like it</div><div class="pals">${m.p.map(c => `<button style="background:${c}" data-hex="${c}" title="${c}"></button>`).join('')}</div>` : ''}
+    ${(it.tags || []).length ? `<div class="k">Seen by Gemini</div><div class="tags">${it.tags.map(t => `<span data-t="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="acts">${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener">Open the original ↗</a>` : ''}<button id="vl-map">Show on the map</button></div>
+    ${sims.length ? `<div class="k">More like this</div><div class="sim">${sims.map(o => `<div data-id="${o.id}" title="${esc(trunc(o.caption || '', 90))}"><img src="${esc(tileUrls(o)[0] || '')}" alt="" loading="lazy" /></div>`).join('')}</div>` : ''}`;
+  const side = $('#vl-side');
+  side.querySelector('.x').onclick = closeLight;
+  side.querySelectorAll('.sim [data-id]').forEach(el => el.onclick = () => openLight(+el.dataset.id));
+  side.querySelectorAll('.sim img').forEach((im) => { im.onerror = () => { const o = S.byId.get(+im.parentElement.dataset.id); const u = tileUrls(o); const i = u.indexOf(im.src); if (i >= 0 && i + 1 < u.length) im.src = u[i + 1]; }; });
+  side.querySelectorAll('[data-hex]').forEach(el => el.onclick = () => { const h = el.dataset.hex; const [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const [hh, ss, vv] = rgb2hsv(r, g, b); V.color = bucketOf(hh, ss, vv); syncSwatches(); closeLight(); renderVisuals(); $('#visuals').scrollTo({ top: 0, behavior: 'smooth' }); });
+  side.querySelectorAll('[data-t]').forEach(el => el.onclick = () => { V.q = el.dataset.t; V.ids = null; qEl.value = V.q; closeLight(); renderVisuals(); $('#visuals').scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('#vl-map').onclick = () => { closeLight(); setMode('map'); const n = S.byKey.get('i' + id); if (n) { if (n.pc) select(n.pc); setTimeout(() => openDrawer(n), 350); } };
+  side.scrollTop = 0;
+  $('#vlight').classList.add('open');
+}
+function closeLight() { $('#vlight').classList.remove('open'); lightId = null; }
+function stepLight(d) { if (lightId == null) return; const i = V.order.findIndex(x => x.id === lightId); const n = V.order[(i + d + V.order.length) % V.order.length]; if (n) openLight(n.id); }
+$('#vlight .prev').onclick = () => stepLight(-1); $('#vlight .next').onclick = () => stepLight(1);
+$('#vlight').addEventListener('click', (e) => { if (e.target.id === 'vlight' || e.target.classList.contains('stage')) closeLight(); });
+
+/* ---- switching between the map and the board ---- */
+function setMode(m) {
+  S.mode = m; document.body.classList.toggle('vis', m === 'visuals');
+  [...$('#mode').children].forEach(x => x.classList.toggle('on', x.dataset.m === m));
+  try { localStorage.setItem('tonidex-mode', m); } catch {}
+  if (m === 'visuals') { closeDrawer(); $('#focus').classList.remove('show'); renderVisuals(); qEl.placeholder = 'Search images: water, blue, chrome…'; }
+  else { closeLight(); qEl.placeholder = 'Find, or ask by meaning…'; S.dirty = true; }
+  updateHash();
+}
+$('#mode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); });
 
 /* ---------- auth + boot ---------- */
 async function boot() {
@@ -1116,6 +1435,8 @@ async function boot() {
   // intro: start zoomed on the families, settle to the whole map
   const fin = { ...S.cam }; S.cam = { x: fin.x, y: S.layout === 'tree' ? 200 : 0, k: fin.k * 2.4 }; S.camT = { t0: performance.now() + 250, dur: 1400, a: { ...S.cam }, b: fin };
   $('#veil').classList.add('gone');
+  let startMode = hp.get('m'); try { startMode = startMode || localStorage.getItem('tonidex-mode'); } catch {}
+  if (startMode === 'visuals') setMode('visuals');
   const n = hp.get('n'); if (n && S.byKey.get(n)) setTimeout(() => select(S.byKey.get(n)), 1700);
 }
 $('#auth').addEventListener('submit', async (e) => {
