@@ -10,6 +10,7 @@ Usage:
   python seed_from_xarchive.py
 
 Options:
+  (default)              Every bookmark that is in a folder
   --folder "cool news"   Only seed bookmarks from this folder (can pass multiple times)
   --all                  Seed all bookmarks regardless of folder
   --dry-run              Print what would be inserted without touching Supabase
@@ -109,7 +110,9 @@ def main():
                         help="Print rows that would be inserted, don't touch Supabase")
     args = parser.parse_args()
 
-    target_folders = set(args.folders) if args.folders else DEFAULT_FOLDERS
+    # No --folder: take every bookmark that is in ANY folder (unfoldered ones stay out on purpose).
+    # Was {"cool news"} only, which would have skipped the visual folders (2026-10-23).
+    target_folders = set(args.folders) if args.folders else None
     include_all = args.all_folders
 
     # Load export
@@ -127,9 +130,11 @@ def main():
     else:
         filtered = [
             b for b in bookmarks
-            if any(folder in target_folders for folder in b.get("folders", []))
+            if (b.get("folders") if target_folders is None
+                else any(folder in target_folders for folder in b.get("folders", [])))
         ]
-        print(f"Filtered to {len(filtered)} bookmarks in folders: {target_folders}")
+        print(f"Filtered to {len(filtered)} bookmarks in "
+              f"{'any folder' if target_folders is None else 'folders: ' + str(target_folders)}")
 
     if not filtered:
         print("Nothing to seed. Done.")

@@ -1,11 +1,17 @@
 # Portfolio — Current State
 
-**Last updated:** 2026-10-22 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
+**Last updated:** 2026-10-23 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
+
+## 2026-10-23: new X bookmarks imported ✅
+
+- Fresh xarchive export (`data/bookmarks/xarchive_tonzownz_2026-10-23.json`, git-ignored): 2,114 bookmarks, 1,005 in folders. xarchive now lives at `~/xarchive` (copied from the Codex folder); if export says "could not discover query ID", open x.com/i/bookmarks and a folder first, or `git pull` + reload.
+- **`seed_from_xarchive.py` default fixed:** with no `--folder` it now takes every foldered bookmark (it was `{"cool news"}` only, despite older notes saying otherwise).
+- Result: 53 new X rows (1,016 total), all in the graph, tagged and embedded; 40/42 images archived to R2 and captioned.
 
 ## 2026-10-22: Tonidex Visuals, a mood board of every saved image ✅
 
