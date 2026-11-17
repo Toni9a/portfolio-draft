@@ -229,6 +229,11 @@ def classify_error(stderr):
     s = (stderr or "").lower()
     if "429" in s or "too many requests" in s or "rate-limit" in s or "rate limit" in s:
         return "rate_limited"
+    if any(k in s for k in ("nodename nor servname", "name or service not known", "getaddrinfo",
+                            "temporary failure in name resolution", "network is unreachable",
+                            "connection reset", "connection refused", "timed out", "read timeout",
+                            "connection aborted", "remote end closed", "ssl")):
+        return "network"
     if "private" in s:
         return "private"
     if any(k in s for k in ("not available", "removed", "deleted", "404", "does not exist",
@@ -374,6 +379,10 @@ def download(rec, workdir, audio_only, cookies_browser):
         cmd += ["--cookies-from-browser", cookies_browser]
     proc = subprocess.run(cmd + [rec["url"]], capture_output=True, text=True, timeout=300)
     files = [p for p in workdir.glob(f"{vid}.media.*") if not p.name.endswith(".part")]
+    if not files and "403" in (proc.stderr or "") and "--cookies-from-browser" not in cmd:
+        proc = subprocess.run(cmd + ["--cookies-from-browser", cookies_browser, rec["url"]],
+                              capture_output=True, text=True, timeout=300)
+        files = [p for p in workdir.glob(f"{vid}.media.*") if not p.name.endswith(".part")]
     if not files:
         raise RuntimeError((proc.stderr or "download failed").strip().splitlines()[-1][:200])
     return files[0]
@@ -546,6 +555,7 @@ def cost_test(args, out):
 # ───────────────────────── full pass (--run) ─────────────────────────
 
 TRIAGE_BATCH = 50
+MAX_GEMINI_SECONDS = 600  # Toni 2026-11-17: never audio-transcribe or watch videos over 10 min
 MAX_FULL_TEXT = 8000
 
 
@@ -578,10 +588,26 @@ def compose_full_text(row, caption, transcript, notes):
     return "\n\n".join(p.strip() for p in parts if p and p.strip())[:MAX_FULL_TEXT] or None
 
 
+def retry(fn, tries=5):
+    """Retry a Supabase call through short network blips."""
+    for n in range(tries):
+        try:
+            return fn()
+        except Exception as e:
+            if n == tries - 1:
+                raise
+            print(f"    supabase retry {n + 1}: {str(e)[:80]}")
+            time.sleep(10 * (n + 1))
+
+
 def write_back(sb, row, update, plan_only):
     """Update the inbox row; if it already has a node, refresh it and clear tags/embedding."""
     if plan_only:
         return
+    retry(lambda: _write_back(sb, row, update))
+
+
+def _write_back(sb, row, update):
     update = {**update, "video_processed_at": datetime.now(timezone.utc).isoformat()}
     sb.table("inbox").update(update).eq("id", row["id"]).execute()
     if "full_text" in update or "title" in update or "media_urls" in update:
@@ -620,7 +646,8 @@ def full_pass(args):
     if args.source:
         q = q.eq("source", args.source)
     if args.folder:
-        q = q.eq("folder", args.folder)
+        folders = [f.strip() for f in args.folder.split(",") if f.strip()]
+        q = q.in_("folder", folders) if len(folders) > 1 else q.eq("folder", folders[0])
     rows = q.limit(args.limit).execute().data
     # filed items first; unfiled TikToks go through triage as a batch
     rows.sort(key=lambda r: bool((r.get("raw_data") or {}).get("needs_triage")))
@@ -636,158 +663,179 @@ def full_pass(args):
         if spent >= args.max_spend_usd:
             raise SpendStop(f"--max-spend-usd {args.max_spend_usd} reached")
 
-    # ── A. metadata + native subtitles (free) ──
-    metas, consecutive_429 = [], 0
-    try:
-        for i, row in enumerate(rows, 1):
-            item = row_item(row)
-            if i > 1:
-                time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
-            proc, info, subs, _ = run_ytdlp(item, work, args.cookies_from_browser)
-            if not info and proc and item["platform"] == "tiktok" \
-                    and classify_error(proc.stderr) == "login_required":
-                time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
-                proc, info, subs, _ = run_ytdlp(dict(item, platform="tiktok_cookies"), work,
-                                                args.cookies_from_browser)
-                item["used_cookies"] = True
-            tag = f"[{i:>3}/{len(rows)}] {item['platform'][:2]} {item['folder'][:16]:<16}"
-            if not info:
-                err = classify_error(proc.stderr if proc else "")
-                if err == "rate_limited":
-                    consecutive_429 += 1
-                    print(f"{tag} 429")
-                    if consecutive_429 >= 3:
-                        print("Three 429s in a row. Stopping; remaining rows stay pending.")
-                        break
-                    continue  # leave pending, retry next run
+    # Work in chunks of TRIAGE_BATCH so progress is saved as we go.
+    consecutive_429, stop = 0, False
+    for c0 in range(0, len(rows), TRIAGE_BATCH):
+        chunk = rows[c0:c0 + TRIAGE_BATCH]
+        # ── A. metadata + native subtitles (free) ──
+        metas = []
+        try:
+            for i, row in enumerate(chunk, c0 + 1):
+                item = row_item(row)
+                if i > 1:
+                    time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
+                proc, info, subs, _ = run_ytdlp(item, work, args.cookies_from_browser)
+                if not info and proc and item["platform"] == "tiktok" \
+                        and classify_error(proc.stderr) == "login_required":
+                    time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
+                    proc, info, subs, _ = run_ytdlp(dict(item, platform="tiktok_cookies"), work,
+                                                    args.cookies_from_browser)
+                    item["used_cookies"] = True
+                tag = f"[{i:>3}/{len(rows)}] {item['platform'][:2]} {item['folder'][:16]:<16}"
+                if not info:
+                    err = classify_error(proc.stderr if proc else "")
+                    if err in ("rate_limited", "network"):
+                        consecutive_429 += 1
+                        print(f"{tag} {err} (left pending)")
+                        if consecutive_429 >= 3:
+                            print(f"Three {err} errors in a row. Stopping; remaining rows stay pending.")
+                            stop = True
+                            break
+                        time.sleep(30)
+                        continue  # leave pending, retry next run
+                    consecutive_429 = 0
+                    if err == "other":
+                        counts["left_pending"] += 1
+                        print(f"{tag} unknown yt-dlp error, left pending: "
+                              f"{(proc.stderr or '').strip().splitlines()[-1][:120] if proc else ''}")
+                        continue
+                    counts["unavailable"] += 1
+                    print(f"{tag} unavailable ({err})")
+                    write_back(sb, row, {"video_route": "unavailable",
+                                         "video_notes": {"error": err}}, args.plan_only)
+                    continue
                 consecutive_429 = 0
-                counts["unavailable"] += 1
-                print(f"{tag} unavailable ({err})")
-                write_back(sb, row, {"video_route": "unavailable",
-                                     "video_notes": {"error": err}}, args.plan_only)
-                continue
-            consecutive_429 = 0
-            sub = pick_sub_file(subs)
-            transcript = vtt_to_text(sub) if sub else None
-            duration = round(info["duration"], 1) if info.get("duration") else None
-            words = len(transcript.split()) if transcript else 0
-            metas.append({"row": row, "item": item, "info": info, "transcript": transcript,
-                          "duration": duration,
-                          "wpm": round(words / (duration / 60), 1) if transcript and duration else None,
-                          "caption": info.get("description") or info.get("title") or ""})
-            for f in work.glob(f"{item['video_id']}.*"):
-                f.unlink()
-    except KeyboardInterrupt:
-        print("Interrupted during metadata; processing what was fetched.")
+                sub = pick_sub_file(subs)
+                transcript = vtt_to_text(sub) if sub else None
+                duration = round(info["duration"], 1) if info.get("duration") else None
+                words = len(transcript.split()) if transcript else 0
+                metas.append({"row": row, "item": item, "info": info, "transcript": transcript,
+                              "duration": duration,
+                              "wpm": round(words / (duration / 60), 1) if transcript and duration else None,
+                              "caption": info.get("description") or info.get("title") or ""})
+                for f in work.glob(f"{item['video_id']}.*"):
+                    f.unlink()
+        except KeyboardInterrupt:
+            print("Interrupted during metadata; processing what was fetched.")
+            stop = True
 
-    try:
-        # ── B. caption triage for unfiled TikToks (one Gemini call per 50) ──
-        unfiled = [m for m in metas if m["item"]["group"] == "tiktok_unfiled"]
-        keep_ids = {id(m) for m in metas if m["item"]["group"] != "tiktok_unfiled"}
-        for b in range(0, len(unfiled), TRIAGE_BATCH):
-            batch = unfiled[b:b + TRIAGE_BATCH]
-            if args.plan_only:
-                keep_ids |= {id(m) for m in batch}
-                continue
-            items = "\n".join(f"{j}. {m['caption'].strip()[:300] or '(no caption)'}"
-                              for j, m in enumerate(batch, 1))
-            text, usage = gemini_call(client, TRIAGE_PROMPT.format(items=items), cfg_json)
-            charge(usage)
-            verdicts = json.loads(re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip())
-            if isinstance(verdicts, dict):
-                verdicts = next((v for v in verdicts.values() if isinstance(v, list)), [])
-            keep = {int(v["i"]) for v in verdicts if v.get("keep")}
-            for j, m in enumerate(batch, 1):
-                if j in keep:
-                    keep_ids.add(id(m))
-                else:
-                    counts["triaged_out"] += 1
-                    write_back(sb, m["row"], {"video_route": "triaged_out",
-                                              "video_notes": {"caption": m["caption"][:500],
-                                                              "triage_why": next((v.get("why") for v in verdicts
-                                                                                  if int(v["i"]) == j), None)}},
-                               False)
-            print(f"triage batch {b // TRIAGE_BATCH + 1}: kept {len(keep)}/{len(batch)}  ${usage['usd']:.4f}")
-
-        # ── C. route, Gemini step, write back ──
-        for m in [m for m in metas if id(m) in keep_ids]:
-            row, item, info = m["row"], m["item"], m["info"]
-            transcript, caption = m["transcript"], m["caption"]
-            if item.get("kind") == "photo" or not m["duration"]:
-                route, reasons = ["caption_only"], ["no_video"]
-            else:
-                route, reasons = would_route(item, caption, transcript, m["wpm"])
-            final = route[-1]
-            notes, cost, media, uploaded = None, 0.0, None, None
-            try:
-                if final == "audio" and not args.plan_only:
-                    time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
-                    media = download(item, work, True, args.cookies_from_browser)
-                    part, uploaded = media_part(client, media, "audio/mp3")
-                    text, usage = gemini_call(client, [part, AUDIO_PROMPT], cfg_text)
-                    charge(usage); cost += usage["usd"]
-                    text = re.sub(r"^thought\s*", "", text.strip())
-                    if "[music]" in text or "[no speech]" in text:
-                        reasons.append("audio_" + ("music" if "[music]" in text else "no_speech"))
-                        final = "full_video"  # nothing to transcribe: watch it instead
+        try:
+            # ── B. caption triage for unfiled TikToks (one Gemini call per 50) ──
+            unfiled = [m for m in metas if m["item"]["group"] == "tiktok_unfiled"]
+            keep_ids = {id(m) for m in metas if m["item"]["group"] != "tiktok_unfiled"}
+            for b in range(0, len(unfiled), TRIAGE_BATCH):
+                batch = unfiled[b:b + TRIAGE_BATCH]
+                if args.plan_only:
+                    keep_ids |= {id(m) for m in batch}
+                    continue
+                items = "\n".join(f"{j}. {m['caption'].strip()[:300] or '(no caption)'}"
+                                  for j, m in enumerate(batch, 1))
+                text, usage = gemini_call(client, TRIAGE_PROMPT.format(items=items), cfg_json)
+                charge(usage)
+                verdicts = json.loads(re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip())
+                if isinstance(verdicts, dict):
+                    verdicts = next((v for v in verdicts.values() if isinstance(v, list)), [])
+                keep = {int(v["i"]) for v in verdicts if v.get("keep")}
+                for j, m in enumerate(batch, 1):
+                    if j in keep:
+                        keep_ids.add(id(m))
                     else:
-                        transcript = text
-                    media.unlink(); media = None
-                    if uploaded:
-                        client.files.delete(name=uploaded); uploaded = None
-                if final == "full_video" and not args.plan_only:
-                    time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
-                    media = download(item, work, False, args.cookies_from_browser)
-                    part, uploaded = media_part(client, media, "video/mp4")
-                    text, usage = gemini_call(client, [part, VIDEO_PROMPT.format(caption=caption[:1000])],
-                                              cfg_json)
-                    charge(usage); cost += usage["usd"]
-                    notes = parse_json_obj(text)
-                    if notes.get("transcript") and not transcript:
-                        transcript = notes["transcript"]
-            except SpendStop:
-                raise
-            except Exception as e:
-                reasons.append(f"error: {str(e)[:120]}")
-                print(f"    error on {item['video_id']}: {str(e)[:120]}")
-                if final in ("audio", "full_video") and not transcript and not notes:
-                    continue  # leave pending; retry next run
-            finally:
-                if media and media.exists():
-                    media.unlink()
-                if uploaded:
-                    try:
-                        client.files.delete(name=uploaded)
-                    except Exception:
-                        pass
+                        counts["triaged_out"] += 1
+                        write_back(sb, m["row"], {"video_route": "triaged_out",
+                                                  "video_notes": {"caption": m["caption"][:500],
+                                                                  "triage_why": next((v.get("why") for v in verdicts
+                                                                                      if int(v["i"]) == j), None)}},
+                                   False)
+                print(f"triage batch {b // TRIAGE_BATCH + 1}: kept {len(keep)}/{len(batch)}  ${usage['usd']:.4f}")
 
-            update = {"video_route": final,
-                      "video_notes": {"caption": caption[:2000], "creator": info.get("uploader"),
-                                      "creator_id": info.get("uploader_id") or info.get("channel_id"),
-                                      "duration": m["duration"], "view_count": info.get("view_count"),
-                                      "upload_date": info.get("upload_date"),
-                                      "transcript": transcript, "wpm": m["wpm"], "notes": notes,
-                                      "reasons": reasons, "cost_usd": round(cost, 6),
-                                      "model": GEMINI_MODEL if cost else None}}
-            ft = compose_full_text(row, caption, transcript, notes)
-            if ft and ft != row.get("full_text"):
-                update["full_text"] = ft
-            if not row.get("title"):
-                t = next((ln.strip() for ln in caption.splitlines() if ln.strip()), None) \
-                    or (notes or {}).get("shown")
-                if t:
-                    update["title"] = t[:200]
-            if not row.get("author_handle") and (info.get("uploader_id") or info.get("uploader")):
-                update["author_handle"] = info.get("uploader_id") or info.get("uploader")
-            if final in ("caption_transcript_cover", "caption_only") and info.get("thumbnail"):
-                update["media_urls"] = [info["thumbnail"]]  # tag_images.py tags it
-            write_back(sb, row, update, args.plan_only)
-            counts[final] += 1
-            log.append({"id": row["id"], "folder": item["folder"], "route": final, "cost_usd": cost})
-            print(f"  {item['platform'][:2]} {item['folder'][:16]:<16} {m['duration'] or '?':>5}s  "
-                  f"{' → '.join(route[:-1] + [final]):<40} ${cost:.4f}")
-    except SpendStop as e:
-        print(f"\nStopped: {e}. Remaining rows stay pending.")
+            # ── C. route, Gemini step, write back ──
+            for m in [m for m in metas if id(m) in keep_ids]:
+                row, item, info = m["row"], m["item"], m["info"]
+                transcript, caption = m["transcript"], m["caption"]
+                if item.get("kind") == "photo" or not m["duration"]:
+                    route, reasons = ["caption_only"], ["no_video"]
+                else:
+                    route, reasons = would_route(item, caption, transcript, m["wpm"])
+                final = route[-1]
+                if final in ("audio", "full_video") and (m["duration"] or 0) > MAX_GEMINI_SECONDS:
+                    reasons.append("over_10_min")
+                    final = "native_transcript" if transcript else "caption_only"
+                notes, cost, media, uploaded = None, 0.0, None, None
+                try:
+                    if final == "audio" and not args.plan_only:
+                        time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
+                        media = download(item, work, True, args.cookies_from_browser)
+                        part, uploaded = media_part(client, media, "audio/mp3")
+                        text, usage = gemini_call(client, [part, AUDIO_PROMPT], cfg_text)
+                        charge(usage); cost += usage["usd"]
+                        text = re.sub(r"^thought\s*", "", text.strip())
+                        if "[music]" in text or "[no speech]" in text:
+                            reasons.append("audio_" + ("music" if "[music]" in text else "no_speech"))
+                            final = "full_video"  # nothing to transcribe: watch it instead
+                        else:
+                            transcript = text
+                        media.unlink(); media = None
+                        if uploaded:
+                            client.files.delete(name=uploaded); uploaded = None
+                    if final == "full_video" and not args.plan_only:
+                        time.sleep(rng.uniform(args.min_sleep, args.max_sleep))
+                        media = download(item, work, False, args.cookies_from_browser)
+                        part, uploaded = media_part(client, media, "video/mp4")
+                        text, usage = gemini_call(client, [part, VIDEO_PROMPT.format(caption=caption[:1000])],
+                                                  cfg_json)
+                        charge(usage); cost += usage["usd"]
+                        notes = parse_json_obj(text)
+                        if notes.get("transcript") and not transcript:
+                            transcript = notes["transcript"]
+                except SpendStop:
+                    raise
+                except Exception as e:
+                    reasons.append(f"error: {str(e)[:120]}")
+                    print(f"    error on {item['video_id']}: {str(e)[:120]}")
+                    if final in ("audio", "full_video") and not transcript and not notes:
+                        continue  # leave pending; retry next run
+                finally:
+                    if media and media.exists():
+                        media.unlink()
+                    if uploaded:
+                        try:
+                            client.files.delete(name=uploaded)
+                        except Exception:
+                            pass
+
+                update = {"video_route": final,
+                          "video_notes": {"caption": caption[:2000], "creator": info.get("uploader"),
+                                          "creator_id": info.get("uploader_id") or info.get("channel_id"),
+                                          "duration": m["duration"], "view_count": info.get("view_count"),
+                                          "upload_date": info.get("upload_date"),
+                                          "transcript": transcript, "wpm": m["wpm"], "notes": notes,
+                                          "reasons": reasons, "cost_usd": round(cost, 6),
+                                          "model": GEMINI_MODEL if cost else None}}
+                ft = compose_full_text(row, caption, transcript, notes)
+                if ft and ft != row.get("full_text"):
+                    update["full_text"] = ft
+                if not row.get("title"):
+                    t = next((ln.strip() for ln in caption.splitlines() if ln.strip()), None) \
+                        or (notes or {}).get("shown")
+                    if t:
+                        update["title"] = t[:200]
+                # TikTok: uploader = @handle, uploader_id = numeric. Instagram: channel = username.
+                handle = info.get("uploader") if item["platform"] == "tiktok" else \
+                    (info.get("channel") or info.get("uploader_id"))
+                if not row.get("author_handle") and handle:
+                    update["author_handle"] = handle
+                if final in ("caption_transcript_cover", "caption_only") and info.get("thumbnail"):
+                    update["media_urls"] = [info["thumbnail"]]  # tag_images.py tags it
+                write_back(sb, row, update, args.plan_only)
+                counts[final] += 1
+                log.append({"id": row["id"], "folder": item["folder"], "route": final, "cost_usd": cost})
+                print(f"  {item['platform'][:2]} {item['folder'][:16]:<16} {m['duration'] or '?':>5}s  "
+                      f"{' → '.join(route[:-1] + [final]):<40} ${cost:.4f}")
+        except SpendStop as e:
+            print(f"\nStopped: {e}. Remaining rows stay pending.")
+            stop = True
+        if stop:
+            break
 
     print(f"\nRoutes: {dict(counts)}")
     print(f"Spent ${spent:.4f} (≈ £{spent * USD_TO_GBP:.4f})")
@@ -817,7 +865,7 @@ def main():
     ap.add_argument("--plan-only", action="store_true", help="--run without Gemini or writes")
     ap.add_argument("--max-spend-usd", type=float, default=1.50)
     ap.add_argument("--source", help="--run: only this inbox.source")
-    ap.add_argument("--folder", help="--run: only this inbox.folder")
+    ap.add_argument("--folder", help="--run: only these inbox.folder values (comma-separated)")
     ap.add_argument("--only", help="cost test: comma-separated video ids to re-run (skips triage)")
     ap.add_argument("--cost-test", action="store_true",
                     help="Gemini steps on up to 10 cached Phase 0 videos; prints cost per video. "

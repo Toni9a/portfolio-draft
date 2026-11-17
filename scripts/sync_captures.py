@@ -80,12 +80,14 @@ def to_node(r: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="show changes, write nothing")
+    ap.add_argument("--source", help="only sync inbox rows with this source")
+    ap.add_argument("--folder", help="only sync inbox rows in these folders (comma-separated)")
     args = ap.parse_args()
 
     sb: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     inbox = fetch_all(sb, "inbox",
-                      "id,source,title,full_text,url,source_created_at,captured_at,created_at,video_route")
+                      "id,source,folder,title,full_text,url,source_created_at,captured_at,created_at,video_route")
     have = {r["source_id"] for r in fetch_all(sb, "node", "id,source_id", source_table="inbox")}
     inbox_ids = {str(r["id"]) for r in inbox}
 
@@ -97,6 +99,13 @@ def main() -> None:
     missing = sorted((r for r in inbox
                       if str(r["id"]) not in have and r.get("video_route") not in HOLD_ROUTES),
                      key=lambda r: r.get("created_at") or "")
+    if args.source:
+        missing = [r for r in missing if r.get("source") == args.source]
+    if args.folder:
+        wanted = {f.strip() for f in args.folder.split(",") if f.strip()}
+        missing = [r for r in missing if r.get("folder") in wanted]
+    if args.source or args.folder:
+        print(f"{DIM}filter          source={args.source or '*'} folder={args.folder or '*'}{RESET}")
     orphans = have - inbox_ids
 
     by_source = {}

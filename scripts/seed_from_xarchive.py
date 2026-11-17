@@ -44,7 +44,6 @@ def find_latest_export(path: Path) -> Path:
     exports = sorted(path.glob("xarchive_*.json"), reverse=True)
     if not exports:
         raise FileNotFoundError(f"No xarchive_*.json found in {path}")
-    print(f"Using export: {exports[0].name}")
     return exports[0]
 
 
@@ -108,6 +107,8 @@ def main():
                         help="Include all bookmarks regardless of folder")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print rows that would be inserted, don't touch Supabase")
+    parser.add_argument("--file", type=Path,
+                        help="Export to read (default: newest xarchive_*.json in data/bookmarks/)")
     args = parser.parse_args()
 
     # No --folder: take every bookmark that is in ANY folder (unfoldered ones stay out on purpose).
@@ -116,7 +117,8 @@ def main():
     include_all = args.all_folders
 
     # Load export
-    export_path = find_latest_export(XARCHIVE_PATH)
+    export_path = args.file.expanduser() if args.file else find_latest_export(XARCHIVE_PATH)
+    print(f"Using export: {export_path}")
     with open(export_path) as f:
         data = json.load(f)
 
@@ -144,6 +146,38 @@ def main():
     rows = [tweet_to_inbox_row(b) for b in filtered]
 
     if args.dry_run:
+        # What would actually be new: inbox_url_unique skips any URL already there.
+        sb: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+        have_urls, have_ids, off = set(), set(), 0
+        while True:
+            page = (sb.table("inbox").select("url,source,source_item_id")
+                    .order("id").range(off, off + 999).execute().data)
+            for r in page:
+                if r.get("url"):
+                    have_urls.add(r["url"])
+                if r.get("source") == "twitter" and r.get("source_item_id"):
+                    have_ids.add(r["source_item_id"])
+            if len(page) < 1000:
+                break
+            off += 1000
+        seen, new = set(), []
+        for r in rows:
+            if r["url"] not in have_urls and r["url"] not in seen:
+                seen.add(r["url"])
+                new.append(r)
+        same_tweet = [r for r in new if r["source_item_id"] in have_ids]
+        by_folder = {}
+        for r in new:
+            by_folder[r["folder"]] = by_folder.get(r["folder"], 0) + 1
+        print(f"\n─── DRY RUN: {len(rows)} rows sent, {len(new)} NEW (rest already in inbox by URL) ───")
+        for f_, n in sorted(by_folder.items(), key=lambda x: -x[1]):
+            print(f"    {f_:<24} {n}")
+        if same_tweet:
+            print(f"  ⚠ {len(same_tweet)} of the new rows are tweets already in inbox under a different URL "
+                  f"(would be duplicates)")
+        for r in new[:5]:
+            print(f"  [{r['folder']}] {r['url'][:80]}")
+        return
         print(f"\n─── DRY RUN: {len(rows)} rows would be upserted ───")
         for r in rows[:5]:
             print(f"  [{r['folder']}] {r['url'][:80]}")
