@@ -44,6 +44,8 @@ SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 
 TITLE_CHARS = 120
 BATCH = 200
+# inbox.video_route values that must not become nodes yet (see ingest_social.py / watch_videos.py)
+HOLD_ROUTES = {"pending", "triaged_out"}
 
 DIM, RESET, GREEN, YELLOW = "\033[2m", "\033[0m", "\033[32m", "\033[33m"
 
@@ -83,11 +85,17 @@ def main() -> None:
     sb: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     inbox = fetch_all(sb, "inbox",
-                      "id,source,title,full_text,url,source_created_at,captured_at,created_at")
+                      "id,source,title,full_text,url,source_created_at,captured_at,created_at,video_route")
     have = {r["source_id"] for r in fetch_all(sb, "node", "id,source_id", source_table="inbox")}
     inbox_ids = {str(r["id"]) for r in inbox}
 
-    missing = sorted((r for r in inbox if str(r["id"]) not in have),
+    # Social saves wait for watch_videos.py before they become nodes, so the node is
+    # created with the transcript already in its body. Triaged-out TikToks never do.
+    held = [r for r in inbox if r.get("video_route") in HOLD_ROUTES and str(r["id"]) not in have]
+    if held:
+        print(f"{DIM}held back       {len(held)} (video pass pending or triaged out){RESET}")
+    missing = sorted((r for r in inbox
+                      if str(r["id"]) not in have and r.get("video_route") not in HOLD_ROUTES),
                      key=lambda r: r.get("created_at") or "")
     orphans = have - inbox_ids
 
