@@ -47,6 +47,15 @@ BATCH = 200
 # inbox.video_route values that must not become nodes yet (see ingest_social.py / watch_videos.py)
 HOLD_ROUTES = {"pending", "triaged_out"}
 
+
+def held(r: dict) -> bool:
+    """Not ready (or never) for the graph: video pass pending, triaged out, or a dead
+    video with no text at all (a node with only a URL can't be tagged or embedded)."""
+    route = r.get("video_route")
+    if route in HOLD_ROUTES:
+        return True
+    return route == "unavailable" and not (r.get("full_text") or r.get("title"))
+
 DIM, RESET, GREEN, YELLOW = "\033[2m", "\033[0m", "\033[32m", "\033[33m"
 
 
@@ -93,11 +102,11 @@ def main() -> None:
 
     # Social saves wait for watch_videos.py before they become nodes, so the node is
     # created with the transcript already in its body. Triaged-out TikToks never do.
-    held = [r for r in inbox if r.get("video_route") in HOLD_ROUTES and str(r["id"]) not in have]
-    if held:
-        print(f"{DIM}held back       {len(held)} (video pass pending or triaged out){RESET}")
+    held_back = [r for r in inbox if held(r) and str(r["id"]) not in have]
+    if held_back:
+        print(f"{DIM}held back       {len(held_back)} (video pass pending, triaged out, or dead with no text){RESET}")
     missing = sorted((r for r in inbox
-                      if str(r["id"]) not in have and r.get("video_route") not in HOLD_ROUTES),
+                      if str(r["id"]) not in have and not held(r)),
                      key=lambda r: r.get("created_at") or "")
     if args.source:
         missing = [r for r in missing if r.get("source") == args.source]

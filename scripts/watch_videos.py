@@ -236,6 +236,9 @@ def classify_error(stderr):
         return "network"
     if "private" in s:
         return "private"
+    # TikTok per-post region lock: other posts load fine, cookies don't help
+    if "ip address is blocked from accessing this post" in s:
+        return "region_blocked"
     if any(k in s for k in ("not available", "removed", "deleted", "404", "does not exist",
                             "unavailable", "status code 10204", "status code 10216")):
         return "deleted_or_unavailable"
