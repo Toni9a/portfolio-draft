@@ -1,6 +1,6 @@
 # To do
 
-**Last updated:** 2026-10-22 · Replaces `claude/next_session_todo.md` (2026-08-29), whose open items are folded in below.
+**Last updated:** 2026-11-18 · Replaces `claude/next_session_todo.md` (2026-08-29), whose open items are folded in below.
 
 This is the single to-do list for both layers. `CURRENT_STATE.md` says what exists and how it works; this file says what's left. When something here is done, delete it here and record it in `CURRENT_STATE.md` under a dated heading. Update the date above whenever you edit this file.
 
@@ -32,7 +32,8 @@ None open.
 - [ ] **Answer the 78 unanswered Q&A questions** (admin → Q&A). They feed the graph and the claims layer below.
 - [ ] **Claims layer.** Draft in `claims_draft_2026-10-01.md`: approve/reword, then load into a `claim` table. Distil reusable statements for job applications from the 96 answered questions.
 - [ ] **Re-run the Twitter bookmark capture** from the Chrome extension to pull in newer bookmarks. Dedup is safe: `bookmark-ingest` upserts by URL and `sync_captures.py` never creates a second node for the same inbox row. Still check what the extension sends for sub-folders and whether it lands in `inbox.folder`.
-- [ ] **YouTube and Instagram.** `enrich_captures.py` has only been tested on TikTok. Test YouTube and Instagram, then scope real YouTube video analysis (transcript + frames into Gemini). Talk it through before building.
+- [ ] **Social ingest leftovers** (see CURRENT_STATE 2026-11-17/18): 3 TikToks still `pending` (rate-limited). Rerun `python3 scripts/watch_videos.py --run --source tiktok_save` from the Mac, then sync/tag/embed. Optionally decide what to do with the 9 URL-only nodes from deleted TikToks.
+- [ ] **YouTube links (next).** Toni will send YouTube links. Fetch free yt-dlp subtitles in a separate background shell so other work isn't blocked. **No Gemini on them without asking Toni first.** Instagram is now covered by `watch_videos.py`.
 - [ ] **`enrich_captures.py` still runs on the Mac.** It needs a home IP (TikTok/YouTube block datacentre IPs), so it can't join the GitHub Actions job as-is. Tagging, image tagging and embedding already run there weekly.
 
 ## Security and housekeeping

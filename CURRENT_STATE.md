@@ -1,11 +1,35 @@
 # Portfolio — Current State
 
-**Last updated:** 2026-10-23 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
+**Last updated:** 2026-11-18 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
 Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
 
+
+## 2026-11-17/18: Instagram and TikTok saves ingested, watched and in the graph ✅
+
+Spec (local only, git-excluded via `.git/info/exclude`): `social_ingest/social_ingest_spec_2026-11-15.md`. Source exports live in `~/Downloads/social_exports/` and must never be committed.
+
+- **What went in:** 1,141 social rows in `inbox`. Sources: `instagram_save` (saved posts, with collection = `folder`), `instagram_selfchat` (notes/links Toni sent to themself; only thread `toni_560975108639336`, never open any other thread), `instagram_seemore`, and `tiktok_save` (87 videos from the 5 favourites collections, with collection name = `folder`, plus unfiled favourites from 2025 onwards, `folder = 'TikTok saves'`). Feed/algorithm data (98,609 rows: see-more, not-interested, searches, ad interest categories, minus personal categories) went into the new **`algo_snapshot`** table instead. It is signal, not knowledge, and is never synced to `node`. Advertiser lists, login history and anything personal were not loaded.
+- **Scripts (all in `scripts/`):**
+  - `ingest_social.py --dry-run | --apply [--skip-algo]` parses the exports and writes `inbox` and `algo_snapshot`. Re-runs are safe: upsert on `url`, plus the partial unique index `inbox_social_source_item_unique` on `(source, source_item_id)` for URL-less self-chat notes.
+  - `watch_videos.py --run [--source] [--folder "a,b"] [--limit N] [--max-spend-usd X] [--plan-only]` is the video pass. yt-dlp fetches metadata and native subtitles (with Chrome cookies for login walls and 403s, 3–8 s random pacing). It then picks a route and calls Gemini 3.8 Flash only where needed, writing back `inbox.video_route`, `video_notes` (jsonb: caption, creator, duration, transcript, wpm, notes, cost_usd …), `full_text`, `title`, `author_handle` and `media_urls`. It must run on the Mac (home IP); TikTok blocks datacentre IPs, so it is **not** in the weekly GitHub Action. Other modes: `--ytdlp-only` (Phase 0), `--reroute-cached` and `--cost-test`.
+  - `sync_captures.py` holds back rows whose `video_route` is `pending` or `triaged_out`, and `unavailable` rows that have no text. It has `--source` / `--folder` filters.
+- **Routes** (`inbox.video_route`, check constraint in migration `20261117000200`):
+  - `pending`: waiting for the video pass.
+  - `triaged_out`: an unfiled TikTok whose caption failed the Gemini caption check (batches of 50). Never synced.
+  - `unavailable`: deleted, private, or a TikTok per-post region block ("Your IP address is blocked from accessing this post"; cookies don't help).
+  - `caption_only`: a photo post, or a video over 10 minutes with no transcript.
+  - `native_transcript`: platform subtitles. Free; also used for any video over 10 minutes that has subtitles, because there is **no Gemini on videos over 600 s**.
+  - `caption_transcript_cover`: the Veo collection always takes this route. Visual folders take it too when there is a usable transcript (60 wpm or more). The cover image is tagged by `tag_images.py`.
+  - `audio`: Gemini transcribes the audio. No transcript triggers this; if the result is `[music]` or `[no speech]`, the row escalates to `full_video`.
+  - `full_video`: Gemini watches the video. Used for visual folders with no usable transcript, for transcripts under 60 wpm, and for tool demos (the caption names a tool and the transcript has an on-screen phrase).
+- **Final counts:** native_transcript 254, full_video 211, triaged_out 271, audio 66, unavailable 66 (57 region-blocked + 9 deleted), caption_transcript_cover 33, caption_only 6, **pending 3** (TikTok rate-limited at the end; rerun `python3 scripts/watch_videos.py --run --source tiktok_save` from the Mac). Graph: **2,173 nodes**, all captures tagged and embedded.
+- **Cost:** video pass $0.92 in total (from `video_notes.cost_usd`; prices assumed to be $0.75/M in and $3.75/M out). Tagging and embedding are extra and were not measured. The Gemini key belongs to Google Cloud project "Gemini Project" (`gen-lang-client-0611644707`).
+- **Known leftovers:** 9 deleted unfiled TikToks became URL-only nodes with no text before the sync rule was added. They were left in place (never delete without asking). The duplicate twitter inbox row `1878371232560857557` (same tweet under two URL forms) was left alone on purpose.
+- **Also on 2026-11-17:** 30 new X bookmarks were imported from `~/Downloads/social_exports/x_bookmarks/xarchive_2026-11-17.json` (`seed_from_xarchive.py --file …`; the dry run now shows the truly new count per folder) and run through sync, tag, image-tag and embed.
+- **Commits:** `9c2af7c`, `6edaab3` and `086d8a8` on `main` (pushed). Toni's local edit to `.github/workflows/tag-and-embed.yml` (adds a `sync_portfolio` step) is deliberately uncommitted; leave it.
 
 ## 2026-10-23: new X bookmarks imported ✅
 
