@@ -854,15 +854,16 @@ def build_blog():
 # hat -> (mode, slugs). "after-first" = after the first card in that hat's grid,
 # "start" = at the front of the grid. The Full Week replaces the Healthcoach card.
 CASE_PLACEMENT = {
-    "contracting": ("after-first", ["thorne-hale", "lending-assistant", "charity-toolkit"]),
-    "thinking":    ("start",       ["grandma-tv", "automation-collection"]),
+    "contracting": ("after-first", ["thorne-hale", "lending-assistant", "charity-toolkit", "northants-fridge", "local-florist", "fit-with-faith"]),
+    "thinking":    ("start",       ["tonidex", "grandma-tv", "automation-collection"]),
     "artisting":   ("start",       ["pacetune"]),
 }
-CASE_REPLACE = {"Healthcoach + Halfmara": "the-full-week", "Cornerstore": "cornerstore"}
+CASE_REPLACE = {"Healthcoach + Halfmara": "the-full-week", "Cornerstore": "cornerstore", "ChristyHome": "christyhome"}
 CASE_THUMB = {  # which image sits behind each card
-    "thorne-hale": "th-quotes", "lending-assistant": "la-dashboard", "charity-toolkit": "km-timetable",
+    "thorne-hale": "th-quotes", "lending-assistant": "la-dashboard", "charity-toolkit": "km-funday",
     "grandma-tv": "gt-mode", "automation-collection": "ff-results", "the-full-week": "fw-phone",
-    "pacetune": "pt-messages",
+    "pacetune": "pt-messages", "northants-fridge": "nf-hero", "local-florist": "lf-v1v2",
+    "fit-with-faith": "fwf-onboarding", "tonidex": "td-map", "cornerstore": "cs-scan", "christyhome": "ch-scan",
 }
 
 def _div_end(html, start):
@@ -886,7 +887,9 @@ def case_card(item):
     tags = "".join(f'<span class="tag">{h.escape(t)}</span>' for t in item.get("tags", [])[:3])
     year = item.get("date", "")[:4]
     style = ""  # no screenshot behind the card (removed at Toni's request)
+    thumb = (f'          <div class="card-thumb"><img src="{h.escape(img)}" alt="" loading="lazy"></div>\n' if img else "")
     return (f'<a class="project-card case-card" href="work.html#{item["slug"]}"{style}>\n'
+            f'{thumb}'
             f'          <p class="card-period">{year} · <span class="case-badge">Case study</span></p>\n'
             f'          <h3 class="card-title">{h.escape(title)}</h3>\n'
             f'          <p class="card-desc">{h.escape(item.get("excerpt", ""))}</p>\n'

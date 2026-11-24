@@ -32,9 +32,11 @@ A Python controller drives two BroadLink IR units that run an older Bose system:
 | Power on | NEC2 | 186 | 160 | 140 |
 | Power off | NEC2 | 186 | 160 | 204 |
 
-## [GALLERY] Two photos in, a calendar out
+## [GALLERY] A poster for my brother's week
 
-I built this one for my brother. A workflow turns two of his photos into a scrapbook-style weekly calendar on vintage sheet music. It uploads the result to Drive and texts the link. The log shows three runs: two sent the link, and one uploaded but couldn't send because the Mac was locked. It logged that instead of failing silently.
+I built this one for my brother. It started as a workflow that turns two of his photos into a scrapbook-style weekly calendar on vintage sheet music, uploads it to Drive and texts the link. The log shows three runs: two sent the link, and one uploaded but couldn't send because the Mac was locked. It logged that instead of failing silently.
+
+The next version became a poster for the week ahead, one thing he could look at every day. It puts his calendar for the coming week from Google Calendar, his most-played songs from last week through Stats.fm, a Bible verse for the week and a couple of photos from a summer album on one page. I set it up on his phone. The image below uses made-up data.
 
 [[image:gallery]]
 

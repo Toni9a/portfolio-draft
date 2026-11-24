@@ -305,6 +305,246 @@
           "caption": "Corner.OS, a concept for the shop's own screen. Not built."
         }
       }
+    },
+    {
+      "slug": "fit-with-faith",
+      "graph": "fit-with-faith",
+      "order": 9,
+      "title": "A faith and fitness app for *Fitwithfaith*",
+      "excerpt": "A native iPhone app for a creator's TikTok followers: Bible verses, a week planner, strength logging and a Faith Line onboarding.",
+      "date": "2026-11-10",
+      "kind": "Client work",
+      "stage": "Private beta · 6 testers",
+      "tags": [
+        "SwiftUI",
+        "SwiftData",
+        "ActivityKit",
+        "Midjourney",
+        "Faith",
+        "Fitness"
+      ],
+      "media": {
+        "fwf-onboarding": {
+          "kind": "image",
+          "url": "/content/work/media/fit-with-faith/faith-line-screens.jpg",
+          "alt": "Three onboarding screens joined by one drawn line: Your week rooted in purpose, What matters to you, Your week starts here",
+          "caption": "The Faith Line onboarding: draw, choose, arrive."
+        },
+        "fwf-app": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/fit-with-faith/today.jpg",
+          "alt": "Fit with Faith Today screen with a week streak, the week's days and Thursday's plan",
+          "caption": "Today: the week at a glance."
+        },
+        "fwf-progress": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/fit-with-faith/progress.jpg",
+          "alt": "Progress screen charting Barbell Hip Thrust weight rising week by week",
+          "caption": "Strength progress, week by week."
+        },
+        "fwf-storyboard": {
+          "kind": "image",
+          "url": "/content/work/media/fit-with-faith/faith-line-storyboard.jpg",
+          "alt": "Six-frame storyboard where one line becomes a sprout, a dumbbell, the word Faith, a stretch and the GF logo",
+          "caption": "Storyboard: one line morphing through each scene."
+        },
+        "fwf-video": {
+          "kind": "video",
+          "url": "/content/work/media/fit-with-faith/faith-line.mp4",
+          "poster": "/content/work/media/fit-with-faith/faith-line-poster.jpg",
+          "alt": "The Faith Line onboarding animation",
+          "caption": "The onboarding animation."
+        }
+      }
+    },
+    {
+      "slug": "local-florist",
+      "graph": "local-florist",
+      "order": 10,
+      "title": "A bouquet chooser for a *local florist*",
+      "excerpt": "A florist's Instagram archive, tagged with local and cloud vision models, turned into a mobile bouquet chooser with a stock admin and a Shopify version.",
+      "date": "2026-11-16",
+      "kind": "Client work",
+      "stage": "In development",
+      "tags": [
+        "Vision models",
+        "Qwen",
+        "Gemini",
+        "Playwright",
+        "Shopify",
+        "Mobile web"
+      ],
+      "media": {
+        "lf-chooser": {
+          "kind": "image",
+          "url": "/content/work/media/local-florist/chooser.jpg",
+          "alt": "Our bouquets page with a search box, filters for occasion, budget, colour and flower, price chips and a grid of 487 bouquets",
+          "caption": "The chooser: 487 real bouquets, filtered by budget, colour, flower or occasion."
+        },
+        "lf-bouquet": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/local-florist/inside-bouquet.jpg",
+          "alt": "A large mixed bouquet of roses held up in front of the florist's logo on the wall",
+          "caption": "A bouquet from the archive."
+        },
+        "lf-peonies": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/local-florist/peonies.jpg",
+          "alt": "A large bouquet of pink peonies",
+          "caption": "Peonies, used for the hero."
+        },
+        "lf-v1v2": {
+          "kind": "image",
+          "url": "/content/work/media/local-florist/v1-v2.jpg",
+          "alt": "The florist site on a phone in two versions side by side: V1 opens on peonies with Flowers, tied by hand; V2 opens on the pink shopfront with Step inside the pink door",
+          "caption": "V1 (left) leads with the bouquets. V2 (right) walks you into the shop."
+        },
+        "lf-walk": {
+          "kind": "video",
+          "placement": "right",
+          "url": "/content/work/media/local-florist/v2-walk.mp4",
+          "poster": "/content/work/media/local-florist/v2-walk-poster.jpg",
+          "alt": "V2 scroll sequence walking from the pink shopfront through the door into the shop",
+          "caption": "V2: scroll to walk in through the pink door."
+        }
+      }
+    },
+    {
+      "slug": "northants-fridge",
+      "graph": "northants-fridge",
+      "order": 11,
+      "title": "A fridge that opens as you scroll, for *Northants Fridge*",
+      "excerpt": "A site for a used fridge and freezer seller in Northampton: scroll to open the door, stock on lit shelves, and local SEO to get off Facebook.",
+      "date": "2026-10-22",
+      "kind": "Client work",
+      "stage": "Live · in use",
+      "tags": [
+        "Next.js",
+        "Gemini",
+        "Scroll animation",
+        "Local SEO",
+        "Vercel"
+      ],
+      "media": {
+        "nf-hero": {
+          "kind": "image",
+          "url": "/content/work/media/northants-fridge/hero-open.jpg",
+          "alt": "An open fridge freezer in a dark room with lit shelves and labels: ready to go today, free delivery in Northampton, cleaned and tested first",
+          "caption": "The door open, with each shelf as a reason to buy."
+        },
+        "nf-shelves": {
+          "kind": "image",
+          "url": "/content/work/media/northants-fridge/stock.jpg",
+          "alt": "In the fridge right now section showing a listed fridge freezer for £100 and a more coming in all the time card",
+          "caption": "Current stock, pulled from their Facebook listings."
+        }
+      }
+    },
+    {
+      "slug": "tonidex",
+      "graph": "portfolio-platform",
+      "order": 12,
+      "title": "*Tonidex*, a map of everything I save",
+      "excerpt": "A searchable map, image wall and algorithm view of my second brain, so I can find my own saves from my phone when I'm out.",
+      "date": "2026-11-18",
+      "kind": "Personal build",
+      "stage": "In use · signed-in",
+      "tags": [
+        "Supabase",
+        "Gemini",
+        "Embeddings",
+        "Canvas",
+        "Second brain"
+      ],
+      "media": {
+        "td-map": {
+          "kind": "image",
+          "url": "/content/work/media/tonidex/search.jpg",
+          "alt": "Tonidex map with a meaning search for warm minimal packaging, showing matching saves from X, Instagram, TikTok and my own blog posts",
+          "caption": "A meaning search: saves from every app that fit the idea, even ones never tagged that way."
+        },
+        "td-visuals": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/tonidex/visuals.jpg",
+          "alt": "Tonidex Visuals: a masonry wall of saved images with folder filters and colour swatches",
+          "caption": "Visuals: every saved image, filterable by folder and colour."
+        },
+        "td-algo": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/tonidex/interests.jpg",
+          "alt": "Algorithm view, Interests tab: top interests across 1,995 saves, led by interaction design and AI generated content",
+          "caption": "What I'm into: top interests across 1,995 saves, split by app."
+        },
+        "td-data": {
+          "kind": "image",
+          "url": "/content/work/media/tonidex/data.jpg",
+          "alt": "Algorithm view, Data tab: 88,842 TikToks watched, 469 kept, 6,000 liked, 809 shared, 1,830 searches and 454 Instagram posts hidden",
+          "caption": "What the feed shows me versus what I keep."
+        }
+      }
+    },
+    {
+      "slug": "christyhome",
+      "graph": "christyhome",
+      "order": 13,
+      "title": "*ChristyHome*, a house planned from a 3D scan",
+      "excerpt": "A private home app for my cousin: a LiDAR scan of the house, furniture ideas checked against measured rooms, AI previews at real size, and every manual in one place.",
+      "date": "2026-10-20",
+      "kind": "Personal build",
+      "stage": "In use · private",
+      "tags": [
+        "LiDAR",
+        "Polycam",
+        "Blender",
+        "Gemini",
+        "Next.js"
+      ],
+      "media": {
+        "ch-scan": {
+          "kind": "image",
+          "url": "/content/work/media/christyhome/scan-3d.jpg",
+          "alt": "3D LiDAR scan of the two-storey house in the app, with room tabs for living room, kitchen, two bedrooms and front garden",
+          "caption": "The whole house from one Polycam scan, viewable in the app."
+        },
+        "ch-plans": {
+          "kind": "image",
+          "url": "/content/work/media/christyhome/floor-plans.jpg",
+          "alt": "Top-down floor plans of the ground and first floor rendered from the scan",
+          "caption": "Floor plans built in Blender from the measured dimensions, with Claude."
+        },
+        "ch-ideas": {
+          "kind": "image",
+          "url": "/content/work/media/christyhome/ideas.jpg",
+          "alt": "Living room ideas board with sofa beds, a couch and a dining table, each with price, size and comments",
+          "caption": "Ideas for the living room, added by the family. Names and faces blurred."
+        },
+        "ch-try": {
+          "kind": "image",
+          "placement": "right",
+          "url": "/content/work/media/christyhome/try.jpg",
+          "alt": "Try it screen: pick a furniture photo or one of your ideas, then a room",
+          "caption": "Try it: pick a piece, pick a room."
+        },
+        "ch-find": {
+          "kind": "image",
+          "url": "/content/work/media/christyhome/find.jpg",
+          "alt": "Visual search: drop a photo or link, set room, budget, max width and how close a match",
+          "caption": "Find: show it something you love, set a budget and size."
+        },
+        "ch-manuals": {
+          "kind": "image",
+          "placement": "left",
+          "url": "/content/work/media/christyhome/manuals.jpg",
+          "alt": "Manuals and bills section with the boiler control panel card",
+          "caption": "Manuals and bills, starting with the boiler."
+        }
+      }
     }
   ]
 }

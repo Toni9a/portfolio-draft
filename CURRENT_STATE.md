@@ -1,11 +1,36 @@
 # Portfolio — Current State
 
-**Last updated:** 2026-11-18 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
+**Last updated:** 2026-11-24 · **Branch:** `main` · Newest dated section first; each section says when it was verified.
 
 Everything marked ✅ below was verified on this date directly against the Supabase project (`dmlwcrbjetpgqacblvqp`), the deployed edge-function list, the GitHub Actions tab and the working copy. Claims carried over from the previous version without re-checking are marked *(carried forward)*.
 
-Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them.
+Companion doc: `system_atlas.md` (repo root) — the same system from the Layer 1 / pipeline side, with verification queries. This doc is the Layer 2 / site-and-repo view. Don't duplicate between them. **Every script in `scripts/`, what it does, when it runs, and the common run orders (new X bookmarks, new IG/TikTok export) are in `system_atlas.md` §4 "Scripts".**
 
+
+## 2026-11-24: new projects, case studies and card thumbnails ✅
+
+Source notes: `content/project_updates/2026-11_update.md` (Codex interview plus Claude follow-ups; local, not committed).
+- **New case studies** (`content/work/<slug>.md` + `index.json` entries 9–13, media in `content/work/media/<slug>/`): `fit-with-faith` (creator credited as "Fitwithfaith", no TikTok link), `local-florist` (LB Flowers, Northampton, described as "a local florist"; V1/V2 side by side plus a V2 walk-in video built from the site's own scroll frames), `northants-fridge` (links northants-fridge.vercel.app), `tonidex` (Map search, Visuals, Algorithm Interests/Data screenshots), `christyhome` (replaces the ChristyHome card via `CASE_REPLACE`; names and a face blurred; no Vercel link; thermostat and tariff cards left out).
+- **New cards** in `content/butterfly/src/index.src.html`: Fuel Log, Adizero price tracker (no link: the ChatGPT Sites page needs a login), Half-marathon loading-week posters (Toni's and Kajol's, Kajol's exported from Canva).
+- **Card thumbnails:** `.card-thumb` (16:10, top-aligned) on every case-study card (`case_card()` uses `CASE_THUMB`, else the first image) and on the new src cards (images in `content/work/media/cards/`). Older hand-written cards still have none.
+- **Small tools:** the brother calendar section now covers the weekly poster (Stats.fm, Google Calendar, verse, photos), described with made-up data.
+- **MSc date:** already correct (July 2025); nothing to change.
+
+## 2026-11-18: Tonidex "Algorithm" view ✅
+
+Third mode at toniesan.com/tonidex (Map / Visuals / **Algorithm**, hash `#m=algo`), with two tabs (remembered in localStorage `tonidex-algo-tab`):
+- **Interests** (default): top interests across all saves (with the source mix), "rising lately" (a concept's share of the last 60 days of saves divided by its share overall), top concepts per source plus the family split, and what the platforms think (Meta ad categories, TikTok search words, IG hashtags and accounts, "show less" hashtags).
+- **Data**: the stats and charts listed below.
+- **Data:** service-role-only SQL function `tonidex_algo_data()` (migration `20261118000100_tonidex_algo_data.sql`). It pre-aggregates the latest snapshot per platform/kind, converts UTC to Europe/London, and returns about 80 KB. It's served by `tonidex-map?view=algo` (edge function v2, same signed-in check). Read only.
+- **Sections:**
+  - stat tiles: watched / kept / liked / shared / searched / IG not-interested;
+  - TikTok watched per week, with liked / shared / searched small multiples on the same weeks (likes export starts Mar 2026, shares May 2026);
+  - weekday × hour heatmap;
+  - TikTok searches: recurring words, a filterable list, a "kept" count of matching saved items, and click-through to meaning search;
+  - "What I keep": family share per source (X / TikTok / Instagram / Telegram / Mine) and top concepts per source, click-through to the concept panel;
+  - Instagram: ad interest categories (device/network ones dimmed), hashtags and accounts watched, not-interested by year, and hidden hashtags.
+- **Aesth in Visuals (2026-11-18):** new `scripts/fetch_covers.py --folder Aesth` pulled covers for all 23 Instagram Aesth saves into R2 and `tag_images.py` tagged and captioned them. They are now in Visuals. They're R2-only, so the colour swatches can't measure them (R2 has no CORS). Use the same script for any other visual folder.
+- **Also:** Instagram is now its own source toggle ("IG"). Social saves were falling under "Mine".
 
 ## 2026-11-17/18: Instagram and TikTok saves ingested, watched and in the graph ✅
 
@@ -28,7 +53,7 @@ Spec (local only, git-excluded via `.git/info/exclude`): `social_ingest/social_i
 - **Final counts:** native_transcript 254, full_video 211, triaged_out 271, audio 66, unavailable 66 (57 region-blocked + 9 deleted), caption_transcript_cover 33, caption_only 6, pending 3 (TikTok rate-limited at the end; Toni doesn't want them chased, so leave them). Graph: **2,173 nodes**, all captures tagged and embedded.
 - **Cost:** video pass $0.92 in total (from `video_notes.cost_usd`; prices assumed to be $0.75/M in and $3.75/M out). Tagging and embedding are extra and were not measured. The Gemini key belongs to Google Cloud project "Gemini Project" (`gen-lang-client-0611644707`).
 - **Known leftovers:** 9 deleted unfiled TikToks became URL-only nodes with no text before the sync rule was added. They were left in place (never delete without asking). The duplicate twitter inbox row `1878371232560857557` (same tweet under two URL forms) was left alone on purpose.
-- **Also on 2026-11-17:** 30 new X bookmarks were imported from `~/Downloads/social_exports/x_bookmarks/xarchive_2026-11-17.json` (`seed_from_xarchive.py --file …`; the dry run now shows the truly new count per folder) and run through sync, tag, image-tag and embed.
+- **Also on 2026-11-17:** 30 new X bookmarks were imported from `~/Downloads/social_exports/x_bookmarks/xarchive_2026-11-17.json` (`seed_from_xarchive.py --file …`; the dry run now shows the truly new count per folder) and run through sync, tag, image-tag and embed. **`archive_media.py` was not run**, so 26 of their images (plus 2 that 404) were missing from Tonidex Visuals; run it after every X import (see `system_atlas.md` gotcha 5b).
 - **Commits:** `9c2af7c`, `6edaab3` and `086d8a8` on `main` (pushed). Toni's local edit to `.github/workflows/tag-and-embed.yml` (adds a `sync_portfolio` step) is deliberately uncommitted; leave it.
 
 ## 2026-10-23: new X bookmarks imported ✅
